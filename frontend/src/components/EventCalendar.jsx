@@ -224,9 +224,19 @@ export function EventCalendar({ colorMap, events, onCreateForDate, onSelectEvent
 
   function handleSelectDate(date, anchorElement = null) {
     setCurrentDate(date);
-    setSelectedDate(date);
     setVisibleMonth(startOfMonth(date));
     setIsMiniCalendarOpen(false);
+
+    // Empty day -> straight to new-event form (Google Calendar behavior).
+    // Day with events -> show the agenda popup.
+    if (getEventsForDate(events, date).length === 0) {
+      setSelectedDate(null);
+      setAgendaPosition(null);
+      onCreateForDate(formatDateForInput(date));
+      return;
+    }
+
+    setSelectedDate(date);
 
     if (anchorElement && monthViewRef.current) {
       const containerRect = monthViewRef.current.getBoundingClientRect();

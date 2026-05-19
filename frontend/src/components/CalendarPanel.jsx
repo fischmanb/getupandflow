@@ -52,25 +52,7 @@ export function CalendarPanel({ className }) {
 
   return (
     <article className={className}>
-      <div className="calendar-panel-actions">
-        <div className="calendar-panel-action-stack">
-          <button
-            className="task-create-button"
-            onClick={() => {
-              if (isCreating || createPromptMessage) {
-                setCreatePromptMessage("");
-                closeForms();
-                return;
-              }
-              beginCreate();
-            }}
-            type="button"
-          >
-            {isCreating || createPromptMessage ? "X" : "+ Event"}
-          </button>
-          {createPromptMessage ? <p className="calendar-create-error">{createPromptMessage}</p> : null}
-        </div>
-      </div>
+      {createPromptMessage ? <p className="calendar-create-error">{createPromptMessage}</p> : null}
       {isCreating || editingEvent ? (
         <EventFormPanel
           event={editingEvent}
