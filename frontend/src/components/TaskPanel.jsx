@@ -172,9 +172,7 @@ export function TaskPanel({ className, onStateChange }) {
   return (
     <article className={className}>
       <div className="task-panel-header">
-        <div>
-          <p className="panel-label">Task Panel</p>
-        </div>
+        <h4 className="task-panel-title">Tasks</h4>
         <div className="task-panel-actions">
           <div className="task-panel-action-row">
             {!isLoadingTasks && !shouldShowMinimized ? (

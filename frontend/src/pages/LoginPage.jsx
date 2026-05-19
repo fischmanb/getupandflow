@@ -33,9 +33,8 @@ export function LoginPage() {
   return (
     <main className="auth-layout">
       <section className="auth-card">
-        <p className="eyebrow">Iteration 1</p>
         <h1>Sign in to Get Up and Flow</h1>
-        <p className="subtle-copy">Use your account credentials to access the authenticated app shell.</p>
+        <p className="subtle-copy">Welcome back.</p>
         <form className="auth-form" onSubmit={handleSubmit}>
           <label>
             Username

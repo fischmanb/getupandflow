@@ -113,10 +113,7 @@ export function EventFormPanel({ event, initialDate, onCancel, onSaved }) {
   return (
     <section className="entity-form-card">
       <div className="entity-form-header">
-        <div>
-          <p className="panel-label">{event ? "Edit Event" : "Create Event"}</p>
-          <h4>{event ? "Update event details" : "Create a new event"}</h4>
-        </div>
+        <h4>{event ? "Edit event" : "New event"}</h4>
       </div>
       <form className="entity-form-grid" onSubmit={handleSubmit}>
         <label>

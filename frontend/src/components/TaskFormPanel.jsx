@@ -69,12 +69,9 @@ export function TaskFormPanel({ onCancel, onSaved, task }) {
   return (
     <section className="entity-form-card">
       <div className="entity-form-header">
-        <div>
-          <p className="panel-label">{task ? "Edit Task" : "Create Task"}</p>
-          <h4>{task ? "Update task details" : "Create a new task"}</h4>
-        </div>
-        <button aria-label="Close task form" className="entity-form-dismiss" onClick={onCancel} type="button">
-          X
+        <h4>{task ? "Edit task" : "New task"}</h4>
+        <button aria-label="Close" className="entity-form-dismiss" onClick={onCancel} type="button">
+          ×
         </button>
       </div>
       <form className="entity-form-grid" onSubmit={handleSubmit}>

@@ -113,12 +113,9 @@ function DayAgendaPanel({ colorMap, date, events, onClose, onCreateForDate, onSe
   return (
     <section className="day-agenda-panel" style={style}>
       <div className="day-agenda-header">
-        <div>
-          <p className="panel-label">Selected Day</p>
-          <h4>{formatLongDate(date)}</h4>
-        </div>
-        <button aria-label="Close selected day events" className="entity-form-dismiss" onClick={onClose} type="button">
-          X
+        <h4>{formatLongDate(date)}</h4>
+        <button aria-label="Close" className="entity-form-dismiss" onClick={onClose} type="button">
+          ×
         </button>
       </div>
       {dayEvents.length > 0 ? (

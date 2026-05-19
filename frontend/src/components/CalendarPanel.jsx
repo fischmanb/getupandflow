@@ -53,7 +53,6 @@ export function CalendarPanel({ className }) {
   return (
     <article className={className}>
       <div className="calendar-panel-actions">
-        <p className="panel-label">Calendar Panel</p>
         <div className="calendar-panel-action-stack">
           <button
             className="task-create-button"

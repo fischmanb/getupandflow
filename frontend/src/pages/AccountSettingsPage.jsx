@@ -9,8 +9,8 @@ export function AccountSettingsPage() {
     <main className="content-page">
       <section className="content-card">
         <p className="eyebrow">Account Settings</p>
-        <h2>Profile entry point</h2>
-        <p className="subtle-copy">This page is the Iteration 3 entry point for future account settings work.</p>
+        <h2>Your account</h2>
+        <p className="subtle-copy">Account settings will live here. Coming soon.</p>
         <dl className="details-grid">
           <div>
             <dt>Name</dt>
