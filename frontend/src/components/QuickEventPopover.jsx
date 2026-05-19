@@ -5,7 +5,7 @@ import { fetchAllPages, getErrorMessage } from "../api/utils";
 import { useAuth } from "../auth/AuthContext";
 import { useClientFilter } from "../filters/ClientFilterContext";
 import { useOutsideClick } from "../hooks/useOutsideClick";
-import { TimeWheelPicker, DurationWheelPicker } from "./TimeWheelPicker";
+import { TimeDropdown, deriveDuration, formatDurationShort } from "./TimeDropdown";
 
 /**
  * QuickEventPopover
@@ -19,10 +19,6 @@ import { TimeWheelPicker, DurationWheelPicker } from "./TimeWheelPicker";
  * Anchored absolutely by the parent via `style` (same convention as DayAgendaPanel).
  */
 
-function pad(n) {
-  return String(n).padStart(2, "0");
-}
-
 function formatDateLong(isoDate) {
   if (!isoDate) return "";
   const [y, m, d] = isoDate.split("-").map(Number);
@@ -30,42 +26,8 @@ function formatDateLong(isoDate) {
   return date.toLocaleDateString(undefined, { weekday: "long", month: "long", day: "numeric" });
 }
 
-function formatTime12h(hhmm) {
-  if (!hhmm) return "";
-  const [hStr, mStr] = hhmm.split(":");
-  const h = Number(hStr);
-  const m = Number(mStr);
-  const period = h >= 12 ? "PM" : "AM";
-  const displayH = h % 12 === 0 ? 12 : h % 12;
-  return `${displayH}:${pad(m)} ${period}`;
-}
-
-function addHours(hhmm, hours) {
-  const [h, m] = hhmm.split(":").map(Number);
-  const totalMin = h * 60 + m + hours * 60;
-  const wrapped = ((totalMin % (24 * 60)) + 24 * 60) % (24 * 60);
-  return `${pad(Math.floor(wrapped / 60))}:${pad(wrapped % 60)}`;
-}
-
-function minutesBetween(startHHMM, endHHMM) {
-  const [sh, sm] = startHHMM.split(":").map(Number);
-  const [eh, em] = endHHMM.split(":").map(Number);
-  let diff = eh * 60 + em - (sh * 60 + sm);
-  if (diff < 0) diff += 24 * 60; // overnight: treat end as next day
-  return diff;
-}
-
 function isOvernight(startHHMM, endHHMM) {
   return endHHMM <= startHHMM;
-}
-
-function formatDuration(minutes) {
-  if (minutes <= 0) return "";
-  const h = Math.floor(minutes / 60);
-  const m = minutes % 60;
-  if (h === 0) return `${m} min`;
-  if (m === 0) return `${h} hr`;
-  return `${h} hr ${m} min`;
 }
 
 function getDefaultTimes() {
@@ -99,7 +61,6 @@ export function QuickEventPopover({ event, initialDate, onCancel, onSaved, style
   const [isSubmitting, setIsSubmitting] = useState(false);
   // Existing events open expanded so users see everything they're editing.
   const [isExpanded, setIsExpanded] = useState(Boolean(event));
-  const [isEditingTime, setIsEditingTime] = useState(false);
   const [isEditingDate, setIsEditingDate] = useState(false);
 
   const [formState, setFormState] = useState(() =>
@@ -180,21 +141,7 @@ export function QuickEventPopover({ event, initialDate, onCancel, onSaved, style
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [activeClientId]);
 
-  // Changing start leaves end alone; duration updates as a derived value.
-  function setStartTime(newStart) {
-    setFormState((current) => ({ ...current, start_time: newStart }));
-  }
-
-  // Changing duration recomputes end_time from start + duration. Start stays put.
-  function setDuration(newMinutes) {
-    setFormState((current) => {
-      const [h, m] = current.start_time.split(":").map(Number);
-      const startMin = h * 60 + m;
-      const endMin = (startMin + newMinutes) % (24 * 60);
-      const newEnd = `${pad(Math.floor(endMin / 60))}:${pad(endMin % 60)}`;
-      return { ...current, end_time: newEnd };
-    });
-  }
+  // Time changes are direct; duration is always derived from start/end.
 
   async function handleSubmit(e) {
     e.preventDefault();
@@ -280,62 +227,31 @@ export function QuickEventPopover({ event, initialDate, onCancel, onSaved, style
             </button>
           )}
 
-          {isEditingTime ? (
-            <div className="quick-event-time-picker">
-              <div className="quick-event-time-row">
-                <div className="quick-event-time-col">
-                  <span className="quick-event-time-col-label">Start</span>
-                  <TimeWheelPicker
-                    value={formState.start_time}
-                    onChange={setStartTime}
-                    label="Start time"
-                  />
-                </div>
-                <div className="quick-event-time-col">
-                  <span className="quick-event-time-col-label">End</span>
-                  <TimeWheelPicker
-                    value={formState.end_time}
-                    onChange={(v) => setFormState((current) => ({ ...current, end_time: v }))}
-                    label="End time"
-                  />
-                </div>
-                <div className="quick-event-time-col">
-                  <span className="quick-event-time-col-label">Duration</span>
-                  <DurationWheelPicker
-                    value={minutesBetween(formState.start_time, formState.end_time)}
-                    onChange={setDuration}
-                    label="Duration"
-                  />
-                </div>
-              </div>
-              <div className="quick-event-time-row" style={{ alignItems: "center", justifyContent: "flex-end" }}>
-                <button
-                  type="button"
-                  className="quick-event-time-done"
-                  onClick={() => setIsEditingTime(false)}
-                >
-                  Done
-                </button>
-              </div>
-              {isOvernight(formState.start_time, formState.end_time) ? (
-                <span className="quick-event-overnight-warning">
-                  Heads up: this event runs overnight (ends the next day).
-                </span>
-              ) : null}
-            </div>
-          ) : (
-            <button
-              type="button"
-              className="quick-event-meta-chip"
-              onClick={() => setIsEditingTime(true)}
-              title="Click to change time"
-            >
-              {formatTime12h(formState.start_time)} – {formatTime12h(formState.end_time)}
-              <span className="quick-event-duration-label" style={{ marginLeft: 8 }}>
-                · {formatDuration(minutesBetween(formState.start_time, formState.end_time))}
-              </span>
-            </button>
-          )}
+          <div className="quick-event-time-row-simple">
+            <TimeDropdown
+              value={formState.start_time}
+              onChange={(v) => setFormState((current) => ({ ...current, start_time: v }))}
+              ariaLabel="Start time"
+            />
+            <span className="time-dropdown-dash">–</span>
+            <TimeDropdown
+              value={formState.end_time}
+              onChange={(v) => setFormState((current) => ({ ...current, end_time: v }))}
+              anchorTime={(() => {
+                const [h, m] = formState.start_time.split(":").map(Number);
+                return h * 60 + m;
+              })()}
+              ariaLabel="End time"
+            />
+            <span className="quick-event-duration-label" style={{ marginLeft: 4 }}>
+              · {formatDurationShort(deriveDuration(formState.start_time, formState.end_time))}
+            </span>
+          </div>
+          {isOvernight(formState.start_time, formState.end_time) ? (
+            <span className="quick-event-overnight-warning">
+              Heads up: this event runs overnight (ends the next day).
+            </span>
+          ) : null}
         </div>
 
         <label className="quick-event-field">
