@@ -44,15 +44,33 @@ class AdminOnlyPermission(permissions.BasePermission):
 
 
 class ClientCategoryPermission(permissions.BasePermission):
+    """Categories belong to a Client. The Client, their assigned Coach, and any Admin
+    may create/edit/delete on the Client's behalf. Anyone authenticated may read
+    within their RBAC scope (queryset already enforces that).
+    """
+
     def has_permission(self, request, view):
+        if not (request.user and request.user.is_authenticated):
+            return False
         if request.method in permissions.SAFE_METHODS:
-            return request.user and request.user.is_authenticated
-        return request.user and request.user.is_authenticated and RBACScope.is_client(request.user)
+            return True
+        return (
+            RBACScope.is_admin(request.user)
+            or RBACScope.is_coach(request.user)
+            or RBACScope.is_client(request.user)
+        )
 
     def has_object_permission(self, request, view, obj):
         if request.method in permissions.SAFE_METHODS:
             return True
-        return RBACScope.is_client(request.user) and obj.client_id == request.user.id
+        user = request.user
+        if RBACScope.is_admin(user):
+            return True
+        if RBACScope.is_client(user):
+            return obj.client_id == user.id
+        if RBACScope.is_coach(user):
+            return getattr(obj.client, "profile", None) and obj.client.profile.assigned_coach_id == user.id
+        return False
 
 
 class RoleScopedQuerysetMixin:
@@ -157,7 +175,15 @@ class EventCategoryViewSet(viewsets.ModelViewSet):
         return queryset
 
     def perform_create(self, serializer):
-        serializer.save(client=self.request.user)
+        # If the request didn't specify a client_id, default to "self if I'm a Client".
+        # Coaches/Admins must pass client_id explicitly (validated in the serializer).
+        if "client_id" not in serializer.validated_data:
+            user = self.request.user
+            if not RBACScope.is_client(user):
+                raise ValidationError({"client_id": "Coaches and admins must specify a client."})
+            serializer.save(client=user)
+            return
+        serializer.save()
 
 
 class EventViewSet(RoleScopedQuerysetMixin, viewsets.ModelViewSet):

@@ -1,11 +1,14 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
+import { Link } from "react-router-dom";
 
 import { apiClient } from "../api/client";
 import { getErrorMessage, getListData, getPaginationMeta } from "../api/utils";
+import { useAuth } from "../auth/AuthContext";
 import { PRESET_CATEGORY_COLORS, getCategoryColorHex } from "../categories/presetColors";
 import { PaginationControls } from "../components/PaginationControls";
+import { useClientFilter } from "../filters/ClientFilterContext";
 
-function getInitialState(category) {
+function getInitialFormState(category) {
   return {
     name: category?.name || "",
     color: category?.color || PRESET_CATEGORY_COLORS[0].value,
@@ -13,9 +16,13 @@ function getInitialState(category) {
 }
 
 export function CategoryManagementPage() {
+  const { user } = useAuth();
+  const { clients: availableClients, supportsClientFiltering } = useClientFilter();
+
   const [categories, setCategories] = useState([]);
   const [editingCategory, setEditingCategory] = useState(null);
-  const [formState, setFormState] = useState(getInitialState(null));
+  const [formState, setFormState] = useState(getInitialFormState(null));
+  const [selectedClientId, setSelectedClientId] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isLoadingCategories, setIsLoadingCategories] = useState(true);
   const [errorMessage, setErrorMessage] = useState("");
@@ -23,11 +30,32 @@ export function CategoryManagementPage() {
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(0);
 
+  // Coaches and Admins must pick which client they're managing categories for.
+  // Clients are themselves — no picker needed.
+  const isManagingOnBehalf = supportsClientFiltering;
+  const effectiveClientId = isManagingOnBehalf ? selectedClientId : user?.id;
+
+  // Default-select the first available client when the picker first becomes relevant.
+  useEffect(() => {
+    if (isManagingOnBehalf && !selectedClientId && availableClients.length > 0) {
+      setSelectedClientId(availableClients[0].id);
+    }
+  }, [availableClients, isManagingOnBehalf, selectedClientId]);
+
   async function loadCategories(page = currentPage) {
+    if (isManagingOnBehalf && !effectiveClientId) {
+      // No client picked yet; show empty.
+      setCategories([]);
+      setTotalPages(0);
+      setIsLoadingCategories(false);
+      return;
+    }
     setIsLoadingCategories(true);
     setListErrorMessage("");
     try {
-      const response = await apiClient.get("/categories/", { params: { page } });
+      const params = { page };
+      if (isManagingOnBehalf) params.client_id = effectiveClientId;
+      const response = await apiClient.get("/categories/", { params });
       setCategories(getListData(response.data));
       setTotalPages(getPaginationMeta(response.data).totalPages);
       setCurrentPage(page);
@@ -40,23 +68,34 @@ export function CategoryManagementPage() {
     }
   }
 
+  // Reload whenever the picked client changes.
   useEffect(() => {
-    loadCategories();
-  }, []);
+    loadCategories(1);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [effectiveClientId]);
 
   async function handleSubmit(event) {
     event.preventDefault();
     setErrorMessage("");
-    setIsSubmitting(true);
 
+    if (isManagingOnBehalf && !effectiveClientId) {
+      setErrorMessage("Pick a client before saving a category.");
+      return;
+    }
+
+    setIsSubmitting(true);
     try {
+      const payload = { ...formState };
+      // Coaches/Admins always send client_id; Clients omit it (server defaults to self).
+      if (isManagingOnBehalf) payload.client_id = effectiveClientId;
+
       if (editingCategory) {
         await apiClient.patch(`/categories/${editingCategory.id}/`, formState);
       } else {
-        await apiClient.post("/categories/", formState);
+        await apiClient.post("/categories/", payload);
       }
       setEditingCategory(null);
-      setFormState(getInitialState(null));
+      setFormState(getInitialFormState(null));
       await loadCategories(1);
     } catch (error) {
       setErrorMessage(getErrorMessage(error, "Unable to save category."));
@@ -71,7 +110,7 @@ export function CategoryManagementPage() {
       await apiClient.delete(`/categories/${categoryId}/`);
       if (editingCategory?.id === categoryId) {
         setEditingCategory(null);
-        setFormState(getInitialState(null));
+        setFormState(getInitialFormState(null));
       }
       await loadCategories(1);
     } catch (error) {
@@ -79,12 +118,38 @@ export function CategoryManagementPage() {
     }
   }
 
+  const headerCopy = useMemo(() => {
+    if (!isManagingOnBehalf) {
+      return "Categories are only used for events and must use one of the preset colors.";
+    }
+    return "Categories belong to a client. Pick the client whose categories you're managing.";
+  }, [isManagingOnBehalf]);
+
   return (
     <main className="content-page">
       <section className="content-card">
+        <Link className="back-link" to="/app">← Back</Link>
         <p className="eyebrow">Event Categories</p>
-        <h2>Manage your event categories</h2>
-        <p className="subtle-copy">Categories are only used for events and must use one of the preset colors.</p>
+        <h2>Manage event categories</h2>
+        <p className="subtle-copy">{headerCopy}</p>
+
+        {isManagingOnBehalf ? (
+          <label className="quick-event-field" style={{ maxWidth: 320 }}>
+            <span className="quick-event-field-label">Client</span>
+            <select
+              value={selectedClientId}
+              onChange={(e) => setSelectedClientId(Number(e.target.value))}
+              disabled={availableClients.length === 0}
+            >
+              {availableClients.length === 0 ? <option value="">No clients available</option> : null}
+              {availableClients.map((c) => (
+                <option key={c.id} value={c.id}>
+                  {c.label || c.username}
+                </option>
+              ))}
+            </select>
+          </label>
+        ) : null}
 
         <form className="entity-form-grid category-form" onSubmit={handleSubmit}>
           <label>
@@ -121,15 +186,15 @@ export function CategoryManagementPage() {
             </button>
             {editingCategory ? (
               <button
-                aria-label="Close category form"
+                aria-label="Close"
                 className="entity-form-dismiss"
                 onClick={() => {
                   setEditingCategory(null);
-                  setFormState(getInitialState(null));
+                  setFormState(getInitialFormState(null));
                 }}
                 type="button"
               >
-                X
+                ×
               </button>
             ) : null}
           </div>
@@ -152,7 +217,7 @@ export function CategoryManagementPage() {
                   className="calendar-nav-button"
                   onClick={() => {
                     setEditingCategory(category);
-                    setFormState(getInitialState(category));
+                    setFormState(getInitialFormState(category));
                   }}
                   type="button"
                 >

@@ -30,11 +30,36 @@ class ClientAssignmentSerializer(serializers.ModelSerializer):
 
 
 class EventCategorySerializer(serializers.ModelSerializer):
-    client_id = serializers.IntegerField(source="client.id", read_only=True)
+    # Writable on create so coaches/admins can specify the client.
+    client_id = serializers.IntegerField(required=False)
+    client = UserSummarySerializer(read_only=True)
 
     class Meta:
         model = EventCategory
-        fields = ["id", "name", "color", "client_id", "created_at", "updated_at"]
+        fields = ["id", "name", "color", "client", "client_id", "created_at", "updated_at"]
+        # client_id is read-only on responses by virtue of being derived from the model field,
+        # but we want it to round-trip on writes too. Mark fields nothing extra.
+
+    def validate_client_id(self, value):
+        request = self.context["request"]
+        try:
+            client = User.objects.get(pk=value)
+        except User.DoesNotExist:
+            raise serializers.ValidationError("Client not found.")
+        if not RBACScope.can_access_client(request.user, client):
+            raise serializers.ValidationError("You do not have access to this client.")
+        return value
+
+    def to_representation(self, instance):
+        data = super().to_representation(instance)
+        data["client_id"] = instance.client_id
+        return data
+
+    def create(self, validated_data):
+        client_id = validated_data.pop("client_id", None)
+        if client_id is not None:
+            validated_data["client_id"] = client_id
+        return super().create(validated_data)
 
 
 class ClientScopedValidationMixin:

@@ -522,6 +522,75 @@ class PlannerRBACAPITests(APITestCase):
         self.assertEqual(len(get_list_results(response)), 1)
         self.assertEqual(get_list_results(response)[0]["id"], self.category.id)
 
+    def test_coach_can_create_category_for_assigned_client(self):
+        self.authenticate(self.coach_one)
+
+        response = self.client.post(
+            reverse("category-list"),
+            {"name": "Coach-made", "color": "rose", "client_id": self.client_one.id},
+            format="json",
+        )
+
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+        self.assertEqual(response.data["client_id"], self.client_one.id)
+
+    def test_coach_cannot_create_category_for_unassigned_client(self):
+        self.authenticate(self.coach_one)
+
+        response = self.client.post(
+            reverse("category-list"),
+            {"name": "Sneaky", "color": "rose", "client_id": self.client_two.id},
+            format="json",
+        )
+
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+
+    def test_coach_must_specify_client_id_to_create_category(self):
+        self.authenticate(self.coach_one)
+
+        response = self.client.post(
+            reverse("category-list"),
+            {"name": "Coach-made", "color": "rose"},
+            format="json",
+        )
+
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+
+    def test_admin_can_create_category_for_any_client(self):
+        self.authenticate(self.admin)
+
+        response = self.client.post(
+            reverse("category-list"),
+            {"name": "Admin-made", "color": "rose", "client_id": self.client_two.id},
+            format="json",
+        )
+
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+        self.assertEqual(response.data["client_id"], self.client_two.id)
+
+    def test_coach_can_delete_category_for_assigned_client(self):
+        from planner.models import EventCategory
+
+        # Create an unused category to avoid PROTECT on existing events
+        cat = EventCategory.objects.create(name="Deletable", color="rose", client=self.client_one)
+        self.authenticate(self.coach_one)
+
+        response = self.client.delete(reverse("category-detail", args=[cat.id]))
+
+        self.assertEqual(response.status_code, status.HTTP_204_NO_CONTENT)
+
+    def test_coach_cannot_delete_category_for_unassigned_client(self):
+        # Create a category owned by client_two (assigned to coach_two)
+        from planner.models import EventCategory
+
+        other = EventCategory.objects.create(name="Other", color="rose", client=self.client_two)
+        self.authenticate(self.coach_one)
+
+        response = self.client.delete(reverse("category-detail", args=[other.id]))
+
+        # 404 because the coach can't see it in the first place (queryset scope), which is fine.
+        self.assertIn(response.status_code, (status.HTTP_403_FORBIDDEN, status.HTTP_404_NOT_FOUND))
+
     def test_task_list_is_paginated_for_large_datasets(self):
         for index in range(12):
             Task.objects.create(

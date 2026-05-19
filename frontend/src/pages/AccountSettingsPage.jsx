@@ -26,11 +26,9 @@ export function AccountSettingsPage() {
             <dd>{user.role}</dd>
           </div>
         </dl>
-        {user.role === "Client" ? (
-          <Link className="task-create-button category-manage-link" to="/app/categories">
-            Manage event categories
-          </Link>
-        ) : null}
+        <Link className="task-create-button category-manage-link" to="/app/categories">
+          Manage event categories
+        </Link>
       </section>
     </main>
   );
