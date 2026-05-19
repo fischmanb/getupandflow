@@ -274,6 +274,7 @@ export function EventCalendar({ colorMap, events, onCreateForDate, onSelectEvent
         {isMiniCalendarOpen ? (
           <MiniCalendarPopup
             currentDate={currentDate}
+            onClose={() => setIsMiniCalendarOpen(false)}
             onSelectDate={handleSelectDate}
             onVisibleMonthChange={setVisibleMonth}
             visibleMonth={visibleMonth}

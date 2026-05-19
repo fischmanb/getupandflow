@@ -133,6 +133,9 @@ export function EventFormPanel({ event, initialDate, onCancel, onSaved }) {
     <section className="entity-form-card" ref={cardRef}>
       <div className="entity-form-header">
         <h4>{event ? "Edit event" : "New event"}</h4>
+        <button aria-label="Close" className="entity-form-dismiss" onClick={attemptCancel} type="button">
+          ×
+        </button>
       </div>
       <form className="entity-form-grid" onSubmit={handleSubmit}>
         <label>

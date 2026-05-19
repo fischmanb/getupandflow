@@ -1,6 +1,6 @@
 import { addMonths, formatMonthYear, getMonthGrid, isSameDay, WEEKDAY_LABELS } from "../calendar/calendarUtils";
 
-export function MiniCalendarPopup({ currentDate, onSelectDate, visibleMonth, onVisibleMonthChange }) {
+export function MiniCalendarPopup({ currentDate, onClose, onSelectDate, visibleMonth, onVisibleMonthChange }) {
   const days = getMonthGrid(visibleMonth);
 
   return (
@@ -13,6 +13,11 @@ export function MiniCalendarPopup({ currentDate, onSelectDate, visibleMonth, onV
         <button onClick={() => onVisibleMonthChange(addMonths(visibleMonth, 1))} type="button">
           {">"}
         </button>
+        {onClose ? (
+          <button aria-label="Close" className="mini-calendar-close" onClick={onClose} type="button">
+            ×
+          </button>
+        ) : null}
       </div>
       <div className="mini-calendar-weekdays">
         {WEEKDAY_LABELS.map((label) => (

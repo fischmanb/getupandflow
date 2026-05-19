@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 
 function getInitialState(user, defaultRole = "Coach") {
   return {
@@ -28,6 +28,20 @@ export function AdminUserManagementForm({
     setFormState(getInitialState(editingUser));
   }, [editingUser]);
 
+  const initialFormState = useMemo(() => getInitialState(editingUser), [editingUser]);
+  const isDirty = useMemo(
+    () => JSON.stringify(formState) !== JSON.stringify(initialFormState),
+    [formState, initialFormState],
+  );
+
+  function attemptCancel() {
+    if (!onCancel) return;
+    if (isDirty && !window.confirm("Discard your changes?")) {
+      return;
+    }
+    onCancel();
+  }
+
   const isClient = formState.role === "Client";
 
   return (
@@ -38,8 +52,8 @@ export function AdminUserManagementForm({
           <h3>{editingUser ? "Update user" : "Create user"}</h3>
         </div>
         {editingUser ? (
-          <button aria-label="Close user form" className="entity-form-dismiss" onClick={onCancel} type="button">
-            X
+          <button aria-label="Close" className="entity-form-dismiss" onClick={attemptCancel} type="button">
+            ×
           </button>
         ) : null}
       </div>
