@@ -150,6 +150,13 @@ button {
   flex: 1;
 }
 
+.shell-greeting {
+  margin: 4px 0 0;
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: #102033;
+}
+
 .shell-header-actions {
   display: flex;
   align-items: center;
