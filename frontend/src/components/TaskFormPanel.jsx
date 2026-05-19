@@ -1,9 +1,10 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 
 import { apiClient } from "../api/client";
 import { getErrorMessage } from "../api/utils";
 import { useAuth } from "../auth/AuthContext";
 import { useClientFilter } from "../filters/ClientFilterContext";
+import { useOutsideClick } from "../hooks/useOutsideClick";
 
 function toLocalDateTimeValue(value) {
   if (!value) {
@@ -30,6 +31,24 @@ export function TaskFormPanel({ onCancel, onSaved, task }) {
   const [formState, setFormState] = useState(() =>
     getInitialTaskState(task, selectedClientIds[0] || user?.id),
   );
+
+  const initialFormState = useMemo(
+    () => getInitialTaskState(task, selectedClientIds[0] || user?.id),
+    [task, selectedClientIds, user?.id],
+  );
+  const isDirty = useMemo(
+    () => JSON.stringify(formState) !== JSON.stringify(initialFormState),
+    [formState, initialFormState],
+  );
+
+  const cardRef = useRef(null);
+  function attemptCancel() {
+    if (isDirty && !window.confirm("Discard your changes?")) {
+      return;
+    }
+    onCancel();
+  }
+  useOutsideClick(cardRef, attemptCancel, true);
 
   const isClient = user?.role === "Client";
   const isCreateMode = !task;
@@ -67,10 +86,10 @@ export function TaskFormPanel({ onCancel, onSaved, task }) {
   }
 
   return (
-    <section className="entity-form-card">
+    <section className="entity-form-card" ref={cardRef}>
       <div className="entity-form-header">
         <h4>{task ? "Edit task" : "New task"}</h4>
-        <button aria-label="Close" className="entity-form-dismiss" onClick={onCancel} type="button">
+        <button aria-label="Close" className="entity-form-dismiss" onClick={attemptCancel} type="button">
           ×
         </button>
       </div>

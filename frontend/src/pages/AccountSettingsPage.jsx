@@ -8,6 +8,7 @@ export function AccountSettingsPage() {
   return (
     <main className="content-page">
       <section className="content-card">
+        <Link className="back-link" to="/app">← Back</Link>
         <p className="eyebrow">Account Settings</p>
         <h2>Your account</h2>
         <p className="subtle-copy">Account settings will live here. Coming soon.</p>

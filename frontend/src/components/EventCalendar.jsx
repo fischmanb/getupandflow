@@ -18,6 +18,7 @@ import {
   startOfWeek,
 } from "../calendar/calendarUtils";
 import { useCalendarControls } from "../calendar/CalendarControlsContext";
+import { useOutsideClick } from "../hooks/useOutsideClick";
 import { CalendarToolbar } from "./CalendarToolbar";
 import { MiniCalendarPopup } from "./MiniCalendarPopup";
 
@@ -109,9 +110,11 @@ function WeekView({ colorMap, currentDate, events, onSelectEvent }) {
 
 function DayAgendaPanel({ colorMap, date, events, onClose, onCreateForDate, onSelectEvent, style }) {
   const dayEvents = getEventsForDate(events, date);
+  const panelRef = useRef(null);
+  useOutsideClick(panelRef, onClose, true);
 
   return (
-    <section className="day-agenda-panel" style={style}>
+    <section className="day-agenda-panel" ref={panelRef} style={style}>
       <div className="day-agenda-header">
         <h4>{formatLongDate(date)}</h4>
         <button aria-label="Close" className="entity-form-dismiss" onClick={onClose} type="button">

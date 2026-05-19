@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { Link } from "react-router-dom";
 
 import { apiClient } from "../api/client";
@@ -6,6 +6,7 @@ import { fetchAllPages, getErrorMessage } from "../api/utils";
 import { useAuth } from "../auth/AuthContext";
 import { getCategoryColorHex } from "../categories/presetColors";
 import { useClientFilter } from "../filters/ClientFilterContext";
+import { useOutsideClick } from "../hooks/useOutsideClick";
 
 function getInitialEventState(event, defaultClientId, initialDate = "") {
   return {
@@ -33,6 +34,24 @@ export function EventFormPanel({ event, initialDate, onCancel, onSaved }) {
   const [formState, setFormState] = useState(() =>
     getInitialEventState(event, selectedClientIds[0] || user?.id, initialDate),
   );
+
+  const initialFormState = useMemo(
+    () => getInitialEventState(event, selectedClientIds[0] || user?.id, initialDate),
+    [event, initialDate, selectedClientIds, user?.id],
+  );
+  const isDirty = useMemo(
+    () => JSON.stringify(formState) !== JSON.stringify(initialFormState),
+    [formState, initialFormState],
+  );
+
+  const cardRef = useRef(null);
+  function attemptCancel() {
+    if (isDirty && !window.confirm("Discard your changes?")) {
+      return;
+    }
+    onCancel();
+  }
+  useOutsideClick(cardRef, attemptCancel, true);
 
   const isClient = user?.role === "Client";
   const isCreateMode = !event;
@@ -111,7 +130,7 @@ export function EventFormPanel({ event, initialDate, onCancel, onSaved }) {
   }
 
   return (
-    <section className="entity-form-card">
+    <section className="entity-form-card" ref={cardRef}>
       <div className="entity-form-header">
         <h4>{event ? "Edit event" : "New event"}</h4>
       </div>
