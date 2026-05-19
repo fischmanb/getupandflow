@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from "react";
+import { createPortal } from "react-dom";
 
 import { apiClient } from "../api/client";
 import { fetchAllPages, getErrorMessage } from "../api/utils";
@@ -56,20 +57,51 @@ function formatDurationShort(ms) {
 
 function TimeChipPicker({ value, onChange, anchorDate, durationFrom, ariaLabel }) {
   const [open, setOpen] = useState(false);
-  const containerRef = useRef(null);
+  const [position, setPosition] = useState(null); // { top, left, width, openUpward }
+  const buttonRef = useRef(null);
   const listRef = useRef(null);
 
+  // Position the portal dropdown beside/below the chip. Flip up if no room.
+  function computePosition() {
+    if (!buttonRef.current) return;
+    const rect = buttonRef.current.getBoundingClientRect();
+    const listHeight = 240;
+    const spaceBelow = window.innerHeight - rect.bottom;
+    const spaceAbove = rect.top;
+    const flip = spaceBelow < listHeight + 16 && spaceAbove > spaceBelow;
+    setPosition({
+      top: flip ? rect.top - 4 : rect.bottom + 4,
+      left: rect.left,
+      minWidth: rect.width,
+      openUpward: flip,
+    });
+  }
+
+  useEffect(() => {
+    if (!open) return;
+    computePosition();
+    function onResize() { computePosition(); }
+    function onScroll() { computePosition(); }
+    window.addEventListener("resize", onResize);
+    window.addEventListener("scroll", onScroll, true);
+    return () => {
+      window.removeEventListener("resize", onResize);
+      window.removeEventListener("scroll", onScroll, true);
+    };
+  }, [open]);
+
+  // Close when clicking outside the chip or the list.
   useEffect(() => {
     function handleClick(e) {
-      if (containerRef.current && !containerRef.current.contains(e.target)) {
-        setOpen(false);
-      }
+      const insideChip = buttonRef.current?.contains(e.target);
+      const insideList = listRef.current?.contains(e.target);
+      if (!insideChip && !insideList) setOpen(false);
     }
     if (open) document.addEventListener("mousedown", handleClick);
     return () => document.removeEventListener("mousedown", handleClick);
   }, [open]);
 
-  // When list opens, scroll current value into view.
+  // Scroll current value into view when list opens.
   useEffect(() => {
     if (!open || !listRef.current) return;
     const minutesOfDay = value.getHours() * 60 + value.getMinutes();
@@ -80,8 +112,9 @@ function TimeChipPicker({ value, onChange, anchorDate, durationFrom, ariaLabel }
   const options = useMemo(() => generateDayTimes(anchorDate), [anchorDate]);
 
   return (
-    <div className="gcal-time-chip" ref={containerRef}>
+    <>
       <button
+        ref={buttonRef}
         type="button"
         className="gcal-chip-button"
         onClick={() => setOpen((v) => !v)}
@@ -90,33 +123,47 @@ function TimeChipPicker({ value, onChange, anchorDate, durationFrom, ariaLabel }
       >
         {format12h(value)}
       </button>
-      {open ? (
-        <div className="gcal-time-list" ref={listRef} role="listbox">
-          {options.map((opt) => {
-            const isActive = opt.getHours() === value.getHours() && opt.getMinutes() === value.getMinutes();
-            let durLabel = "";
-            if (durationFrom) {
-              let diff = opt - durationFrom;
-              if (diff < 0) diff += 24 * 60 * 60 * 1000;
-              durLabel = formatDurationShort(diff);
-            }
-            return (
-              <button
-                key={opt.toISOString()}
-                type="button"
-                className={isActive ? "gcal-time-item active" : "gcal-time-item"}
-                onClick={() => { onChange(opt); setOpen(false); }}
-                role="option"
-                aria-selected={isActive}
-              >
-                <span>{format12h(opt)}</span>
-                {durLabel ? <span className="gcal-time-duration">{durLabel}</span> : null}
-              </button>
-            );
-          })}
-        </div>
-      ) : null}
-    </div>
+      {open && position
+        ? createPortal(
+            <div
+              ref={listRef}
+              role="listbox"
+              className={position.openUpward ? "gcal-time-list gcal-time-list-up" : "gcal-time-list"}
+              style={{
+                position: "fixed",
+                top: position.openUpward ? "auto" : position.top,
+                bottom: position.openUpward ? window.innerHeight - position.top : "auto",
+                left: position.left,
+                minWidth: position.minWidth,
+              }}
+            >
+              {options.map((opt) => {
+                const isActive = opt.getHours() === value.getHours() && opt.getMinutes() === value.getMinutes();
+                let durLabel = "";
+                if (durationFrom) {
+                  let diff = opt - durationFrom;
+                  if (diff < 0) diff += 24 * 60 * 60 * 1000;
+                  durLabel = formatDurationShort(diff);
+                }
+                return (
+                  <button
+                    key={opt.toISOString()}
+                    type="button"
+                    className={isActive ? "gcal-time-item active" : "gcal-time-item"}
+                    onClick={() => { onChange(opt); setOpen(false); }}
+                    role="option"
+                    aria-selected={isActive}
+                  >
+                    <span>{format12h(opt)}</span>
+                    {durLabel ? <span className="gcal-time-duration">{durLabel}</span> : null}
+                  </button>
+                );
+              })}
+            </div>,
+            document.body,
+          )
+        : null}
+    </>
   );
 }
 
