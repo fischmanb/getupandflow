@@ -21,6 +21,7 @@ import { useCalendarControls } from "../calendar/CalendarControlsContext";
 import { useOutsideClick } from "../hooks/useOutsideClick";
 import { CalendarToolbar } from "./CalendarToolbar";
 import { MiniCalendarPopup } from "./MiniCalendarPopup";
+import { QuickEventPopover } from "./QuickEventPopover";
 
 function formatTimeRange(event) {
   return `${event.start_time.slice(0, 5)} - ${event.end_time.slice(0, 5)}`;
@@ -196,11 +197,22 @@ function MonthView({ colorMap, currentDate, events, onCreateForDate, onSelectDat
   );
 }
 
-export function EventCalendar({ colorMap, events, onCreateForDate, onSelectEvent }) {
+export function EventCalendar({
+  colorMap,
+  createInitialDate,
+  editingEvent,
+  events,
+  isCreating,
+  onCloseForms,
+  onCreateForDate,
+  onFormSaved,
+  onSelectEvent,
+}) {
   const { currentDate, setCurrentDate, view } = useCalendarControls();
   const [isMiniCalendarOpen, setIsMiniCalendarOpen] = useState(false);
   const [selectedDate, setSelectedDate] = useState(null);
   const [agendaPosition, setAgendaPosition] = useState(null);
+  const [formPosition, setFormPosition] = useState(null);
   const [visibleMonth, setVisibleMonth] = useState(startOfMonth(new Date()));
   const monthViewRef = useRef(null);
 
@@ -225,42 +237,57 @@ export function EventCalendar({ colorMap, events, onCreateForDate, onSelectEvent
     });
   }
 
+  function computeAnchoredPosition(anchorElement, panelWidth = 440, panelHeight = 260) {
+    if (!anchorElement || !monthViewRef.current) return null;
+    const containerRect = monthViewRef.current.getBoundingClientRect();
+    const anchorRect = anchorElement.getBoundingClientRect();
+    const estimatedPanelWidth = Math.min(panelWidth, Math.max(280, containerRect.width - 24));
+    const preferredLeft = anchorRect.left - containerRect.left + (anchorRect.width / 2) - (estimatedPanelWidth / 2);
+    const preferredTop = anchorRect.top - containerRect.top + anchorRect.height + 10;
+    const maxLeft = Math.max(12, containerRect.width - estimatedPanelWidth - 12);
+    const left = Math.min(Math.max(12, preferredLeft), maxLeft);
+    const maxTop = Math.max(12, containerRect.height - panelHeight - 12);
+    const top =
+      preferredTop + panelHeight <= containerRect.height
+        ? preferredTop
+        : Math.min(Math.max(12, anchorRect.top - containerRect.top - panelHeight - 10), maxTop);
+    return { left, top };
+  }
+
   function handleSelectDate(date, anchorElement = null) {
     setCurrentDate(date);
     setVisibleMonth(startOfMonth(date));
     setIsMiniCalendarOpen(false);
 
-    // Empty day -> straight to new-event form (Google Calendar behavior).
+    // Empty day -> straight to new-event popover (Google Calendar behavior).
     // Day with events -> show the agenda popup.
     if (getEventsForDate(events, date).length === 0) {
       setSelectedDate(null);
       setAgendaPosition(null);
+      setFormPosition(computeAnchoredPosition(anchorElement));
       onCreateForDate(formatDateForInput(date));
       return;
     }
 
     setSelectedDate(date);
-
-    if (anchorElement && monthViewRef.current) {
-      const containerRect = monthViewRef.current.getBoundingClientRect();
-      const anchorRect = anchorElement.getBoundingClientRect();
-      const estimatedPanelWidth = Math.min(440, Math.max(280, containerRect.width - 24));
-      const estimatedPanelHeight = 260;
-      const preferredLeft = anchorRect.left - containerRect.left + (anchorRect.width / 2) - (estimatedPanelWidth / 2);
-      const preferredTop = anchorRect.top - containerRect.top + anchorRect.height + 10;
-      const maxLeft = Math.max(12, containerRect.width - estimatedPanelWidth - 12);
-      const left = Math.min(Math.max(12, preferredLeft), maxLeft);
-      const maxTop = Math.max(12, containerRect.height - estimatedPanelHeight - 12);
-      const top =
-        preferredTop + estimatedPanelHeight <= containerRect.height
-          ? preferredTop
-          : Math.min(Math.max(12, anchorRect.top - containerRect.top - estimatedPanelHeight - 10), maxTop);
-
-      setAgendaPosition({ left, top });
-    } else {
-      setAgendaPosition(null);
-    }
+    setAgendaPosition(computeAnchoredPosition(anchorElement));
   }
+
+  function handleCloseForms() {
+    setFormPosition(null);
+    onCloseForms();
+  }
+
+  function handleFormSaved() {
+    setFormPosition(null);
+    onFormSaved();
+  }
+
+  // Showing the form? Close the agenda popup so they don't fight for the same space.
+  const formIsOpen = isCreating || Boolean(editingEvent);
+  // Edit clicks from the agenda popup don't carry an anchor — reuse the agenda's position.
+  const effectiveFormPosition = formPosition || agendaPosition;
+  const showAgenda = selectedDate && !formIsOpen;
 
   return (
     <div className="calendar-shell">
@@ -286,7 +313,7 @@ export function EventCalendar({ colorMap, events, onCreateForDate, onSelectEvent
       {view === "week" ? <WeekView colorMap={colorMap} currentDate={currentDate} events={events} onSelectEvent={onSelectEvent} /> : null}
       {view === "month" ? (
         <div className="month-view-shell">
-          {selectedDate ? (
+          {showAgenda ? (
             <DayAgendaPanel
               colorMap={colorMap}
               date={selectedDate}
@@ -295,6 +322,19 @@ export function EventCalendar({ colorMap, events, onCreateForDate, onSelectEvent
               onCreateForDate={onCreateForDate}
               onSelectEvent={onSelectEvent}
               style={agendaPosition ? { left: `${agendaPosition.left}px`, top: `${agendaPosition.top}px` } : undefined}
+            />
+          ) : null}
+          {formIsOpen ? (
+            <QuickEventPopover
+              event={editingEvent}
+              initialDate={createInitialDate}
+              onCancel={handleCloseForms}
+              onSaved={handleFormSaved}
+              style={
+                effectiveFormPosition
+                  ? { left: `${effectiveFormPosition.left}px`, top: `${effectiveFormPosition.top}px` }
+                  : undefined
+              }
             />
           ) : null}
           <div ref={monthViewRef}>

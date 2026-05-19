@@ -1,7 +1,6 @@
 import { useEffect, useState } from "react";
 
 import { EventCalendar } from "./EventCalendar";
-import { EventFormPanel } from "./EventFormPanel";
 import { useClientFilter } from "../filters/ClientFilterContext";
 
 function getEventPromptMessage(selectedClientCount) {
@@ -53,22 +52,19 @@ export function CalendarPanel({ className }) {
   return (
     <article className={className}>
       {createPromptMessage ? <p className="calendar-create-error">{createPromptMessage}</p> : null}
-      {isCreating || editingEvent ? (
-        <EventFormPanel
-          event={editingEvent}
-          initialDate={createInitialDate}
-          onCancel={closeForms}
-          onSaved={handleSaved}
-        />
-      ) : null}
       {eventError ? <p className="form-error">{eventError}</p> : null}
       {isLoadingEvents ? (
         <p className="subtle-copy">Loading calendar events...</p>
       ) : (
         <EventCalendar
           colorMap={colorMap}
+          editingEvent={editingEvent}
           events={events}
+          isCreating={isCreating}
+          createInitialDate={createInitialDate}
+          onCloseForms={closeForms}
           onCreateForDate={beginCreate}
+          onFormSaved={handleSaved}
           onSelectEvent={setEditingEvent}
         />
       )}
