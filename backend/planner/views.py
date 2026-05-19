@@ -64,12 +64,31 @@ class RoleScopedQuerysetMixin:
         role = RBACScope.role_for(user)
 
         if role == ROLE_ADMIN:
+            scoped = queryset
+        elif role == ROLE_CLIENT:
+            scoped = queryset.filter(**{self.client_field: user})
+        elif role == ROLE_COACH:
+            scoped = queryset.filter(**{f"{self.client_field}__profile__assigned_coach": user})
+        else:
+            return queryset.none()
+
+        return self._apply_client_ids_filter(scoped)
+
+    def _apply_client_ids_filter(self, queryset):
+        raw_client_ids = self.request.query_params.get("client_ids")
+        if not raw_client_ids:
             return queryset
-        if role == ROLE_CLIENT:
-            return queryset.filter(**{self.client_field: user})
-        if role == ROLE_COACH:
-            return queryset.filter(**{f"{self.client_field}__profile__assigned_coach": user})
-        return queryset.none()
+
+        client_ids = []
+        for value in raw_client_ids.split(","):
+            value = value.strip()
+            if value.isdigit():
+                client_ids.append(int(value))
+
+        if not client_ids:
+            return queryset.none()
+
+        return queryset.filter(**{f"{self.client_field}__in": client_ids})
 
 
 class UserViewSet(viewsets.ReadOnlyModelViewSet):
@@ -146,23 +165,6 @@ class EventViewSet(RoleScopedQuerysetMixin, viewsets.ModelViewSet):
     serializer_class = EventSerializer
     permission_classes = [permissions.IsAuthenticated]
     pagination_class = None
-
-    def get_queryset(self):
-        queryset = super().get_queryset()
-        raw_client_ids = self.request.query_params.get("client_ids")
-        if not raw_client_ids:
-            return queryset
-
-        client_ids = []
-        for value in raw_client_ids.split(","):
-            value = value.strip()
-            if value.isdigit():
-                client_ids.append(int(value))
-
-        if not client_ids:
-            return queryset.none()
-
-        return queryset.filter(client_id__in=client_ids)
 
 
 class TaskViewSet(RoleScopedQuerysetMixin, viewsets.ModelViewSet):

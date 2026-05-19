@@ -43,10 +43,23 @@ export function TaskPanel({ className, onStateChange }) {
   const previousTaskCountRef = useRef(0);
 
   async function loadTasks(page = currentPage) {
+    if (supportsClientFiltering && selectedClientIds.length === 0) {
+      setTasks([]);
+      setTotalPages(0);
+      setTotalTaskCount(0);
+      setCurrentPage(1);
+      setIsLoadingTasks(false);
+      return;
+    }
+
     setIsLoadingTasks(true);
     setErrorMessage("");
     try {
-      const response = await apiClient.get("/tasks/", { params: { page } });
+      const params = { page };
+      if (supportsClientFiltering) {
+        params.client_ids = selectedClientIds.join(",");
+      }
+      const response = await apiClient.get("/tasks/", { params });
       const nextTasks = getListData(response.data);
       const meta = getPaginationMeta(response.data);
       setTasks(nextTasks);
@@ -64,9 +77,12 @@ export function TaskPanel({ className, onStateChange }) {
     }
   }
 
+  const selectedClientIdsKey = selectedClientIds.join(",");
+
   useEffect(() => {
-    loadTasks();
-  }, []);
+    loadTasks(1);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [selectedClientIdsKey, supportsClientFiltering]);
 
   useEffect(() => {
     if (typeof window === "undefined") {

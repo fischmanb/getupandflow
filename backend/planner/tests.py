@@ -138,6 +138,37 @@ class PlannerRBACAPITests(APITestCase):
         self.assertEqual(len(get_list_results(response)), 1)
         self.assertEqual(get_list_results(response)[0]["id"], self.client_one_event.id)
 
+    def test_admin_can_filter_tasks_by_selected_clients(self):
+        self.authenticate(self.admin)
+
+        response = self.client.get(reverse("task-list"), {"client_ids": str(self.client_one.id)})
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        results = get_list_results(response)
+        self.assertEqual(len(results), 1)
+        self.assertEqual(results[0]["id"], self.client_one_task.id)
+
+    def test_task_filter_with_empty_or_invalid_client_ids_returns_empty(self):
+        self.authenticate(self.admin)
+
+        response = self.client.get(reverse("task-list"), {"client_ids": "not-a-number"})
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(len(get_list_results(response)), 0)
+
+    def test_coach_task_filtering_cannot_escape_rbac_scope(self):
+        self.authenticate(self.coach_one)
+
+        response = self.client.get(
+            reverse("task-list"),
+            {"client_ids": f"{self.client_one.id},{self.client_two.id}"},
+        )
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        results = get_list_results(response)
+        self.assertEqual(len(results), 1)
+        self.assertEqual(results[0]["id"], self.client_one_task.id)
+
     def test_coach_filtering_cannot_escape_rbac_scope(self):
         self.authenticate(self.coach_one)
 
