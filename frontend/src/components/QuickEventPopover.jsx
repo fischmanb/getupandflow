@@ -5,6 +5,7 @@ import { fetchAllPages, getErrorMessage } from "../api/utils";
 import { useAuth } from "../auth/AuthContext";
 import { useClientFilter } from "../filters/ClientFilterContext";
 import { useOutsideClick } from "../hooks/useOutsideClick";
+import { TimeWheelPicker } from "./TimeWheelPicker";
 
 /**
  * QuickEventPopover
@@ -44,6 +45,27 @@ function addHours(hhmm, hours) {
   const totalMin = h * 60 + m + hours * 60;
   const wrapped = ((totalMin % (24 * 60)) + 24 * 60) % (24 * 60);
   return `${pad(Math.floor(wrapped / 60))}:${pad(wrapped % 60)}`;
+}
+
+function minutesBetween(startHHMM, endHHMM) {
+  const [sh, sm] = startHHMM.split(":").map(Number);
+  const [eh, em] = endHHMM.split(":").map(Number);
+  let diff = eh * 60 + em - (sh * 60 + sm);
+  if (diff < 0) diff += 24 * 60; // overnight: treat end as next day
+  return diff;
+}
+
+function isOvernight(startHHMM, endHHMM) {
+  return endHHMM <= startHHMM;
+}
+
+function formatDuration(minutes) {
+  if (minutes <= 0) return "";
+  const h = Math.floor(minutes / 60);
+  const m = minutes % 60;
+  if (h === 0) return `${m} min`;
+  if (m === 0) return `${h} hr`;
+  return `${h} hr ${m} min`;
 }
 
 function getDefaultTimes() {
@@ -158,12 +180,15 @@ export function QuickEventPopover({ event, initialDate, onCancel, onSaved, style
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [activeClientId]);
 
-  // If user adjusts start time and end is now before start, push end out an hour.
+  // When user changes start, shift end forward by the same delta so duration is preserved.
   function setStartTime(newStart) {
     setFormState((current) => {
-      const next = { ...current, start_time: newStart };
-      if (next.end_time <= newStart) next.end_time = addHours(newStart, 1);
-      return next;
+      const oldDuration = minutesBetween(current.start_time, current.end_time);
+      const [h, m] = newStart.split(":").map(Number);
+      const startMin = h * 60 + m;
+      const endMin = (startMin + oldDuration) % (24 * 60);
+      const newEnd = `${pad(Math.floor(endMin / 60))}:${pad(endMin % 60)}`;
+      return { ...current, start_time: newStart, end_time: newEnd };
     });
   }
 
@@ -252,30 +277,43 @@ export function QuickEventPopover({ event, initialDate, onCancel, onSaved, style
           )}
 
           {isEditingTime ? (
-            <span className="quick-event-time-edit">
-              <input
-                type="time"
-                aria-label="Start time"
-                className="quick-event-meta-input"
-                value={formState.start_time}
-                onChange={(e) => setStartTime(e.target.value)}
-              />
-              <span className="quick-event-time-dash">–</span>
-              <input
-                type="time"
-                aria-label="End time"
-                className="quick-event-meta-input"
-                value={formState.end_time}
-                onChange={(e) => setFormState((current) => ({ ...current, end_time: e.target.value }))}
-              />
-              <button
-                type="button"
-                className="quick-event-time-done"
-                onClick={() => setIsEditingTime(false)}
-              >
-                Done
-              </button>
-            </span>
+            <div className="quick-event-time-picker">
+              <div className="quick-event-time-row">
+                <div className="quick-event-time-col">
+                  <span className="quick-event-time-col-label">Start</span>
+                  <TimeWheelPicker
+                    value={formState.start_time}
+                    onChange={setStartTime}
+                    label="Start time"
+                  />
+                </div>
+                <div className="quick-event-time-col">
+                  <span className="quick-event-time-col-label">End</span>
+                  <TimeWheelPicker
+                    value={formState.end_time}
+                    onChange={(v) => setFormState((current) => ({ ...current, end_time: v }))}
+                    label="End time"
+                  />
+                </div>
+              </div>
+              <div className="quick-event-time-row" style={{ alignItems: "center", justifyContent: "space-between" }}>
+                <span className="quick-event-duration-label">
+                  Duration: {formatDuration(minutesBetween(formState.start_time, formState.end_time))}
+                </span>
+                <button
+                  type="button"
+                  className="quick-event-time-done"
+                  onClick={() => setIsEditingTime(false)}
+                >
+                  Done
+                </button>
+              </div>
+              {isOvernight(formState.start_time, formState.end_time) ? (
+                <span className="quick-event-overnight-warning">
+                  Heads up: this event runs overnight (ends the next day).
+                </span>
+              ) : null}
+            </div>
           ) : (
             <button
               type="button"
@@ -284,6 +322,9 @@ export function QuickEventPopover({ event, initialDate, onCancel, onSaved, style
               title="Click to change time"
             >
               {formatTime12h(formState.start_time)} – {formatTime12h(formState.end_time)}
+              <span className="quick-event-duration-label" style={{ marginLeft: 8 }}>
+                · {formatDuration(minutesBetween(formState.start_time, formState.end_time))}
+              </span>
             </button>
           )}
         </div>
