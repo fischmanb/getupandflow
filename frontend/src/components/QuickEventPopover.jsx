@@ -180,19 +180,12 @@ export function QuickEventPopover({ event, initialDate, onCancel, onSaved, style
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [activeClientId]);
 
-  // When user changes start, shift end forward by the same delta so duration is preserved.
+  // Changing start leaves end alone; duration updates as a derived value.
   function setStartTime(newStart) {
-    setFormState((current) => {
-      const oldDuration = minutesBetween(current.start_time, current.end_time);
-      const [h, m] = newStart.split(":").map(Number);
-      const startMin = h * 60 + m;
-      const endMin = (startMin + oldDuration) % (24 * 60);
-      const newEnd = `${pad(Math.floor(endMin / 60))}:${pad(endMin % 60)}`;
-      return { ...current, start_time: newStart, end_time: newEnd };
-    });
+    setFormState((current) => ({ ...current, start_time: newStart }));
   }
 
-  // When user changes duration, recompute end_time from start + duration.
+  // Changing duration recomputes end_time from start + duration. Start stays put.
   function setDuration(newMinutes) {
     setFormState((current) => {
       const [h, m] = current.start_time.split(":").map(Number);
