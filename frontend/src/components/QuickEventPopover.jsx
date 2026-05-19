@@ -5,7 +5,7 @@ import { fetchAllPages, getErrorMessage } from "../api/utils";
 import { useAuth } from "../auth/AuthContext";
 import { useClientFilter } from "../filters/ClientFilterContext";
 import { useOutsideClick } from "../hooks/useOutsideClick";
-import { TimeWheelPicker } from "./TimeWheelPicker";
+import { TimeWheelPicker, DurationWheelPicker } from "./TimeWheelPicker";
 
 /**
  * QuickEventPopover
@@ -192,6 +192,17 @@ export function QuickEventPopover({ event, initialDate, onCancel, onSaved, style
     });
   }
 
+  // When user changes duration, recompute end_time from start + duration.
+  function setDuration(newMinutes) {
+    setFormState((current) => {
+      const [h, m] = current.start_time.split(":").map(Number);
+      const startMin = h * 60 + m;
+      const endMin = (startMin + newMinutes) % (24 * 60);
+      const newEnd = `${pad(Math.floor(endMin / 60))}:${pad(endMin % 60)}`;
+      return { ...current, end_time: newEnd };
+    });
+  }
+
   async function handleSubmit(e) {
     e.preventDefault();
     if (!formState.title.trim()) {
@@ -295,11 +306,16 @@ export function QuickEventPopover({ event, initialDate, onCancel, onSaved, style
                     label="End time"
                   />
                 </div>
+                <div className="quick-event-time-col">
+                  <span className="quick-event-time-col-label">Duration</span>
+                  <DurationWheelPicker
+                    value={minutesBetween(formState.start_time, formState.end_time)}
+                    onChange={setDuration}
+                    label="Duration"
+                  />
+                </div>
               </div>
-              <div className="quick-event-time-row" style={{ alignItems: "center", justifyContent: "space-between" }}>
-                <span className="quick-event-duration-label">
-                  Duration: {formatDuration(minutesBetween(formState.start_time, formState.end_time))}
-                </span>
+              <div className="quick-event-time-row" style={{ alignItems: "center", justifyContent: "flex-end" }}>
                 <button
                   type="button"
                   className="quick-event-time-done"

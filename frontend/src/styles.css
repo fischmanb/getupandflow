@@ -1229,18 +1229,18 @@ button {
 .time-wheel-picker {
   display: flex;
   align-items: center;
-  gap: 6px;
-  padding: 8px 10px;
+  gap: 2px;
+  padding: 6px 6px;
   background: rgba(37, 99, 235, 0.04);
   border: 1px solid rgba(16, 32, 51, 0.1);
-  border-radius: 12px;
+  border-radius: 10px;
   user-select: none;
 }
 
 .time-wheel-column {
   position: relative;
-  width: 64px;
-  height: 108px; /* exactly 3 rows */
+  width: 40px;
+  height: 108px;
   overflow: hidden;
 }
 
@@ -1268,7 +1268,7 @@ button {
   scroll-snap-align: center;
   background: transparent;
   border: none;
-  font-size: 1rem;
+  font-size: 0.9rem;
   color: rgba(16, 32, 51, 0.45);
   cursor: pointer;
   transition: color 120ms ease, font-weight 120ms ease;
@@ -1277,16 +1277,16 @@ button {
 .time-wheel-item.active {
   color: #2563eb;
   font-weight: 700;
-  font-size: 1.1rem;
+  font-size: 1rem;
 }
 
 .time-wheel-highlight {
   position: absolute;
   top: 36px;
-  left: 4px;
-  right: 4px;
+  left: 2px;
+  right: 2px;
   height: 36px;
-  border-radius: 8px;
+  border-radius: 6px;
   background: rgba(37, 99, 235, 0.1);
   pointer-events: none;
   z-index: 1;
@@ -1326,19 +1326,23 @@ button {
 
 .quick-event-time-row {
   display: flex;
-  gap: 12px;
+  gap: 8px;
   align-items: flex-start;
+  justify-content: space-between;
 }
 
 .quick-event-time-col {
   display: grid;
   gap: 4px;
+  flex: 1;
+  min-width: 0;
 }
 
 .quick-event-time-col-label {
   font-size: 0.78rem;
   color: #46607d;
   font-weight: 600;
+  text-align: center;
 }
 
 .quick-event-duration-label {

@@ -121,3 +121,49 @@ export function TimeWheelPicker({ value, onChange, label }) {
     </div>
   );
 }
+
+/**
+ * DurationWheelPicker
+ *
+ * Two scrollable columns: hours (0-8), minutes (00, 15, 30, 45). Value is total
+ * minutes (integer). onChange emits the same.
+ */
+
+const DURATION_HOURS = Array.from({ length: 9 }, (_, i) => i); // 0..8
+
+function parseDurationMinutes(totalMinutes) {
+  const clamped = Math.max(0, Math.min(8 * 60 + 45, Number(totalMinutes) || 0));
+  const h = Math.floor(clamped / 60);
+  const rawMin = clamped % 60;
+  const snappedMin = MINUTES.reduce((closest, m) => {
+    return Math.abs(Number(m) - rawMin) < Math.abs(Number(closest) - rawMin) ? m : closest;
+  }, MINUTES[0]);
+  return { hours: h, minute: snappedMin };
+}
+
+export function DurationWheelPicker({ value, onChange, label }) {
+  const { hours, minute } = useMemo(() => parseDurationMinutes(value), [value]);
+
+  function update(nextHours, nextMinute) {
+    const next = nextHours * 60 + Number(nextMinute);
+    if (next !== value) onChange(next);
+  }
+
+  return (
+    <div className="time-wheel-picker" aria-label={label}>
+      <Column
+        items={DURATION_HOURS}
+        value={hours}
+        onChange={(h) => update(h, minute)}
+        ariaLabel="Duration hours"
+      />
+      <span className="time-wheel-colon">:</span>
+      <Column
+        items={MINUTES}
+        value={minute}
+        onChange={(m) => update(hours, m)}
+        ariaLabel="Duration minutes"
+      />
+    </div>
+  );
+}
