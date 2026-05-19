@@ -1,0 +1,425 @@
+import { useEffect, useMemo, useRef, useState } from "react";
+
+import { apiClient } from "../api/client";
+import { fetchAllPages, getErrorMessage } from "../api/utils";
+import { useAuth } from "../auth/AuthContext";
+import { useClientFilter } from "../filters/ClientFilterContext";
+import { dateToISODate, dateToISOTime } from "../calendar/eventAdapter";
+
+/**
+ * Center-screen modal for creating or editing an event. Modeled after Google
+ * Calendar's editor: title row, time row (date + start time chip + end time chip),
+ * category, optional Location/Description/Repeats, then Save.
+ *
+ * Props:
+ *  - mode: "create" | "edit"
+ *  - initialStart, initialEnd: Date objects (always required)
+ *  - event: the API event object if editing
+ *  - onClose(): close without saving
+ *  - onSaved(): close and refresh parent's events
+ */
+
+function pad(n) { return String(n).padStart(2, "0"); }
+
+function format12h(date) {
+  let h = date.getHours();
+  const m = date.getMinutes();
+  const period = h >= 12 ? "pm" : "am";
+  h = h % 12 === 0 ? 12 : h % 12;
+  return `${h}:${pad(m)}${period}`;
+}
+
+function formatLongDate(date) {
+  return date.toLocaleDateString(undefined, { weekday: "long", month: "long", day: "numeric" });
+}
+
+// Generate every 15-min increment of a given date (returns Date instances).
+function generateDayTimes(anchorDate) {
+  const out = [];
+  for (let i = 0; i < 96; i++) {
+    const d = new Date(anchorDate);
+    d.setHours(0, i * 15, 0, 0);
+    out.push(d);
+  }
+  return out;
+}
+
+function formatDurationShort(ms) {
+  const minutes = Math.max(0, Math.round(ms / 60000));
+  if (minutes === 0) return "";
+  const h = Math.floor(minutes / 60);
+  const m = minutes % 60;
+  if (h === 0) return `${m} min`;
+  if (m === 0) return `${h} hr`;
+  return `${h} hr ${m} min`;
+}
+
+function TimeChipPicker({ value, onChange, anchorDate, durationFrom, ariaLabel }) {
+  const [open, setOpen] = useState(false);
+  const containerRef = useRef(null);
+  const listRef = useRef(null);
+
+  useEffect(() => {
+    function handleClick(e) {
+      if (containerRef.current && !containerRef.current.contains(e.target)) {
+        setOpen(false);
+      }
+    }
+    if (open) document.addEventListener("mousedown", handleClick);
+    return () => document.removeEventListener("mousedown", handleClick);
+  }, [open]);
+
+  // When list opens, scroll current value into view.
+  useEffect(() => {
+    if (!open || !listRef.current) return;
+    const minutesOfDay = value.getHours() * 60 + value.getMinutes();
+    const targetIndex = Math.floor(minutesOfDay / 15);
+    listRef.current.scrollTop = Math.max(0, (targetIndex - 2) * 36);
+  }, [open, value]);
+
+  const options = useMemo(() => generateDayTimes(anchorDate), [anchorDate]);
+
+  return (
+    <div className="gcal-time-chip" ref={containerRef}>
+      <button
+        type="button"
+        className="gcal-chip-button"
+        onClick={() => setOpen((v) => !v)}
+        aria-label={ariaLabel}
+        aria-expanded={open}
+      >
+        {format12h(value)}
+      </button>
+      {open ? (
+        <div className="gcal-time-list" ref={listRef} role="listbox">
+          {options.map((opt) => {
+            const isActive = opt.getHours() === value.getHours() && opt.getMinutes() === value.getMinutes();
+            let durLabel = "";
+            if (durationFrom) {
+              let diff = opt - durationFrom;
+              if (diff < 0) diff += 24 * 60 * 60 * 1000;
+              durLabel = formatDurationShort(diff);
+            }
+            return (
+              <button
+                key={opt.toISOString()}
+                type="button"
+                className={isActive ? "gcal-time-item active" : "gcal-time-item"}
+                onClick={() => { onChange(opt); setOpen(false); }}
+                role="option"
+                aria-selected={isActive}
+              >
+                <span>{format12h(opt)}</span>
+                {durLabel ? <span className="gcal-time-duration">{durLabel}</span> : null}
+              </button>
+            );
+          })}
+        </div>
+      ) : null}
+    </div>
+  );
+}
+
+function DateChipPicker({ value, onChange }) {
+  const [open, setOpen] = useState(false);
+  return (
+    <span className="gcal-date-chip">
+      {open ? (
+        <input
+          type="date"
+          value={dateToISODate(value)}
+          autoFocus
+          onBlur={() => setOpen(false)}
+          onChange={(e) => {
+            const [y, m, d] = e.target.value.split("-").map(Number);
+            const next = new Date(value);
+            next.setFullYear(y, m - 1, d);
+            onChange(next);
+          }}
+        />
+      ) : (
+        <button type="button" className="gcal-chip-button" onClick={() => setOpen(true)}>
+          {formatLongDate(value)}
+        </button>
+      )}
+    </span>
+  );
+}
+
+export function EventEditorModal({ mode, initialStart, initialEnd, event, onClose, onSaved }) {
+  const { user } = useAuth();
+  const { selectedClients, selectedClientIds, supportsClientFiltering } = useClientFilter();
+
+  const [title, setTitle] = useState(event?.title || "");
+  const [start, setStart] = useState(initialStart);
+  const [end, setEnd] = useState(initialEnd);
+  const [location, setLocation] = useState(event?.location || "");
+  const [description, setDescription] = useState(event?.description || "");
+  const [recurrenceType, setRecurrenceType] = useState(event?.recurrence_type || "none");
+  const [recurrenceUntil, setRecurrenceUntil] = useState(event?.recurrence_until || "");
+  const [category, setCategory] = useState(event?.category || "");
+  const [categories, setCategories] = useState([]);
+  const [isLoadingCategories, setIsLoadingCategories] = useState(false);
+  const [errorMessage, setErrorMessage] = useState("");
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isExpanded, setIsExpanded] = useState(mode === "edit");
+  const titleInputRef = useRef(null);
+
+  // Focus title on open.
+  useEffect(() => {
+    const id = setTimeout(() => titleInputRef.current?.focus(), 50);
+    return () => clearTimeout(id);
+  }, []);
+
+  // Close on Escape.
+  useEffect(() => {
+    function onKey(e) { if (e.key === "Escape") onClose(); }
+    document.addEventListener("keydown", onKey);
+    return () => document.removeEventListener("keydown", onKey);
+  }, [onClose]);
+
+  const isClient = user?.role === "Client";
+  const selectedClientId = supportsClientFiltering ? selectedClientIds[0] || "" : user?.id;
+  const activeClientId = isClient
+    ? user?.id
+    : mode === "create"
+      ? selectedClientId
+      : event?.client?.id || event?.client_id;
+
+  // Load categories for the active client.
+  useEffect(() => {
+    let alive = true;
+    async function load() {
+      if (!activeClientId) {
+        setCategories([]);
+        return;
+      }
+      setIsLoadingCategories(true);
+      try {
+        const params = { client_id: activeClientId };
+        const results = await fetchAllPages("/categories/", { params });
+        if (!alive) return;
+        setCategories(results);
+        if (mode === "create" && !category && results.length > 0) {
+          setCategory(results[0].id);
+        }
+      } catch (err) {
+        if (!alive) return;
+        setCategories([]);
+      } finally {
+        if (alive) setIsLoadingCategories(false);
+      }
+    }
+    load();
+    return () => { alive = false; };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [activeClientId]);
+
+  // Update end if start moves past it on the same day.
+  function setStartTime(newStart) {
+    setStart(newStart);
+  }
+
+  function setEndTime(newEnd) {
+    setEnd(newEnd);
+  }
+
+  // Keep date of end aligned with start's date (so the date chip controls both).
+  function setDate(newDate) {
+    const newStart = new Date(start);
+    newStart.setFullYear(newDate.getFullYear(), newDate.getMonth(), newDate.getDate());
+    const newEnd = new Date(end);
+    newEnd.setFullYear(newDate.getFullYear(), newDate.getMonth(), newDate.getDate());
+    setStart(newStart);
+    setEnd(newEnd);
+  }
+
+  const durationMs = end - start;
+  const isOvernight = durationMs < 0 || (start.toDateString() === end.toDateString() && durationMs === 0 && end < start);
+
+  async function handleSubmit(e) {
+    e.preventDefault();
+    setErrorMessage("");
+
+    if (!title.trim()) {
+      setErrorMessage("Add a title before saving.");
+      titleInputRef.current?.focus();
+      return;
+    }
+    if (!category) {
+      setErrorMessage("Pick a category before saving.");
+      setIsExpanded(true);
+      return;
+    }
+
+    setIsSubmitting(true);
+    const payload = {
+      title: title.trim(),
+      event_date: dateToISODate(start),
+      start_time: dateToISOTime(start),
+      end_time: dateToISOTime(end),
+      location,
+      description,
+      category: Number(category),
+      recurrence_type: recurrenceType,
+      recurrence_until: recurrenceType === "none" ? null : recurrenceUntil || null,
+      client_id: Number(activeClientId),
+    };
+
+    try {
+      if (event?.id) {
+        await apiClient.put(`/events/${event.id}/`, payload);
+      } else {
+        await apiClient.post("/events/", payload);
+      }
+      onSaved();
+    } catch (err) {
+      setErrorMessage(getErrorMessage(err, "Unable to save event."));
+    } finally {
+      setIsSubmitting(false);
+    }
+  }
+
+  async function handleDelete() {
+    if (!event?.id) return;
+    if (!window.confirm("Delete this event?")) return;
+    setIsSubmitting(true);
+    try {
+      await apiClient.delete(`/events/${event.id}/`);
+      onSaved();
+    } catch (err) {
+      setErrorMessage(getErrorMessage(err, "Unable to delete event."));
+      setIsSubmitting(false);
+    }
+  }
+
+  return (
+    <div className="gcal-modal-backdrop" onClick={onClose}>
+      <div className="gcal-modal" onClick={(e) => e.stopPropagation()}>
+        <header className="gcal-modal-header">
+          <span className="gcal-modal-eyebrow">{mode === "edit" ? "Edit event" : "New event"}</span>
+          <button type="button" aria-label="Close" className="gcal-modal-close" onClick={onClose}>×</button>
+        </header>
+
+        <form className="gcal-modal-form" onSubmit={handleSubmit}>
+          <input
+            ref={titleInputRef}
+            className="gcal-modal-title"
+            placeholder="Add title"
+            value={title}
+            onChange={(e) => setTitle(e.target.value)}
+          />
+
+          <div className="gcal-modal-row">
+            <span className="gcal-modal-row-icon" aria-hidden>🕒</span>
+            <DateChipPicker value={start} onChange={setDate} />
+            <TimeChipPicker
+              value={start}
+              onChange={setStartTime}
+              anchorDate={start}
+              ariaLabel="Start time"
+            />
+            <span className="gcal-modal-dash">–</span>
+            <TimeChipPicker
+              value={end}
+              onChange={setEndTime}
+              anchorDate={start}
+              durationFrom={start}
+              ariaLabel="End time"
+            />
+            <span className="gcal-modal-duration">· {formatDurationShort(durationMs > 0 ? durationMs : durationMs + 24 * 60 * 60 * 1000)}</span>
+          </div>
+
+          {isOvernight ? (
+            <div className="gcal-modal-warning">Heads up: this event runs overnight (ends the next day).</div>
+          ) : null}
+
+          <div className="gcal-modal-row">
+            <span className="gcal-modal-row-icon" aria-hidden>🏷️</span>
+            {isLoadingCategories ? (
+              <span className="subtle-copy">Loading categories…</span>
+            ) : categories.length === 0 ? (
+              <span className="subtle-copy">No categories yet — create one in Account Settings → Manage event categories.</span>
+            ) : (
+              <select
+                className="gcal-modal-select"
+                value={category}
+                onChange={(e) => setCategory(e.target.value)}
+              >
+                {categories.map((c) => (
+                  <option key={c.id} value={c.id}>{c.name}</option>
+                ))}
+              </select>
+            )}
+          </div>
+
+          {isExpanded ? (
+            <>
+              <div className="gcal-modal-row">
+                <span className="gcal-modal-row-icon" aria-hidden>📍</span>
+                <input
+                  className="gcal-modal-input"
+                  placeholder="Add location"
+                  value={location}
+                  onChange={(e) => setLocation(e.target.value)}
+                />
+              </div>
+
+              <div className="gcal-modal-row">
+                <span className="gcal-modal-row-icon" aria-hidden>🔁</span>
+                <select
+                  className="gcal-modal-select"
+                  value={recurrenceType}
+                  onChange={(e) => setRecurrenceType(e.target.value)}
+                >
+                  <option value="none">Does not repeat</option>
+                  <option value="daily">Daily</option>
+                  <option value="weekly">Weekly</option>
+                  <option value="monthly">Monthly</option>
+                </select>
+                {recurrenceType !== "none" ? (
+                  <input
+                    type="date"
+                    className="gcal-modal-input"
+                    style={{ maxWidth: 160 }}
+                    value={recurrenceUntil || ""}
+                    onChange={(e) => setRecurrenceUntil(e.target.value)}
+                    placeholder="Until"
+                  />
+                ) : null}
+              </div>
+
+              <div className="gcal-modal-row gcal-modal-row-top">
+                <span className="gcal-modal-row-icon" aria-hidden>📝</span>
+                <textarea
+                  className="gcal-modal-input"
+                  placeholder="Add description"
+                  rows={3}
+                  value={description}
+                  onChange={(e) => setDescription(e.target.value)}
+                />
+              </div>
+            </>
+          ) : null}
+
+          {errorMessage ? <p className="form-error">{errorMessage}</p> : null}
+
+          <footer className="gcal-modal-footer">
+            {!isExpanded ? (
+              <button type="button" className="gcal-modal-link" onClick={() => setIsExpanded(true)}>
+                More options
+              </button>
+            ) : mode === "edit" ? (
+              <button type="button" className="gcal-modal-link gcal-modal-delete" onClick={handleDelete} disabled={isSubmitting}>
+                Delete
+              </button>
+            ) : <span />}
+            <button type="submit" className="gcal-modal-save" disabled={isSubmitting}>
+              {isSubmitting ? "Saving…" : mode === "edit" ? "Save" : "Create"}
+            </button>
+          </footer>
+        </form>
+      </div>
+    </div>
+  );
+}

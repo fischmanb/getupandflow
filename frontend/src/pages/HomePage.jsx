@@ -1,6 +1,6 @@
 import { useState } from "react";
 
-import { CalendarPanel } from "../components/CalendarPanel";
+import { BigCalendarPanel } from "../components/BigCalendarPanel";
 import { TaskPanel } from "../components/TaskPanel";
 
 function CalendarIcon() {
@@ -57,7 +57,7 @@ export function HomePage() {
           onStateChange={setTaskPanelState}
           className={activeMobileView === "tasks" ? "workspace-panel tasks-panel" : "workspace-panel tasks-panel mobile-hidden"}
         />
-        <CalendarPanel
+        <BigCalendarPanel
           className={
             activeMobileView === "calendar"
               ? "workspace-panel calendar-panel"

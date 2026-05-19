@@ -1512,3 +1512,342 @@ button {
     padding: 4px 6px;
   }
 }
+
+/* ============================================================
+   react-big-calendar style overrides
+   ============================================================ */
+
+.rbc-shell .rbc-calendar {
+  font-family: inherit;
+  background: #ffffff;
+  border-radius: 16px;
+  padding: 12px;
+  border: 1px solid rgba(16, 32, 51, 0.08);
+}
+
+.rbc-shell .rbc-toolbar button {
+  border-radius: 14px;
+  font-weight: 600;
+  color: #102033;
+  border: 1px solid rgba(16, 32, 51, 0.12);
+  background: #ffffff;
+}
+
+.rbc-shell .rbc-toolbar button:hover {
+  background: rgba(37, 99, 235, 0.06);
+}
+
+.rbc-shell .rbc-toolbar button.rbc-active,
+.rbc-shell .rbc-toolbar button.rbc-active:hover {
+  background: #2563eb;
+  color: #fff;
+  border-color: #2563eb;
+}
+
+.rbc-shell .rbc-toolbar-label {
+  font-weight: 700;
+  color: #102033;
+}
+
+.rbc-shell .rbc-today {
+  background-color: rgba(37, 99, 235, 0.06);
+}
+
+.rbc-shell .rbc-event {
+  padding: 2px 6px;
+  font-size: 0.85rem;
+}
+
+.rbc-shell .rbc-header {
+  font-weight: 700;
+  color: #46607d;
+  border-bottom: 1px solid rgba(16, 32, 51, 0.08);
+  padding: 8px 4px;
+}
+
+.rbc-shell .rbc-month-view,
+.rbc-shell .rbc-time-view {
+  border: 1px solid rgba(16, 32, 51, 0.08);
+  border-radius: 10px;
+  overflow: hidden;
+}
+
+.rbc-shell .rbc-time-content,
+.rbc-shell .rbc-time-header-content,
+.rbc-shell .rbc-month-row + .rbc-month-row,
+.rbc-shell .rbc-day-bg + .rbc-day-bg,
+.rbc-shell .rbc-time-content > * + * > *,
+.rbc-shell .rbc-time-header-content > .rbc-row {
+  border-color: rgba(16, 32, 51, 0.06);
+}
+
+.rbc-shell .rbc-current-time-indicator {
+  background: #ef4444;
+  height: 2px;
+}
+
+/* ============================================================
+   Google Calendar–style event editor modal
+   ============================================================ */
+
+.gcal-modal-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(16, 32, 51, 0.45);
+  z-index: 100;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+}
+
+.gcal-modal {
+  background: #ffffff;
+  border-radius: 18px;
+  box-shadow: 0 32px 80px rgba(16, 32, 51, 0.28), 0 2px 12px rgba(16, 32, 51, 0.08);
+  width: 100%;
+  max-width: 580px;
+  max-height: calc(100vh - 32px);
+  overflow-y: auto;
+}
+
+.gcal-modal-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px 20px 0;
+}
+
+.gcal-modal-eyebrow {
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: #46607d;
+}
+
+.gcal-modal-close {
+  background: transparent;
+  border: 1px solid rgba(16, 32, 51, 0.12);
+  border-radius: 8px;
+  width: 32px;
+  height: 32px;
+  font-size: 1.1rem;
+  cursor: pointer;
+  color: #102033;
+}
+
+.gcal-modal-close:hover {
+  background: rgba(16, 32, 51, 0.04);
+}
+
+.gcal-modal-form {
+  display: grid;
+  gap: 14px;
+  padding: 16px 20px 20px;
+}
+
+.gcal-modal-title {
+  font-size: 1.4rem;
+  font-weight: 500;
+  border: none;
+  border-bottom: 1px solid rgba(16, 32, 51, 0.12);
+  background: transparent;
+  padding: 8px 0;
+  outline: none;
+  font-family: inherit;
+  color: #102033;
+}
+
+.gcal-modal-title:focus {
+  border-bottom-color: #2563eb;
+}
+
+.gcal-modal-title::placeholder {
+  color: rgba(70, 96, 125, 0.5);
+}
+
+.gcal-modal-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.gcal-modal-row-top {
+  align-items: flex-start;
+}
+
+.gcal-modal-row-icon {
+  width: 22px;
+  text-align: center;
+  font-size: 1rem;
+  opacity: 0.75;
+  flex-shrink: 0;
+}
+
+.gcal-modal-input,
+.gcal-modal-select {
+  flex: 1;
+  min-width: 0;
+  border: 1px solid rgba(16, 32, 51, 0.18);
+  border-radius: 8px;
+  padding: 8px 10px;
+  font-size: 0.95rem;
+  background: #ffffff;
+  font-family: inherit;
+}
+
+.gcal-modal-select {
+  cursor: pointer;
+}
+
+textarea.gcal-modal-input {
+  resize: vertical;
+  min-height: 60px;
+}
+
+.gcal-modal-dash {
+  color: #46607d;
+}
+
+.gcal-modal-duration {
+  font-size: 0.9rem;
+  color: #46607d;
+  margin-left: auto;
+}
+
+.gcal-modal-warning {
+  margin-left: 32px;
+  font-size: 0.85rem;
+  color: #b46300;
+  background: rgba(255, 200, 0, 0.12);
+  padding: 6px 10px;
+  border-radius: 6px;
+}
+
+.gcal-modal-footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: 8px;
+  gap: 12px;
+}
+
+.gcal-modal-link {
+  background: transparent;
+  border: none;
+  color: #2563eb;
+  cursor: pointer;
+  font-weight: 500;
+  padding: 4px 0;
+  font-size: 0.95rem;
+}
+
+.gcal-modal-link:hover {
+  text-decoration: underline;
+}
+
+.gcal-modal-delete {
+  color: #b91c1c;
+}
+
+.gcal-modal-save {
+  background: #2563eb;
+  color: #fff;
+  border: none;
+  border-radius: 999px;
+  padding: 10px 22px;
+  font-weight: 600;
+  cursor: pointer;
+  font-family: inherit;
+}
+
+.gcal-modal-save:hover {
+  background: #1d4ed8;
+}
+
+.gcal-modal-save:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+/* GCal-style date/time chips inside the modal */
+
+.gcal-date-chip,
+.gcal-time-chip {
+  position: relative;
+  display: inline-block;
+}
+
+.gcal-chip-button {
+  background: rgba(16, 32, 51, 0.06);
+  color: #102033;
+  border: 1px solid transparent;
+  border-radius: 8px;
+  padding: 6px 12px;
+  font-size: 0.95rem;
+  cursor: pointer;
+  font-family: inherit;
+  font-weight: 500;
+}
+
+.gcal-chip-button:hover {
+  background: rgba(37, 99, 235, 0.1);
+}
+
+.gcal-chip-button[aria-expanded="true"] {
+  background: #ffffff;
+  border-color: #2563eb;
+  box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.18);
+}
+
+.gcal-time-list {
+  position: absolute;
+  top: calc(100% + 4px);
+  left: 0;
+  min-width: 180px;
+  max-height: 240px;
+  overflow-y: auto;
+  background: #ffffff;
+  border: 1px solid rgba(16, 32, 51, 0.18);
+  border-radius: 12px;
+  box-shadow: 0 18px 48px rgba(16, 32, 51, 0.22), 0 2px 8px rgba(16, 32, 51, 0.08);
+  z-index: 110;
+  padding: 4px 0;
+}
+
+.gcal-time-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  width: 100%;
+  padding: 8px 14px;
+  background: transparent;
+  border: none;
+  font-size: 0.92rem;
+  cursor: pointer;
+  color: #102033;
+  font-family: inherit;
+}
+
+.gcal-time-item:hover {
+  background: rgba(37, 99, 235, 0.08);
+}
+
+.gcal-time-item.active {
+  background: rgba(37, 99, 235, 0.12);
+  font-weight: 600;
+}
+
+.gcal-time-duration {
+  color: #46607d;
+  font-size: 0.85rem;
+  margin-left: 18px;
+}
+
+.gcal-date-chip input[type="date"] {
+  border: 1px solid rgba(16, 32, 51, 0.18);
+  border-radius: 8px;
+  padding: 6px 10px;
+  font-size: 0.95rem;
+  font-family: inherit;
+}
