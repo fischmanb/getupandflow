@@ -194,10 +194,49 @@ class EventViewSet(RoleScopedQuerysetMixin, viewsets.ModelViewSet):
 
 
 class TaskViewSet(RoleScopedQuerysetMixin, viewsets.ModelViewSet):
-    queryset = Task.objects.select_related("client", "client__profile").order_by("deadline", "id")
+    queryset = Task.objects.select_related("client", "client__profile").order_by(
+        "sort_order", "deadline", "id"
+    )
     serializer_class = TaskSerializer
     permission_classes = [permissions.IsAuthenticated]
     pagination_class = StandardResultsSetPagination
+
+    @action(detail=False, methods=["post"], url_path="reorder")
+    def reorder(self, request):
+        """Persist drag-and-drop ordering. Body: {"items": [{"id", "priority", "sort_order"}, ...]}.
+        Only tasks within the requester's RBAC scope are updated; others are ignored.
+        """
+        items = request.data.get("items", [])
+        if not isinstance(items, list):
+            raise ValidationError({"items": "Expected a list."})
+
+        scoped = self.get_queryset()
+        scoped_ids = set(scoped.values_list("id", flat=True))
+        valid_priorities = {choice[0] for choice in Task.PRIORITY_CHOICES}
+
+        to_update = []
+        for item in items:
+            task_id = item.get("id")
+            if task_id not in scoped_ids:
+                continue
+            task = Task.objects.get(pk=task_id)
+            if "priority" in item and item["priority"] in valid_priorities:
+                task.priority = item["priority"]
+            if "sort_order" in item:
+                try:
+                    task.sort_order = max(0, int(item["sort_order"]))
+                except (TypeError, ValueError):
+                    pass
+            to_update.append(task)
+
+        with transaction.atomic():
+            for task in to_update:
+                # Use update() to skip full_clean revalidation on bulk reorder.
+                Task.objects.filter(pk=task.pk).update(
+                    priority=task.priority, sort_order=task.sort_order
+                )
+
+        return Response({"updated": len(to_update)})
 
 
 class AdminManagedUserViewSet(viewsets.ModelViewSet):

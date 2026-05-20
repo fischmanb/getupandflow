@@ -143,6 +143,8 @@ class TaskSerializer(ClientScopedValidationMixin, serializers.ModelSerializer):
             "deadline",
             "description",
             "completed_at",
+            "priority",
+            "sort_order",
             "client",
             "client_id",
             "created_at",

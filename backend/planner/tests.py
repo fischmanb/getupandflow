@@ -501,6 +501,31 @@ class PlannerRBACAPITests(APITestCase):
         self.assertTrue(hasattr(self.client_one_event, "category"))
         self.assertFalse(hasattr(self.client_one_task, "category"))
 
+    def test_client_can_reorder_own_tasks(self):
+        self.authenticate(self.client_one)
+        response = self.client.post(
+            reverse("task-reorder"),
+            {"items": [{"id": self.client_one_task.id, "priority": "high", "sort_order": 3}]},
+            format="json",
+        )
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.client_one_task.refresh_from_db()
+        self.assertEqual(self.client_one_task.priority, "high")
+        self.assertEqual(self.client_one_task.sort_order, 3)
+
+    def test_reorder_ignores_out_of_scope_tasks(self):
+        # client_one cannot reorder client_two's task; it should be silently ignored.
+        self.authenticate(self.client_one)
+        response = self.client.post(
+            reverse("task-reorder"),
+            {"items": [{"id": self.client_two_task.id, "priority": "high", "sort_order": 9}]},
+            format="json",
+        )
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(response.data["updated"], 0)
+        self.client_two_task.refresh_from_db()
+        self.assertNotEqual(self.client_two_task.sort_order, 9)
+
     def test_client_can_create_category_for_self(self):
         self.authenticate(self.client_one)
 

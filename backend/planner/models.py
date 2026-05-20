@@ -111,13 +111,25 @@ class Event(ClientOwnedModel):
 
 
 class Task(ClientOwnedModel):
+    PRIORITY_HIGH = "high"
+    PRIORITY_MEDIUM = "medium"
+    PRIORITY_LOW = "low"
+    PRIORITY_CHOICES = [
+        (PRIORITY_HIGH, "High"),
+        (PRIORITY_MEDIUM, "Medium"),
+        (PRIORITY_LOW, "Low"),
+    ]
+
     title = models.CharField(max_length=255)
     deadline = models.DateTimeField()
     description = models.TextField(blank=True)
     completed_at = models.DateTimeField(null=True, blank=True)
+    priority = models.CharField(max_length=10, choices=PRIORITY_CHOICES, default=PRIORITY_MEDIUM)
+    # Manual rank within a priority bucket; lower sorts first. Drag-and-drop writes this.
+    sort_order = models.PositiveIntegerField(default=0)
 
     class Meta:
-        ordering = ["deadline", "title"]
+        ordering = ["sort_order", "deadline", "title"]
 
     def clean(self):
         self.validate_client()
