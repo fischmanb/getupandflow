@@ -464,7 +464,6 @@ export function EventEditorModal({ mode, initialStart, initialEnd, event, onClos
               </div>
 
               <div className="gcal-modal-row gcal-modal-row-top">
-                <span className="gcal-modal-row-icon" aria-hidden>📝</span>
                 <textarea
                   className="gcal-modal-input"
                   placeholder="Add description"
