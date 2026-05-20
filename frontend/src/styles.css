@@ -488,8 +488,10 @@ button {
 .task-panel-header {
   display: flex;
   justify-content: space-between;
-  align-items: flex-start;
+  align-items: center;
   gap: 16px;
+  min-height: 38px;
+  margin-bottom: 16px;
 }
 
 .task-panel-actions,
@@ -1559,18 +1561,20 @@ button {
 
 .rbc-shell .rbc-calendar {
   font-family: inherit;
-  background: #ffffff;
-  border-radius: 16px;
-  padding: 12px;
-  border: 1px solid rgba(16, 32, 51, 0.08);
+  background: transparent;
+  border-radius: 0;
+  padding: 0;
+  border: none;
 }
 
 /* Custom calendar toolbar (replaces RBC default via components.toolbar).
-   Two-row layout that stays tidy in the narrow calendar column:
-   row 1 = nav (left) + period label (fills), row 2 = centered view switcher. */
+   Single row, three zones: nav left (fixed), period label center (shrinks/
+   ellipsizes under pressure), view switcher right (fixed). Controls never
+   wrap; only the middle label gives way. Keeps the header one row tall so it
+   stays level with the Tasks header. */
 .cal-toolbar {
   display: grid;
-  grid-template-columns: auto 1fr;
+  grid-template-columns: auto minmax(0, 1fr) auto;
   align-items: center;
   gap: 12px;
   margin-bottom: 16px;
@@ -1580,7 +1584,6 @@ button {
   display: flex;
   align-items: center;
   gap: 8px;
-  grid-row: 1;
   grid-column: 1;
 }
 
@@ -1590,16 +1593,19 @@ button {
 }
 
 .cal-toolbar-label {
+  grid-column: 2;
   text-align: center;
   font-weight: 700;
-  font-size: 1.1rem;
+  font-size: 1.05rem;
   color: #102033;
   white-space: nowrap;
-  grid-row: 1;
-  grid-column: 2;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  min-width: 0;
 }
 
 .cal-toolbar-views {
+  grid-column: 3;
   display: inline-flex;
   align-items: center;
   height: 38px;
@@ -1607,10 +1613,6 @@ button {
   border-radius: 12px;
   padding: 3px;
   gap: 2px;
-  grid-row: 2;
-  grid-column: 1 / -1;
-  justify-self: center;
-  margin-top: 4px;
 }
 
 .cal-toolbar-today,
