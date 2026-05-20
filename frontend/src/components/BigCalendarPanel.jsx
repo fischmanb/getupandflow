@@ -37,6 +37,29 @@ const VIEW_LABELS = {
 };
 
 /**
+ * Custom Week/Day column header — Google-Calendar style:
+ *   weekday abbreviation (SUN) on top, big day number (17) centered below.
+ *   Today gets a blue weekday label + filled blue circle around the number.
+ * RBC passes `date` (a Date) and `label` to header components.
+ */
+function WeekDayHeader({ date }) {
+  const weekday = format(date, "EEE").toUpperCase();
+  const dayNum = format(date, "d");
+  const today = new Date();
+  const isToday =
+    date.getFullYear() === today.getFullYear() &&
+    date.getMonth() === today.getMonth() &&
+    date.getDate() === today.getDate();
+
+  return (
+    <div className={isToday ? "cal-col-header is-today" : "cal-col-header"}>
+      <span className="cal-col-weekday">{weekday}</span>
+      <span className="cal-col-daynum">{dayNum}</span>
+    </div>
+  );
+}
+
+/**
  * Custom toolbar replacing RBC's default. Three clean zones:
  *   left:   Today + prev/next arrows
  *   center: the current period label
@@ -203,7 +226,11 @@ export function BigCalendarPanel({ className }) {
           onEventResize={handleEventResize}
           resizable
           eventPropGetter={eventPropGetter}
-          components={{ toolbar: CalendarToolbar }}
+          components={{
+            toolbar: CalendarToolbar,
+            week: { header: WeekDayHeader },
+            day: { header: WeekDayHeader },
+          }}
           step={30}
           timeslots={2}
           scrollToTime={SCROLL_TO_TIME}
