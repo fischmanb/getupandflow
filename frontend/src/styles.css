@@ -1565,19 +1565,23 @@ button {
   border: 1px solid rgba(16, 32, 51, 0.08);
 }
 
-/* Custom calendar toolbar (replaces RBC default via components.toolbar) */
+/* Custom calendar toolbar (replaces RBC default via components.toolbar).
+   Two-row layout that stays tidy in the narrow calendar column:
+   row 1 = nav (left) + period label (fills), row 2 = centered view switcher. */
 .cal-toolbar {
-  display: flex;
+  display: grid;
+  grid-template-columns: auto 1fr;
   align-items: center;
   gap: 12px;
   margin-bottom: 16px;
-  flex-wrap: wrap;
 }
 
 .cal-toolbar-nav {
   display: flex;
   align-items: center;
   gap: 8px;
+  grid-row: 1;
+  grid-column: 1;
 }
 
 .cal-toolbar-arrows {
@@ -1586,12 +1590,13 @@ button {
 }
 
 .cal-toolbar-label {
-  flex: 1 1 auto;
   text-align: center;
   font-weight: 700;
   font-size: 1.1rem;
   color: #102033;
   white-space: nowrap;
+  grid-row: 1;
+  grid-column: 2;
 }
 
 .cal-toolbar-views {
@@ -1602,6 +1607,10 @@ button {
   border-radius: 12px;
   padding: 3px;
   gap: 2px;
+  grid-row: 2;
+  grid-column: 1 / -1;
+  justify-self: center;
+  margin-top: 4px;
 }
 
 .cal-toolbar-today,
@@ -2251,4 +2260,91 @@ textarea.gcal-modal-input {
 .error-boundary-fallback h3 {
   margin: 0;
   color: #102033;
+}
+
+/* ============================================================
+   Week / Day time-grid views — match the app, kill the sterile default
+   ============================================================ */
+
+/* Day-header row (the 17 Sun / 18 Mon ... cells above the grid) */
+.rbc-shell .rbc-time-header {
+  border: none;
+}
+
+.rbc-shell .rbc-time-header-content {
+  border-left: 1px solid rgba(16, 32, 51, 0.08);
+}
+
+.rbc-shell .rbc-header {
+  padding: 10px 4px;
+  font-weight: 600;
+  font-size: 0.85rem;
+  color: #46607d;
+  border-bottom: 1px solid rgba(16, 32, 51, 0.08);
+  text-transform: none;
+}
+
+.rbc-shell .rbc-time-view {
+  border: 1px solid rgba(16, 32, 51, 0.08);
+  border-radius: 14px;
+  overflow: hidden;
+}
+
+/* Time gutter labels on the left */
+.rbc-shell .rbc-time-gutter .rbc-timeslot-group {
+  border-bottom: none;
+}
+
+.rbc-shell .rbc-time-gutter .rbc-label {
+  font-size: 0.78rem;
+  color: #6b7e95;
+  padding: 0 8px;
+}
+
+/* Hour rows: softer lines, more breathing room */
+.rbc-shell .rbc-timeslot-group {
+  border-bottom: 1px solid rgba(16, 32, 51, 0.06);
+  min-height: 48px;
+}
+
+.rbc-shell .rbc-time-content {
+  border-top: 1px solid rgba(16, 32, 51, 0.1);
+}
+
+.rbc-shell .rbc-time-content > * + * > * {
+  border-left: 1px solid rgba(16, 32, 51, 0.06);
+}
+
+.rbc-shell .rbc-day-slot .rbc-time-slot {
+  border-top: none;
+}
+
+/* Subtle "today" column tint in week view */
+.rbc-shell .rbc-day-slot.rbc-today,
+.rbc-shell .rbc-time-header-cell .rbc-today {
+  background-color: rgba(37, 99, 235, 0.03);
+}
+
+/* Current-time indicator line */
+.rbc-shell .rbc-current-time-indicator {
+  height: 2px;
+  background: #ef4444;
+}
+
+/* Events in time grid: rounded, padded, legible */
+.rbc-shell .rbc-event {
+  border-radius: 8px;
+  padding: 2px 6px;
+  font-size: 0.82rem;
+  border: none;
+}
+
+.rbc-shell .rbc-event-label {
+  font-size: 0.72rem;
+  opacity: 0.9;
+}
+
+/* All-day row */
+.rbc-shell .rbc-allday-cell {
+  max-height: 60px;
 }

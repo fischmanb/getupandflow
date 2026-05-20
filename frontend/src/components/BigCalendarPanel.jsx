@@ -25,6 +25,10 @@ const DnDCalendar = withDragAndDrop(Calendar);
 
 const VIEWS = [Views.MONTH, Views.WEEK, Views.DAY, Views.AGENDA];
 
+// In Week/Day views, land the scroll on the start of the workday (7 AM)
+// instead of midnight so users don't open onto empty dead hours.
+const SCROLL_TO_TIME = new Date(1970, 0, 1, 7, 0, 0);
+
 const VIEW_LABELS = {
   [Views.MONTH]: "Month",
   [Views.WEEK]: "Week",
@@ -200,8 +204,10 @@ export function BigCalendarPanel({ className }) {
           resizable
           eventPropGetter={eventPropGetter}
           components={{ toolbar: CalendarToolbar }}
-          step={15}
-          timeslots={4}
+          step={30}
+          timeslots={2}
+          scrollToTime={SCROLL_TO_TIME}
+          dayLayoutAlgorithm="no-overlap"
           popup
         />
       </div>
