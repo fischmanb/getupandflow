@@ -202,12 +202,14 @@ export function TaskPanel({ className, onStateChange }) {
             {isCreating ? "Cancel" : "+ Task"}
           </button>
           <button
-            aria-label="Collapse tasks"
+            aria-label="Hide tasks panel"
+            title="Hide tasks panel"
             className="task-panel-collapse-btn"
             onClick={() => setIsCollapsed(true)}
             type="button"
           >
-            ›
+            <span className="task-panel-collapse-label">Hide</span>
+            <span aria-hidden="true">›</span>
           </button>
         </div>
       </div>
