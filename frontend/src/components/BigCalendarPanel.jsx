@@ -25,6 +25,55 @@ const DnDCalendar = withDragAndDrop(Calendar);
 
 const VIEWS = [Views.MONTH, Views.WEEK, Views.DAY, Views.AGENDA];
 
+const VIEW_LABELS = {
+  [Views.MONTH]: "Month",
+  [Views.WEEK]: "Week",
+  [Views.DAY]: "Day",
+  [Views.AGENDA]: "Agenda",
+};
+
+/**
+ * Custom toolbar replacing RBC's default. Three clean zones:
+ *   left:   Today + prev/next arrows
+ *   center: the current period label
+ *   right:  view switcher (Month/Week/Day/Agenda)
+ * RBC injects label/onNavigate/onView/view props.
+ */
+function CalendarToolbar({ label, onNavigate, onView, view }) {
+  return (
+    <div className="cal-toolbar">
+      <div className="cal-toolbar-nav">
+        <button type="button" className="cal-toolbar-today" onClick={() => onNavigate("TODAY")}>
+          Today
+        </button>
+        <div className="cal-toolbar-arrows">
+          <button type="button" aria-label="Previous" onClick={() => onNavigate("PREV")}>
+            ‹
+          </button>
+          <button type="button" aria-label="Next" onClick={() => onNavigate("NEXT")}>
+            ›
+          </button>
+        </div>
+      </div>
+
+      <span className="cal-toolbar-label">{label}</span>
+
+      <div className="cal-toolbar-views">
+        {VIEWS.map((v) => (
+          <button
+            key={v}
+            type="button"
+            className={v === view ? "cal-toolbar-view active" : "cal-toolbar-view"}
+            onClick={() => onView(v)}
+          >
+            {VIEW_LABELS[v]}
+          </button>
+        ))}
+      </div>
+    </div>
+  );
+}
+
 function getEventPromptMessage(count) {
   return count === 0
     ? "Select a client before creating an event."
@@ -150,6 +199,7 @@ export function BigCalendarPanel({ className }) {
           onEventResize={handleEventResize}
           resizable
           eventPropGetter={eventPropGetter}
+          components={{ toolbar: CalendarToolbar }}
           step={15}
           timeslots={4}
           popup
