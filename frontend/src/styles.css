@@ -4,6 +4,36 @@
   background:
     radial-gradient(circle at top, rgba(96, 165, 250, 0.34), transparent 36%),
     linear-gradient(180deg, #f4f7fb 0%, #e8eef6 100%);
+  /* Single radius for all buttons, selectors, CTAs, and chips. */
+  --btn-radius: 10px;
+}
+
+/* Unified control radius — every interactive control uses one shape.
+   Cards/panels keep their own larger radius; this targets controls only. */
+.task-create-button,
+.primary-button,
+.gcal-modal-save,
+.gcal-modal-close,
+.entity-form-dismiss,
+.cal-toolbar-today,
+.cal-toolbar-arrows button,
+.cal-toolbar-views,
+.cal-toolbar-view,
+.menu-button,
+.menu-popover button,
+.calendar-nav-button,
+.calendar-today-button,
+.gcal-chip-button,
+.time-dropdown-chip,
+.gcal-date-chip input[type="date"],
+.toggle-button,
+.task-panel-collapse-btn,
+.task-panel-expand-tab,
+.task-card-check,
+.shell-view-select select,
+button.sign-in-button,
+.login-button {
+  border-radius: var(--btn-radius) !important;
 }
 
 * {
@@ -1615,7 +1645,9 @@ button {
 }
 
 /* Today's date number gets a filled blue circle like Google Calendar.
-   RBC renders the number inside a button.rbc-button-link (newer versions). */
+   RBC renders the number inside a button.rbc-button-link (newer versions).
+   Negative top margin pulls the 28px circle up so its baseline matches the
+   plain date numbers in sibling cells instead of sitting lower. */
 .rbc-shell .rbc-date-cell.rbc-now > a,
 .rbc-shell .rbc-date-cell.rbc-now > .rbc-button-link {
   display: inline-flex;
@@ -1624,9 +1656,12 @@ button {
   background: #2563eb;
   color: #ffffff;
   border-radius: 999px;
-  width: 28px;
-  height: 28px;
+  width: 26px;
+  height: 26px;
+  margin-top: -4px;
+  line-height: 1;
   font-weight: 700;
+  vertical-align: top;
 }
 
 /* Other-month days: soft, low-contrast gray instead of the default beige tint. */
