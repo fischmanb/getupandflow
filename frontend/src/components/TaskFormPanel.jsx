@@ -95,7 +95,7 @@ export function TaskFormPanel({ onCancel, onSaved, task }) {
         </button>
       </div>
       <form className="entity-form-grid" onSubmit={handleSubmit}>
-        <label>
+        <label className="entity-form-wide">
           Title
           <input
             required
@@ -103,7 +103,6 @@ export function TaskFormPanel({ onCancel, onSaved, task }) {
             onChange={(e) => setFormState((current) => ({ ...current, title: e.target.value }))}
           />
         </label>
-        <br></br>
         <label>
           Deadline
           <input

@@ -1,6 +1,7 @@
 import { useState } from "react";
 
 import { BigCalendarPanel } from "../components/BigCalendarPanel";
+import { ErrorBoundary } from "../components/ErrorBoundary";
 import { TaskPanel } from "../components/TaskPanel";
 
 function CalendarIcon() {
@@ -53,17 +54,21 @@ export function HomePage() {
       </section>
 
       <section className={shouldPrioritizeCalendar ? "workspace-grid workspace-grid-prioritize-calendar" : "workspace-grid"}>
-        <TaskPanel
-          onStateChange={setTaskPanelState}
-          className={activeMobileView === "tasks" ? "workspace-panel tasks-panel" : "workspace-panel tasks-panel mobile-hidden"}
-        />
-        <BigCalendarPanel
-          className={
-            activeMobileView === "calendar"
-              ? "workspace-panel calendar-panel"
-              : "workspace-panel calendar-panel mobile-hidden"
-          }
-        />
+        <ErrorBoundary>
+          <BigCalendarPanel
+            className={
+              activeMobileView === "calendar"
+                ? "workspace-panel calendar-panel"
+                : "workspace-panel calendar-panel mobile-hidden"
+            }
+          />
+        </ErrorBoundary>
+        <ErrorBoundary>
+          <TaskPanel
+            onStateChange={setTaskPanelState}
+            className={activeMobileView === "tasks" ? "workspace-panel tasks-panel" : "workspace-panel tasks-panel mobile-hidden"}
+          />
+        </ErrorBoundary>
       </section>
     </main>
   );
