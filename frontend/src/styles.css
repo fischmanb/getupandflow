@@ -8,6 +8,18 @@
   --btn-radius: 10px;
 }
 
+/* ============================================================
+   TYPE SCALE (relational hierarchy — keep new text on these tiers)
+   ------------------------------------------------------------
+   Greeting   1.10rem / 600   "Welcome, <name>"
+   Heading    1.05rem / 700   panel + period titles ("Tasks", "May 2026")
+   Body       0.95rem / 400   task titles, descriptions, prompts
+   Control    0.92rem / 600   ALL buttons (Today, views, +Task, Hide) —
+                              CTAs gain prominence via color, not weight
+   Meta       0.82rem / 500-600  weekday headers, deadlines, captions
+   Eyebrow    0.75rem / 700 + uppercase  section labels, brand line
+   ============================================================ */
+
 /* Unified control radius — every interactive control uses one shape.
    Cards/panels keep their own larger radius; this targets controls only. */
 .task-create-button,
@@ -553,7 +565,7 @@ button {
   padding: 0 18px;
   background: #2563eb;
   color: #fff;
-  font-weight: 700;
+  font-weight: 600;
   font-size: 0.92rem;
 }
 
@@ -1708,7 +1720,6 @@ button {
 }
 
 .rbc-shell .rbc-header {
-  font-weight: 700;
   color: #46607d;
   border-bottom: 1px solid rgba(16, 32, 51, 0.08);
   padding: 8px 4px;
@@ -2044,7 +2055,8 @@ textarea.gcal-modal-input {
   gap: 5px;
   height: 38px;
   padding: 0 12px;
-  font-size: 0.9rem;
+  font-size: 0.92rem;
+  font-weight: 600;
   color: #46607d;
 }
 
@@ -2238,7 +2250,7 @@ textarea.gcal-modal-input {
 }
 
 .task-card-deadline {
-  font-size: 0.8rem;
+  font-size: 0.82rem;
   color: #46607d;
 }
 
@@ -2280,7 +2292,7 @@ textarea.gcal-modal-input {
 .rbc-shell .rbc-header {
   padding: 10px 4px;
   font-weight: 600;
-  font-size: 0.85rem;
+  font-size: 0.82rem;
   color: #46607d;
   border-bottom: 1px solid rgba(16, 32, 51, 0.08);
   text-transform: none;
