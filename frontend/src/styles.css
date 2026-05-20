@@ -1528,12 +1528,48 @@ button {
   border: 1px solid rgba(16, 32, 51, 0.08);
 }
 
+.rbc-shell .rbc-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px 14px;
+  margin-bottom: 16px;
+  padding: 0 2px;
+}
+
+.rbc-shell .rbc-toolbar .rbc-toolbar-label {
+  flex: 1 1 auto;
+  text-align: center;
+  font-weight: 700;
+  font-size: 1.05rem;
+  color: #102033;
+  order: 0;
+  min-width: 120px;
+}
+
+/* Nav group (Today/Back/Next) left, view switcher right. */
+.rbc-shell .rbc-toolbar .rbc-btn-group:first-child {
+  order: -1;
+}
+
+.rbc-shell .rbc-toolbar .rbc-btn-group:last-child {
+  order: 1;
+}
+
+.rbc-shell .rbc-toolbar .rbc-btn-group {
+  display: inline-flex;
+  gap: 4px;
+}
+
 .rbc-shell .rbc-toolbar button {
-  border-radius: 14px;
+  border-radius: 10px;
   font-weight: 600;
   color: #102033;
   border: 1px solid rgba(16, 32, 51, 0.12);
   background: #ffffff;
+  padding: 7px 14px;
+  white-space: nowrap;
 }
 
 .rbc-shell .rbc-toolbar button:hover {
@@ -1545,11 +1581,6 @@ button {
   background: #2563eb;
   color: #fff;
   border-color: #2563eb;
-}
-
-.rbc-shell .rbc-toolbar-label {
-  font-weight: 700;
-  color: #102033;
 }
 
 .rbc-shell .rbc-today {

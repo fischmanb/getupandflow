@@ -28,7 +28,7 @@ export default function App() {
           <Route
             path="categories"
             element={
-              <RoleRoute allowedRoles={["Client"]}>
+              <RoleRoute allowedRoles={["Client", "Coach", "Admin"]}>
                 <CategoryManagementPage />
               </RoleRoute>
             }
