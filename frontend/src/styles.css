@@ -1878,3 +1878,238 @@ textarea.gcal-modal-input {
   font-size: 0.95rem;
   font-family: inherit;
 }
+
+/* ============================================================
+   Task panel — priority groups + drag to reorder
+   ============================================================ */
+
+.task-panel-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 14px;
+}
+
+.task-panel-title {
+  margin: 0;
+  font-size: 1.05rem;
+  font-weight: 700;
+  color: #102033;
+}
+
+.task-panel-header-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.task-panel-collapse-btn,
+.task-panel-expand-tab {
+  border: 1px solid rgba(16, 32, 51, 0.14);
+  background: #fff;
+  border-radius: 10px;
+  cursor: pointer;
+  color: #46607d;
+  font-weight: 700;
+}
+
+.task-panel-collapse-btn {
+  width: 30px;
+  height: 30px;
+  font-size: 1.1rem;
+}
+
+.task-panel-collapse-btn:hover {
+  background: rgba(37, 99, 235, 0.06);
+}
+
+/* Collapsed state: a slim vertical tab */
+.task-panel-collapsed {
+  flex: 0 0 auto !important;
+  width: 44px;
+  min-width: 44px;
+  padding: 0 !important;
+}
+
+.task-panel-expand-tab {
+  height: 100%;
+  width: 44px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  padding: 16px 0;
+}
+
+.task-panel-expand-label {
+  writing-mode: vertical-rl;
+  transform: rotate(180deg);
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: #102033;
+  letter-spacing: 0.04em;
+}
+
+.task-panel-expand-icon {
+  font-size: 1.2rem;
+  color: #2563eb;
+}
+
+.task-priority-groups {
+  display: grid;
+  gap: 16px;
+}
+
+.task-priority-group {
+  display: grid;
+  gap: 8px;
+}
+
+.task-priority-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 0 2px;
+}
+
+.task-priority-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 999px;
+}
+
+.task-priority-dot-high { background: #ef4444; }
+.task-priority-dot-medium { background: #f59e0b; }
+.task-priority-dot-low { background: #10b981; }
+
+.task-priority-label {
+  font-size: 0.82rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: #46607d;
+}
+
+.task-priority-count {
+  margin-left: auto;
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: #46607d;
+  background: rgba(16, 32, 51, 0.06);
+  border-radius: 999px;
+  padding: 1px 8px;
+}
+
+.task-priority-dropzone {
+  display: grid;
+  gap: 6px;
+  min-height: 8px;
+  border-radius: 10px;
+}
+
+.task-priority-empty {
+  margin: 0;
+  font-size: 0.82rem;
+  color: rgba(70, 96, 125, 0.6);
+  padding: 10px 12px;
+  border: 1px dashed rgba(16, 32, 51, 0.14);
+  border-radius: 10px;
+  text-align: center;
+}
+
+.task-card {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 12px;
+  background: #ffffff;
+  border: 1px solid rgba(16, 32, 51, 0.1);
+  border-left: 4px solid rgba(16, 32, 51, 0.1);
+  border-radius: 10px;
+  cursor: pointer;
+  transition: box-shadow 120ms ease, transform 120ms ease, border-color 120ms ease;
+}
+
+.task-card:hover {
+  box-shadow: 0 4px 14px rgba(16, 32, 51, 0.08);
+  border-color: rgba(37, 99, 235, 0.3);
+}
+
+.task-priority-high .task-card { border-left-color: #ef4444; }
+.task-priority-medium .task-card { border-left-color: #f59e0b; }
+.task-priority-low .task-card { border-left-color: #10b981; }
+
+.task-card.dragging {
+  opacity: 0.4;
+}
+
+.task-card.drag-over {
+  box-shadow: 0 -2px 0 #2563eb;
+}
+
+.task-card.overdue {
+  border-color: rgba(239, 68, 68, 0.4);
+}
+
+.task-card.completed {
+  opacity: 0.55;
+}
+
+.task-card.completed .task-card-title {
+  text-decoration: line-through;
+}
+
+.task-card-grip {
+  color: rgba(16, 32, 51, 0.3);
+  cursor: grab;
+  font-size: 1rem;
+  line-height: 1;
+  flex-shrink: 0;
+}
+
+.task-card-check {
+  width: 22px;
+  height: 22px;
+  border-radius: 6px;
+  border: 1.5px solid rgba(16, 32, 51, 0.25);
+  background: #fff;
+  cursor: pointer;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.85rem;
+  color: #fff;
+}
+
+.task-card-check.checked {
+  background: #10b981;
+  border-color: #10b981;
+}
+
+.task-card-body {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.task-card-title {
+  font-weight: 600;
+  color: #102033;
+  font-size: 0.95rem;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.task-card-deadline {
+  font-size: 0.8rem;
+  color: #46607d;
+}
+
+.task-card-deadline.overdue {
+  color: #ef4444;
+  font-weight: 600;
+}

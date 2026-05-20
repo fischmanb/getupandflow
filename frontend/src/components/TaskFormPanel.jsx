@@ -18,6 +18,7 @@ function getInitialTaskState(task, defaultClientId) {
     title: task?.title || "",
     deadline: toLocalDateTimeValue(task?.deadline),
     description: task?.description || "",
+    priority: task?.priority || "medium",
     completed: Boolean(task?.completed_at),
     client_id: task?.client?.id || defaultClientId || "",
   };
@@ -111,6 +112,17 @@ export function TaskFormPanel({ onCancel, onSaved, task }) {
             value={formState.deadline}
             onChange={(e) => setFormState((current) => ({ ...current, deadline: e.target.value }))}
           />
+        </label>
+        <label>
+          Priority
+          <select
+            value={formState.priority}
+            onChange={(e) => setFormState((current) => ({ ...current, priority: e.target.value }))}
+          >
+            <option value="high">High</option>
+            <option value="medium">Medium</option>
+            <option value="low">Low</option>
+          </select>
         </label>
         <label className="entity-form-wide">
           Description
