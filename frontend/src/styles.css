@@ -1554,8 +1554,9 @@ button {
 }
 
 /* Today's date number gets a filled blue circle like Google Calendar.
-   The number itself is wrapped in an <a> tag by RBC; we style that. */
-.rbc-shell .rbc-date-cell.rbc-now > a {
+   RBC renders the number inside a button.rbc-button-link (newer versions). */
+.rbc-shell .rbc-date-cell.rbc-now > a,
+.rbc-shell .rbc-date-cell.rbc-now > .rbc-button-link {
   display: inline-flex;
   align-items: center;
   justify-content: center;

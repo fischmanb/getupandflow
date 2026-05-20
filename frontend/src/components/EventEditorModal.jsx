@@ -101,12 +101,20 @@ function TimeChipPicker({ value, onChange, anchorDate, durationFrom, ariaLabel }
     return () => document.removeEventListener("mousedown", handleClick);
   }, [open]);
 
-  // Scroll current value into view when list opens.
+  // Scroll current value into view when list opens. Measure the actual item
+  // height (padding/line-height vary) and run after paint via rAF.
   useEffect(() => {
-    if (!open || !listRef.current) return;
-    const minutesOfDay = value.getHours() * 60 + value.getMinutes();
-    const targetIndex = Math.floor(minutesOfDay / 15);
-    listRef.current.scrollTop = Math.max(0, (targetIndex - 2) * 36);
+    if (!open) return;
+    const raf = requestAnimationFrame(() => {
+      const list = listRef.current;
+      if (!list) return;
+      const firstItem = list.querySelector(".gcal-time-item");
+      const rowHeight = firstItem ? firstItem.offsetHeight : 38;
+      const minutesOfDay = value.getHours() * 60 + value.getMinutes();
+      const targetIndex = Math.round(minutesOfDay / 15);
+      list.scrollTop = Math.max(0, (targetIndex - 2) * rowHeight);
+    });
+    return () => cancelAnimationFrame(raf);
   }, [open, value]);
 
   const options = useMemo(() => generateDayTimes(anchorDate), [anchorDate]);
