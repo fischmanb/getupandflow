@@ -1779,15 +1779,15 @@ button {
 }
 
 .gcal-modal-eyebrow {
-  font-size: 0.85rem;
-  font-weight: 600;
-  color: #46607d;
+  font-size: 1.05rem;
+  font-weight: 700;
+  color: #102033;
 }
 
 .gcal-modal-close {
   background: transparent;
   border: 1px solid rgba(16, 32, 51, 0.12);
-  border-radius: 8px;
+  border-radius: var(--btn-radius);
   width: 32px;
   height: 32px;
   font-size: 1.1rem;
@@ -1807,7 +1807,7 @@ button {
 
 .gcal-modal-title {
   font-size: 1.4rem;
-  font-weight: 500;
+  font-weight: 600;
   border: none;
   border-bottom: 1px solid rgba(16, 32, 51, 0.12);
   background: transparent;
@@ -1836,28 +1836,51 @@ button {
   align-items: flex-start;
 }
 
-.gcal-modal-row-icon {
-  width: 22px;
-  text-align: center;
-  font-size: 1rem;
-  opacity: 0.75;
-  flex-shrink: 0;
+/* Custom-styled select wrapper to replace the bare native dropdown */
+.gcal-select-wrap {
+  position: relative;
+  flex: 1;
+  min-width: 0;
+  display: inline-flex;
 }
 
 .gcal-modal-input,
 .gcal-modal-select {
   flex: 1;
   min-width: 0;
+  width: 100%;
   border: 1px solid rgba(16, 32, 51, 0.18);
-  border-radius: 8px;
-  padding: 8px 10px;
+  border-radius: var(--btn-radius);
+  padding: 9px 12px;
   font-size: 0.95rem;
   background: #ffffff;
   font-family: inherit;
+  color: #102033;
+}
+
+.gcal-modal-input:focus,
+.gcal-modal-select:focus {
+  outline: none;
+  border-color: #2563eb;
+  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.12);
 }
 
 .gcal-modal-select {
   cursor: pointer;
+  appearance: none;
+  -webkit-appearance: none;
+  padding-right: 32px;
+}
+
+.gcal-select-chevron {
+  position: absolute;
+  right: 12px;
+  top: 50%;
+  transform: translateY(-50%);
+  pointer-events: none;
+  color: #6b7e95;
+  font-size: 1rem;
+  line-height: 1;
 }
 
 textarea.gcal-modal-input {
@@ -1876,7 +1899,6 @@ textarea.gcal-modal-input {
 }
 
 .gcal-modal-warning {
-  margin-left: 32px;
   font-size: 0.85rem;
   color: #b46300;
   background: rgba(255, 200, 0, 0.12);
@@ -1942,8 +1964,8 @@ textarea.gcal-modal-input {
   background: rgba(16, 32, 51, 0.06);
   color: #102033;
   border: 1px solid transparent;
-  border-radius: 8px;
-  padding: 6px 12px;
+  border-radius: var(--btn-radius);
+  padding: 9px 12px;
   font-size: 0.95rem;
   cursor: pointer;
   font-family: inherit;

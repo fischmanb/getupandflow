@@ -34,9 +34,24 @@ function formatLongDate(date) {
   return date.toLocaleDateString(undefined, { weekday: "long", month: "long", day: "numeric" });
 }
 
-// Generate every 15-min increment of a given date (returns Date instances).
-function generateDayTimes(anchorDate) {
+// Generate 15-min increments. If `startFrom` is given (end-time picker),
+// list times from startFrom + 15min through end of day, so the end options
+// are always *after* the start. Otherwise list the full day from midnight.
+function generateDayTimes(anchorDate, startFrom) {
   const out = [];
+  if (startFrom) {
+    const begin = new Date(startFrom);
+    // First option is 15 minutes after the start time.
+    begin.setMinutes(begin.getMinutes() + 15, 0, 0);
+    const endOfDay = new Date(anchorDate);
+    endOfDay.setHours(23, 45, 0, 0);
+    const cursor = new Date(begin);
+    while (cursor <= endOfDay) {
+      out.push(new Date(cursor));
+      cursor.setMinutes(cursor.getMinutes() + 15);
+    }
+    return out;
+  }
   for (let i = 0; i < 96; i++) {
     const d = new Date(anchorDate);
     d.setHours(0, i * 15, 0, 0);
@@ -117,7 +132,10 @@ function TimeChipPicker({ value, onChange, anchorDate, durationFrom, ariaLabel }
     return () => cancelAnimationFrame(raf);
   }, [open, value]);
 
-  const options = useMemo(() => generateDayTimes(anchorDate), [anchorDate]);
+  const options = useMemo(
+    () => generateDayTimes(anchorDate, durationFrom),
+    [anchorDate, durationFrom],
+  );
 
   return (
     <>
@@ -149,9 +167,8 @@ function TimeChipPicker({ value, onChange, anchorDate, durationFrom, ariaLabel }
                 const isActive = opt.getHours() === value.getHours() && opt.getMinutes() === value.getMinutes();
                 let durLabel = "";
                 if (durationFrom) {
-                  let diff = opt - durationFrom;
-                  if (diff < 0) diff += 24 * 60 * 60 * 1000;
-                  durLabel = formatDurationShort(diff);
+                  // End options are always after the start, so the diff is positive.
+                  durLabel = formatDurationShort(opt - durationFrom);
                 }
                 return (
                   <button
@@ -366,7 +383,6 @@ export function EventEditorModal({ mode, initialStart, initialEnd, event, onClos
           />
 
           <div className="gcal-modal-row">
-            <span className="gcal-modal-row-icon" aria-hidden>🕒</span>
             <DateChipPicker value={start} onChange={setDate} />
             <TimeChipPicker
               value={start}
@@ -390,28 +406,29 @@ export function EventEditorModal({ mode, initialStart, initialEnd, event, onClos
           ) : null}
 
           <div className="gcal-modal-row">
-            <span className="gcal-modal-row-icon" aria-hidden>🏷️</span>
             {isLoadingCategories ? (
               <span className="subtle-copy">Loading categories…</span>
             ) : categories.length === 0 ? (
               <span className="subtle-copy">No categories yet — create one in Account Settings → Manage event categories.</span>
             ) : (
-              <select
-                className="gcal-modal-select"
-                value={category}
-                onChange={(e) => setCategory(e.target.value)}
-              >
-                {categories.map((c) => (
-                  <option key={c.id} value={c.id}>{c.name}</option>
-                ))}
-              </select>
+              <div className="gcal-select-wrap">
+                <select
+                  className="gcal-modal-select"
+                  value={category}
+                  onChange={(e) => setCategory(e.target.value)}
+                >
+                  {categories.map((c) => (
+                    <option key={c.id} value={c.id}>{c.name}</option>
+                  ))}
+                </select>
+                <span className="gcal-select-chevron" aria-hidden>⌄</span>
+              </div>
             )}
           </div>
 
           {isExpanded ? (
             <>
               <div className="gcal-modal-row">
-                <span className="gcal-modal-row-icon" aria-hidden>📍</span>
                 <input
                   className="gcal-modal-input"
                   placeholder="Add location"
@@ -421,17 +438,19 @@ export function EventEditorModal({ mode, initialStart, initialEnd, event, onClos
               </div>
 
               <div className="gcal-modal-row">
-                <span className="gcal-modal-row-icon" aria-hidden>🔁</span>
-                <select
-                  className="gcal-modal-select"
-                  value={recurrenceType}
-                  onChange={(e) => setRecurrenceType(e.target.value)}
-                >
+                <div className="gcal-select-wrap">
+                  <select
+                    className="gcal-modal-select"
+                    value={recurrenceType}
+                    onChange={(e) => setRecurrenceType(e.target.value)}
+                  >
                   <option value="none">Does not repeat</option>
                   <option value="daily">Daily</option>
                   <option value="weekly">Weekly</option>
                   <option value="monthly">Monthly</option>
                 </select>
+                  <span className="gcal-select-chevron" aria-hidden>⌄</span>
+                </div>
                 {recurrenceType !== "none" ? (
                   <input
                     type="date"
