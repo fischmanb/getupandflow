@@ -1517,11 +1517,13 @@ button {
     padding: 6px 8px;
   }
 
-  /* Taller time-grid rows on mobile so 30-min events have room for their
-     title. Each timeslot-group is 60 min (2x30); ~72px makes a 30-min
-     event ~36px tall — enough for one readable title line. */
+  /* Taller time-grid rows on mobile so 30-min events fit both their time
+     label and title. Math: timeslot-group = 60min (2x30); at 88px a 30-min
+     event is 44px tall, which fits the ~0.7rem time label (~15px) + one
+     ~0.8rem title line (~15px) + 6px padding (~36px needed) with margin to
+     spare. Costs ~1hr of at-a-glance visibility vs 72px — acceptable. */
   .rbc-shell .rbc-timeslot-group {
-    min-height: 72px;
+    min-height: 88px;
   }
 
   .rbc-shell .rbc-event {
