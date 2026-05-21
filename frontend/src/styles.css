@@ -1480,29 +1480,31 @@ button {
 
   /* Calendar toolbar: stack into rows on mobile so the view switcher
      doesn't overflow off the right edge. Nav row on top, label, then a
-     full-width view switcher whose buttons share the row evenly. */
-  .cal-toolbar {
+     full-width view switcher whose buttons share the row evenly.
+     Specificity bumped (.workspace-panel prefix) so these win over the
+     base .cal-toolbar grid rule that appears later in the file. */
+  .workspace-panel .cal-toolbar {
     display: flex;
     flex-direction: column;
     align-items: stretch;
     gap: 10px;
   }
 
-  .cal-toolbar-nav {
+  .workspace-panel .cal-toolbar-nav {
     justify-content: flex-start;
   }
 
-  .cal-toolbar-label {
+  .workspace-panel .cal-toolbar-label {
     text-align: left;
   }
 
-  .cal-toolbar-views {
+  .workspace-panel .cal-toolbar-views {
     display: flex;
     width: 100%;
     justify-content: space-between;
   }
 
-  .cal-toolbar-view {
+  .workspace-panel .cal-toolbar-view {
     flex: 1;
     text-align: center;
     padding: 6px 8px;
