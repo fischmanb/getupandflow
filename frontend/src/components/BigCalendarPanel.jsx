@@ -1,7 +1,7 @@
-import { useCallback, useMemo, useState } from "react";
+import { useCallback, useMemo, useRef, useState } from "react";
 import { Calendar, Views, dateFnsLocalizer } from "react-big-calendar";
 import withDragAndDrop from "react-big-calendar/lib/addons/dragAndDrop";
-import { format, parse, startOfWeek, getDay } from "date-fns";
+import { format, parse, startOfWeek, getDay, addMonths, addWeeks, addDays } from "date-fns";
 import enUS from "date-fns/locale/en-US";
 
 import { apiClient } from "../api/client";
@@ -115,6 +115,45 @@ export function BigCalendarPanel({ className }) {
   const [editor, setEditor] = useState(null); // { mode, initialStart, initialEnd, event }
   const [createPrompt, setCreatePrompt] = useState("");
 
+  // Touch-swipe navigation: swipe left = next period, right = previous,
+  // by the current view's unit (month / week / day). Agenda has no swipe.
+  const touchRef = useRef(null);
+
+  function navigateBy(direction) {
+    const step = direction === "next" ? 1 : -1;
+    if (view === Views.MONTH) setCurrentDate(addMonths(currentDate, step));
+    else if (view === Views.WEEK) setCurrentDate(addWeeks(currentDate, step));
+    else if (view === Views.DAY) setCurrentDate(addDays(currentDate, step));
+  }
+
+  function handleTouchStart(e) {
+    if (e.touches.length !== 1) {
+      touchRef.current = null;
+      return;
+    }
+    touchRef.current = {
+      x: e.touches[0].clientX,
+      y: e.touches[0].clientY,
+      t: Date.now(),
+    };
+  }
+
+  function handleTouchEnd(e) {
+    const start = touchRef.current;
+    touchRef.current = null;
+    if (!start || view === Views.AGENDA) return;
+    const touch = e.changedTouches[0];
+    const dx = touch.clientX - start.x;
+    const dy = touch.clientY - start.y;
+    const elapsed = Date.now() - start.t;
+    // Require a mostly-horizontal, deliberate swipe so it doesn't fight
+    // vertical scroll in week/day time grids or accidental taps.
+    const isHorizontal = Math.abs(dx) > 60 && Math.abs(dx) > Math.abs(dy) * 1.5;
+    if (isHorizontal && elapsed < 800) {
+      navigateBy(dx < 0 ? "next" : "prev");
+    }
+  }
+
   const canCreate = !supportsClientFiltering || selectedClientIds.length === 1;
 
   const rbcEvents = useMemo(() => apiEventsToRBC(events), [events]);
@@ -208,7 +247,12 @@ export function BigCalendarPanel({ className }) {
       {eventError ? <p className="form-error">{eventError}</p> : null}
       {isLoadingEvents ? <p className="subtle-copy">Loading calendar events…</p> : null}
 
-      <div className="rbc-shell" style={{ height: "75vh", minHeight: 600 }}>
+      <div
+        className="rbc-shell"
+        style={{ height: "75vh", minHeight: 600 }}
+        onTouchStart={handleTouchStart}
+        onTouchEnd={handleTouchEnd}
+      >
         <DnDCalendar
           localizer={localizer}
           events={rbcEvents}

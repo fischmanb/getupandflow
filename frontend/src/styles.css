@@ -1517,6 +1517,33 @@ button {
     padding: 6px 8px;
   }
 
+  /* Taller time-grid rows on mobile so 30-min events have room for their
+     title. Each timeslot-group is 60 min (2x30); ~72px makes a 30-min
+     event ~36px tall — enough for one readable title line. */
+  .rbc-shell .rbc-timeslot-group {
+    min-height: 72px;
+  }
+
+  .rbc-shell .rbc-event {
+    font-size: 0.8rem;
+    line-height: 1.15;
+    padding: 3px 6px;
+  }
+
+  .rbc-shell .rbc-event-label {
+    font-size: 0.7rem;
+  }
+
+  /* Let the title wrap to a second line rather than truncating to nothing
+     in short events; clamp so it never overflows the block. */
+  .rbc-shell .rbc-event-content {
+    white-space: normal;
+    overflow: hidden;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+  }
+
   .mobile-hidden {
     display: none;
   }
