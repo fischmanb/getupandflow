@@ -1478,6 +1478,39 @@ button {
     grid-template-columns: 1fr;
   }
 
+  /* Calendar toolbar: stack into rows on mobile so the view switcher
+     doesn't overflow off the right edge. Nav row on top, label, then a
+     full-width view switcher whose buttons share the row evenly. */
+  .cal-toolbar {
+    grid-template-columns: 1fr;
+    row-gap: 10px;
+  }
+
+  .cal-toolbar-nav {
+    grid-column: 1;
+    grid-row: 1;
+    justify-content: flex-start;
+  }
+
+  .cal-toolbar-label {
+    grid-column: 1;
+    grid-row: 2;
+    text-align: left;
+  }
+
+  .cal-toolbar-views {
+    grid-column: 1;
+    grid-row: 3;
+    width: 100%;
+    justify-content: space-between;
+  }
+
+  .cal-toolbar-view {
+    flex: 1;
+    text-align: center;
+    padding: 6px 8px;
+  }
+
   .mobile-hidden {
     display: none;
   }
