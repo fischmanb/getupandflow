@@ -1478,27 +1478,34 @@ button {
     grid-template-columns: 1fr;
   }
 
-  /* Calendar toolbar: stack into rows on mobile so the view switcher
-     doesn't overflow off the right edge. Nav row on top, label, then a
-     full-width view switcher whose buttons share the row evenly.
+  /* Calendar toolbar on mobile: two rows max.
+     Row 1 = nav (Today/arrows) + period label sharing the line.
+     Row 2 = full-width view switcher with evenly-spread buttons.
      Specificity bumped (.workspace-panel prefix) so these win over the
      base .cal-toolbar grid rule that appears later in the file. */
   .workspace-panel .cal-toolbar {
-    display: flex;
-    flex-direction: column;
-    align-items: stretch;
-    gap: 10px;
+    display: grid;
+    grid-template-columns: auto 1fr;
+    align-items: center;
+    column-gap: 12px;
+    row-gap: 10px;
   }
 
   .workspace-panel .cal-toolbar-nav {
+    grid-row: 1;
+    grid-column: 1;
     justify-content: flex-start;
   }
 
   .workspace-panel .cal-toolbar-label {
+    grid-row: 1;
+    grid-column: 2;
     text-align: left;
   }
 
   .workspace-panel .cal-toolbar-views {
+    grid-row: 2;
+    grid-column: 1 / -1;
     display: flex;
     width: 100%;
     justify-content: space-between;
