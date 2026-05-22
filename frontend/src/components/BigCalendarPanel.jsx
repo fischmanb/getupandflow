@@ -1,4 +1,4 @@
-import { useCallback, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Calendar, Views, dateFnsLocalizer } from "react-big-calendar";
 import withDragAndDrop from "react-big-calendar/lib/addons/dragAndDrop";
 import { format, parse, startOfWeek, getDay, addMonths, addWeeks, addDays } from "date-fns";
@@ -155,6 +155,12 @@ export function BigCalendarPanel({ className }) {
   }
 
   const canCreate = !supportsClientFiltering || selectedClientIds.length === 1;
+
+  // Clear the "select one client" prompt as soon as the selection becomes
+  // valid, so it doesn't linger after the user fixes their selection.
+  useEffect(() => {
+    if (canCreate) setCreatePrompt("");
+  }, [canCreate]);
 
   const rbcEvents = useMemo(() => apiEventsToRBC(events), [events]);
 

@@ -28,6 +28,31 @@ function normalizeClient(profile) {
 
 export function ClientFilterProvider({ children }) {
   const { user } = useAuth();
+
+  // Per-user localStorage key so coaches don't inherit each other's selection.
+  const storageKey = user?.id ? `guaf.clientSelection.${user.id}` : null;
+
+  function readSavedSelection() {
+    if (!storageKey) return null;
+    try {
+      const raw = window.localStorage.getItem(storageKey);
+      if (!raw) return null;
+      const parsed = JSON.parse(raw);
+      return Array.isArray(parsed) ? parsed : null;
+    } catch {
+      return null;
+    }
+  }
+
+  function saveSelection(ids) {
+    if (!storageKey) return;
+    try {
+      window.localStorage.setItem(storageKey, JSON.stringify(ids));
+    } catch {
+      // localStorage unavailable (private mode, etc.) — non-fatal.
+    }
+  }
+
   const [clients, setClients] = useState([]);
   const [selectedClientIds, setSelectedClientIds] = useState([]);
   const [events, setEvents] = useState([]);
@@ -83,7 +108,15 @@ export function ClientFilterProvider({ children }) {
         setClients(nextClients);
         setSelectedClientIds((current) => {
           if (!hasInitializedSelection) {
-            return nextClients.map((client) => client.id);
+            const allowedIds = new Set(nextClients.map((client) => client.id));
+            // Restore last session's selection, filtered to still-assigned clients.
+            const saved = (readSavedSelection() || []).filter((id) => allowedIds.has(id));
+            if (saved.length > 0) {
+              return saved;
+            }
+            // First run / nothing valid saved: default to a single client (the
+            // first), never all of them. An empty list stays empty.
+            return nextClients.length > 0 ? [nextClients[0].id] : [];
           }
 
           const allowedIds = new Set(nextClients.map((client) => client.id));
@@ -133,6 +166,14 @@ export function ClientFilterProvider({ children }) {
       isMounted = false;
     };
   }, [clients.length, hasInitializedSelection, selectedClientIds, supportsClientFiltering]);
+
+  // Persist the selection per-user so the next session restores it.
+  useEffect(() => {
+    if (supportsClientFiltering && hasInitializedSelection) {
+      saveSelection(selectedClientIds);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [selectedClientIds, hasInitializedSelection, supportsClientFiltering]);
 
   const colorMap = useMemo(() => {
     const entries = clients.map((client, index) => [client.id, CLIENT_COLORS[index % CLIENT_COLORS.length]]);
