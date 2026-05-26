@@ -226,6 +226,7 @@ export function EventEditorModal({ mode, initialStart, initialEnd, event, onClos
   const [start, setStart] = useState(initialStart);
   const [end, setEnd] = useState(initialEnd);
   const [location, setLocation] = useState(event?.location || "");
+  const [meetingLink, setMeetingLink] = useState(event?.meeting_link || "");
   const [description, setDescription] = useState(event?.description || "");
   const [recurrenceType, setRecurrenceType] = useState(event?.recurrence_type || "none");
   const [recurrenceUntil, setRecurrenceUntil] = useState(event?.recurrence_until || "");
@@ -331,6 +332,7 @@ export function EventEditorModal({ mode, initialStart, initialEnd, event, onClos
       start_time: dateToISOTime(start),
       end_time: dateToISOTime(end),
       location,
+      meeting_link: meetingLink.trim(),
       description,
       category: Number(category),
       recurrence_type: recurrenceType,
@@ -428,12 +430,35 @@ export function EventEditorModal({ mode, initialStart, initialEnd, event, onClos
 
           {isExpanded ? (
             <>
+              {event?.meeting_link ? (
+                <div className="gcal-modal-row">
+                  <a
+                    className="gcal-join-link"
+                    href={event.meeting_link}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                  >
+                    Join meeting →
+                  </a>
+                </div>
+              ) : null}
+
               <div className="gcal-modal-row">
                 <input
                   className="gcal-modal-input"
                   placeholder="Add location"
                   value={location}
                   onChange={(e) => setLocation(e.target.value)}
+                />
+              </div>
+
+              <div className="gcal-modal-row">
+                <input
+                  className="gcal-modal-input"
+                  type="url"
+                  placeholder="Add meeting link (Zoom, Meet, etc.)"
+                  value={meetingLink}
+                  onChange={(e) => setMeetingLink(e.target.value)}
                 />
               </div>
 

@@ -75,6 +75,7 @@ class Event(ClientOwnedModel):
     start_time = models.TimeField()
     end_time = models.TimeField()
     location = models.CharField(max_length=255, blank=True)
+    meeting_link = models.URLField(max_length=500, blank=True)
     description = models.TextField(blank=True)
     category = models.ForeignKey(EventCategory, on_delete=models.PROTECT, related_name="events")
     recurrence_type = models.CharField(

@@ -1845,6 +1845,24 @@ button {
   padding: 16px 20px 0;
 }
 
+.gcal-join-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  height: 38px;
+  padding: 0 18px;
+  border-radius: var(--btn-radius);
+  background: #2563eb;
+  color: #fff;
+  font-weight: 600;
+  font-size: 0.92rem;
+  text-decoration: none;
+}
+
+.gcal-join-link:hover {
+  background: #1d4ed8;
+}
+
 .gcal-modal-eyebrow {
   font-size: 1.05rem;
   font-weight: 700;

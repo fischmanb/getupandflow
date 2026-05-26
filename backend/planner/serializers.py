@@ -90,6 +90,7 @@ class EventSerializer(ClientScopedValidationMixin, serializers.ModelSerializer):
             "start_time",
             "end_time",
             "location",
+            "meeting_link",
             "description",
             "category",
             "category_detail",
