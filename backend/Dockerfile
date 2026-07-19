@@ -12,6 +12,9 @@ RUN pip install --no-cache-dir --upgrade pip && \
 
 COPY . .
 
+# Fail the build if any model change lacks a committed migration (prevents prod 500s from schema drift)
+RUN python manage.py makemigrations --check --dry-run
+
 RUN chmod +x /app/entrypoint.sh
 
 EXPOSE 8000
