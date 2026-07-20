@@ -1,5 +1,8 @@
+import os
 from datetime import date, datetime, time
+from unittest import mock
 
+import requests
 from django.contrib.auth.models import Group, User
 from django.core.files.uploadedfile import SimpleUploadedFile
 from django.urls import reverse
@@ -9,6 +12,7 @@ from rest_framework.test import APITestCase
 
 from accounts.constants import ROLE_ADMIN, ROLE_CLIENT, ROLE_COACH
 
+from . import zoom
 from .models import Event, EventCategory, Task
 
 
@@ -691,3 +695,362 @@ class PlannerRBACAPITests(APITestCase):
 
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
         self.assertIn("client_id", response.data)
+
+
+ZOOM_ENV = {
+    "ZOOM_ACCOUNT_ID": "test-account",
+    "ZOOM_CLIENT_ID": "test-client-id",
+    "ZOOM_CLIENT_SECRET": "test-client-secret",
+}
+
+
+def make_zoom_response(status_code=200, payload=None):
+    response = mock.Mock()
+    response.status_code = status_code
+    response.json.return_value = payload if payload is not None else {}
+    response.text = str(payload or "")
+    return response
+
+
+class ZoomEventLifecycleTests(APITestCase):
+    """Zoom calls are mocked at the HTTP layer (planner.zoom.requests); no network."""
+
+    @classmethod
+    def setUpTestData(cls):
+        cls.coach_group = Group.objects.get(name=ROLE_COACH)
+        cls.client_group = Group.objects.get(name=ROLE_CLIENT)
+
+        cls.coach = User.objects.create_user(username="zoomcoach", password="Pass12345!", first_name="Casey")
+        cls.coach.groups.add(cls.coach_group)
+        cls.coach.profile.zoom_user_email = "coach@zoom.example.com"
+        cls.coach.profile.save()
+
+        cls.other_coach = User.objects.create_user(username="zoomcoach2", password="Pass12345!")
+        cls.other_coach.groups.add(cls.coach_group)
+
+        cls.client_user = User.objects.create_user(username="zoomclient", password="Pass12345!", first_name="Jordan")
+        cls.client_user.groups.add(cls.client_group)
+        cls.client_user.profile.assigned_coach = cls.coach
+        cls.client_user.profile.save()
+
+        cls.other_client = User.objects.create_user(username="zoomclient2", password="Pass12345!")
+        cls.other_client.groups.add(cls.client_group)
+        cls.other_client.profile.assigned_coach = cls.other_coach
+        cls.other_client.profile.save()
+
+        cls.category = EventCategory.objects.create(name="Coaching", color="sky", client=cls.client_user)
+        cls.other_category = EventCategory.objects.create(name="Other", color="rose", client=cls.other_client)
+
+    def setUp(self):
+        # The module caches the OAuth token in-process; isolate tests from each other.
+        zoom._token_cache["access_token"] = None
+        zoom._token_cache["expires_at"] = 0.0
+
+    def authenticate(self, user):
+        response = self.client.post(
+            reverse("login"),
+            {"username": user.username, "password": "Pass12345!"},
+            format="json",
+        )
+        self.client.credentials(HTTP_AUTHORIZATION=f"Bearer {response.data['access']}")
+
+    def event_payload(self, **overrides):
+        payload = {
+            "title": "Zoom Check-in",
+            "event_date": "2026-08-03",
+            "start_time": "09:00:00",
+            "end_time": "10:00:00",
+            "category": self.category.id,
+            "client_id": self.client_user.id,
+        }
+        payload.update(overrides)
+        return payload
+
+    def mock_zoom_success(self, zoom_requests, meeting_id=98765, join_url="https://zoom.us/j/98765"):
+        zoom_requests.post.return_value = make_zoom_response(200, {"access_token": "tok", "expires_in": 3600})
+        zoom_requests.request.return_value = make_zoom_response(201, {"id": meeting_id, "join_url": join_url})
+
+    @mock.patch.dict(os.environ, ZOOM_ENV)
+    @mock.patch("planner.zoom.requests")
+    def test_create_with_flag_creates_meeting_hosted_by_assigned_coach(self, zoom_requests):
+        self.mock_zoom_success(zoom_requests)
+        self.authenticate(self.coach)
+
+        response = self.client.post(
+            reverse("event-list"),
+            self.event_payload(create_zoom_meeting=True),
+            format="json",
+        )
+
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+        self.assertEqual(response.data["zoom_status"], "ok")
+        self.assertEqual(response.data["zoom_meeting_id"], 98765)
+        self.assertEqual(response.data["meeting_link"], "https://zoom.us/j/98765")
+
+        event = Event.objects.get(pk=response.data["id"])
+        self.assertEqual(event.zoom_meeting_id, 98765)
+        self.assertEqual(event.meeting_link, "https://zoom.us/j/98765")
+
+        method, url = zoom_requests.request.call_args[0]
+        self.assertEqual(method, "POST")
+        self.assertEqual(url, f"{zoom.ZOOM_API_BASE}/users/coach@zoom.example.com/meetings")
+        body = zoom_requests.request.call_args[1]["json"]
+        self.assertEqual(body["topic"], "Zoom Check-in")
+        self.assertEqual(body["start_time"], "2026-08-03T09:00:00")
+        self.assertEqual(body["duration"], 60)
+        self.assertEqual(
+            body["settings"],
+            {
+                "waiting_room": False,
+                "join_before_host": True,
+                "mute_upon_entry": False,
+                "auto_recording": "cloud",
+            },
+        )
+
+    @mock.patch.dict(os.environ, ZOOM_ENV)
+    @mock.patch("planner.zoom.requests")
+    def test_client_can_request_zoom_meeting_for_own_event(self, zoom_requests):
+        self.mock_zoom_success(zoom_requests)
+        self.authenticate(self.client_user)
+
+        response = self.client.post(
+            reverse("event-list"),
+            self.event_payload(create_zoom_meeting=True),
+            format="json",
+        )
+
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+        self.assertEqual(response.data["zoom_status"], "ok")
+        _, url = zoom_requests.request.call_args[0]
+        self.assertEqual(url, f"{zoom.ZOOM_API_BASE}/users/coach@zoom.example.com/meetings")
+
+    @mock.patch.dict(os.environ, ZOOM_ENV)
+    @mock.patch("planner.zoom.requests")
+    def test_create_without_flag_never_calls_zoom(self, zoom_requests):
+        self.authenticate(self.coach)
+
+        response = self.client.post(reverse("event-list"), self.event_payload(), format="json")
+
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+        self.assertIsNone(response.data["zoom_status"])
+        self.assertIsNone(response.data["zoom_meeting_id"])
+        zoom_requests.post.assert_not_called()
+        zoom_requests.request.assert_not_called()
+
+    @mock.patch.dict(os.environ, ZOOM_ENV)
+    @mock.patch("planner.zoom.requests")
+    def test_zoom_failure_still_saves_event(self, zoom_requests):
+        zoom_requests.post.side_effect = requests.ConnectionError("zoom is down")
+        self.authenticate(self.coach)
+
+        response = self.client.post(
+            reverse("event-list"),
+            self.event_payload(create_zoom_meeting=True),
+            format="json",
+        )
+
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+        self.assertEqual(response.data["zoom_status"], "failed")
+        self.assertIsNone(response.data["zoom_meeting_id"])
+        self.assertEqual(response.data["meeting_link"], "")
+        self.assertTrue(Event.objects.filter(pk=response.data["id"]).exists())
+
+    @mock.patch("planner.zoom.requests")
+    def test_zoom_not_configured_still_saves_event(self, zoom_requests):
+        # No ZOOM_* env vars: the service raises ZoomNotConfigured and the write succeeds.
+        env_without_zoom = {key: value for key, value in os.environ.items() if not key.startswith("ZOOM_")}
+        self.authenticate(self.coach)
+
+        with mock.patch.dict(os.environ, env_without_zoom, clear=True):
+            response = self.client.post(
+                reverse("event-list"),
+                self.event_payload(create_zoom_meeting=True),
+                format="json",
+            )
+
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+        self.assertEqual(response.data["zoom_status"], "failed")
+        self.assertTrue(Event.objects.filter(pk=response.data["id"]).exists())
+        zoom_requests.post.assert_not_called()
+        zoom_requests.request.assert_not_called()
+
+    @mock.patch.dict(os.environ, ZOOM_ENV)
+    @mock.patch("planner.zoom.requests")
+    def test_missing_host_email_fails_zoom_but_saves_event(self, zoom_requests):
+        self.authenticate(self.other_coach)  # neither this coach nor their client has a Zoom email
+
+        response = self.client.post(
+            reverse("event-list"),
+            self.event_payload(
+                create_zoom_meeting=True,
+                category=self.other_category.id,
+                client_id=self.other_client.id,
+            ),
+            format="json",
+        )
+
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+        self.assertEqual(response.data["zoom_status"], "failed")
+        zoom_requests.request.assert_not_called()
+
+    @mock.patch.dict(os.environ, ZOOM_ENV)
+    @mock.patch("planner.zoom.requests")
+    def test_schedule_update_propagates_to_zoom(self, zoom_requests):
+        self.mock_zoom_success(zoom_requests)
+        event = Event.objects.create(
+            title="Existing Session",
+            event_date=date(2026, 8, 4),
+            start_time=time(9, 0),
+            end_time=time(10, 0),
+            category=self.category,
+            client=self.client_user,
+            zoom_meeting_id=44444,
+        )
+        self.authenticate(self.coach)
+
+        response = self.client.patch(
+            reverse("event-detail", args=[event.id]),
+            {"start_time": "11:00:00", "end_time": "11:45:00"},
+            format="json",
+        )
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(response.data["zoom_status"], "ok")
+        method, url = zoom_requests.request.call_args[0]
+        self.assertEqual(method, "PATCH")
+        self.assertEqual(url, f"{zoom.ZOOM_API_BASE}/meetings/44444")
+        body = zoom_requests.request.call_args[1]["json"]
+        self.assertEqual(body["start_time"], "2026-08-04T11:00:00")
+        self.assertEqual(body["duration"], 45)
+
+    @mock.patch.dict(os.environ, ZOOM_ENV)
+    @mock.patch("planner.zoom.requests")
+    def test_non_schedule_update_does_not_call_zoom(self, zoom_requests):
+        event = Event.objects.create(
+            title="Existing Session",
+            event_date=date(2026, 8, 4),
+            start_time=time(9, 0),
+            end_time=time(10, 0),
+            category=self.category,
+            client=self.client_user,
+            zoom_meeting_id=44444,
+        )
+        self.authenticate(self.coach)
+
+        response = self.client.patch(
+            reverse("event-detail", args=[event.id]),
+            {"title": "Renamed Session"},
+            format="json",
+        )
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertIsNone(response.data["zoom_status"])
+        zoom_requests.request.assert_not_called()
+
+    @mock.patch.dict(os.environ, ZOOM_ENV)
+    @mock.patch("planner.zoom.requests")
+    def test_zoom_failure_on_update_still_saves_changes(self, zoom_requests):
+        zoom_requests.post.side_effect = requests.Timeout("token timeout")
+        event = Event.objects.create(
+            title="Existing Session",
+            event_date=date(2026, 8, 4),
+            start_time=time(9, 0),
+            end_time=time(10, 0),
+            category=self.category,
+            client=self.client_user,
+            zoom_meeting_id=44444,
+        )
+        self.authenticate(self.coach)
+
+        response = self.client.patch(
+            reverse("event-detail", args=[event.id]),
+            {"start_time": "11:00:00", "end_time": "12:00:00"},
+            format="json",
+        )
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(response.data["zoom_status"], "failed")
+        event.refresh_from_db()
+        self.assertEqual(event.start_time, time(11, 0))
+
+    @mock.patch.dict(os.environ, ZOOM_ENV)
+    @mock.patch("planner.zoom.requests")
+    def test_destroy_deletes_zoom_meeting(self, zoom_requests):
+        zoom_requests.post.return_value = make_zoom_response(200, {"access_token": "tok", "expires_in": 3600})
+        zoom_requests.request.return_value = make_zoom_response(204)
+        event = Event.objects.create(
+            title="Doomed Session",
+            event_date=date(2026, 8, 5),
+            start_time=time(9, 0),
+            end_time=time(10, 0),
+            category=self.category,
+            client=self.client_user,
+            zoom_meeting_id=55555,
+        )
+        self.authenticate(self.coach)
+
+        response = self.client.delete(reverse("event-detail", args=[event.id]))
+
+        self.assertEqual(response.status_code, status.HTTP_204_NO_CONTENT)
+        self.assertFalse(Event.objects.filter(pk=event.id).exists())
+        method, url = zoom_requests.request.call_args[0]
+        self.assertEqual(method, "DELETE")
+        self.assertEqual(url, f"{zoom.ZOOM_API_BASE}/meetings/55555")
+
+    @mock.patch.dict(os.environ, ZOOM_ENV)
+    @mock.patch("planner.zoom.requests")
+    def test_destroy_tolerates_zoom_404(self, zoom_requests):
+        zoom_requests.post.return_value = make_zoom_response(200, {"access_token": "tok", "expires_in": 3600})
+        zoom_requests.request.return_value = make_zoom_response(404, {"code": 3001, "message": "Meeting does not exist"})
+        event = Event.objects.create(
+            title="Already Gone",
+            event_date=date(2026, 8, 5),
+            start_time=time(9, 0),
+            end_time=time(10, 0),
+            category=self.category,
+            client=self.client_user,
+            zoom_meeting_id=66666,
+        )
+        self.authenticate(self.coach)
+
+        response = self.client.delete(reverse("event-detail", args=[event.id]))
+
+        self.assertEqual(response.status_code, status.HTTP_204_NO_CONTENT)
+        self.assertFalse(Event.objects.filter(pk=event.id).exists())
+
+    @mock.patch.dict(os.environ, ZOOM_ENV)
+    @mock.patch("planner.zoom.requests")
+    def test_token_is_cached_across_calls(self, zoom_requests):
+        self.mock_zoom_success(zoom_requests)
+        self.authenticate(self.coach)
+
+        for index in range(2):
+            response = self.client.post(
+                reverse("event-list"),
+                self.event_payload(title=f"Session {index}", create_zoom_meeting=True),
+                format="json",
+            )
+            self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+
+        self.assertEqual(zoom_requests.post.call_count, 1)
+        self.assertEqual(zoom_requests.request.call_count, 2)
+
+    @mock.patch.dict(os.environ, ZOOM_ENV)
+    @mock.patch("planner.zoom.requests")
+    def test_zoom_flag_does_not_bypass_rbac(self, zoom_requests):
+        self.mock_zoom_success(zoom_requests)
+        self.authenticate(self.coach)  # not other_client's coach
+
+        response = self.client.post(
+            reverse("event-list"),
+            self.event_payload(
+                create_zoom_meeting=True,
+                category=self.other_category.id,
+                client_id=self.other_client.id,
+            ),
+            format="json",
+        )
+
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        zoom_requests.request.assert_not_called()
