@@ -1921,6 +1921,27 @@ button {
   align-items: flex-start;
 }
 
+/* "Add Zoom meeting" toggle — identical for coach and client views. */
+.gcal-zoom-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.95rem;
+  color: #102033;
+  cursor: pointer;
+}
+
+.gcal-zoom-toggle input {
+  width: 16px;
+  height: 16px;
+  accent-color: #2563eb;
+  cursor: pointer;
+}
+
+.gcal-zoom-toggle input:disabled {
+  cursor: default;
+}
+
 /* Custom-styled select wrapper to replace the bare native dropdown */
 .gcal-select-wrap {
   position: relative;
