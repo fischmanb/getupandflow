@@ -15,6 +15,7 @@ class UserProfile(models.Model):
         related_name="coached_clients",
     )
     phone_number = models.CharField(max_length=30, blank=True)
+    zoom_user_email = models.EmailField(null=True, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
