@@ -75,6 +75,7 @@ function TimeChipPicker({ value, onChange, anchorDate, durationFrom, ariaLabel }
   const [position, setPosition] = useState(null); // { top, left, width, openUpward }
   const buttonRef = useRef(null);
   const listRef = useRef(null);
+  const hasCenteredRef = useRef(false);
 
   // Position the portal dropdown beside/below the chip. Flip up if no room.
   function computePosition() {
@@ -116,26 +117,45 @@ function TimeChipPicker({ value, onChange, anchorDate, durationFrom, ariaLabel }
     return () => document.removeEventListener("mousedown", handleClick);
   }, [open]);
 
-  // Scroll current value into view when list opens. Measure the actual item
-  // height (padding/line-height vary) and run after paint via rAF.
-  useEffect(() => {
-    if (!open) return;
-    const raf = requestAnimationFrame(() => {
-      const list = listRef.current;
-      if (!list) return;
-      const firstItem = list.querySelector(".gcal-time-item");
-      const rowHeight = firstItem ? firstItem.offsetHeight : 38;
-      const minutesOfDay = value.getHours() * 60 + value.getMinutes();
-      const targetIndex = Math.round(minutesOfDay / 15);
-      list.scrollTop = Math.max(0, (targetIndex - 2) * rowHeight);
-    });
-    return () => cancelAnimationFrame(raf);
-  }, [open, value]);
-
   const options = useMemo(
     () => generateDayTimes(anchorDate, durationFrom),
     [anchorDate, durationFrom],
   );
+
+  // Scroll the selected option into view (centered) when the list opens.
+  // The portal only mounts once `position` is measured, so this keys on
+  // `position` (not just `open`) and centers exactly once per open —
+  // `position` also changes while the user scrolls, and re-centering then
+  // would fight their scrolling. Runs after paint via rAF.
+  useEffect(() => {
+    if (!open) {
+      hasCenteredRef.current = false;
+      return;
+    }
+    if (!position || hasCenteredRef.current) return;
+    hasCenteredRef.current = true;
+    const raf = requestAnimationFrame(() => {
+      const list = listRef.current;
+      if (!list) return;
+      const items = list.querySelectorAll(".gcal-time-item");
+      if (items.length === 0) return;
+      // Find the selected option, or the nearest one when the value isn't on
+      // the 15-min grid. Indexing the options array keeps this correct for
+      // the end picker, whose list doesn't start at midnight.
+      let targetIndex = options.findIndex(
+        (opt) => opt.getHours() === value.getHours() && opt.getMinutes() === value.getMinutes(),
+      );
+      if (targetIndex === -1) {
+        targetIndex = options.findIndex((opt) => opt >= value);
+      }
+      if (targetIndex === -1) {
+        targetIndex = options.length - 1;
+      }
+      const item = items[Math.min(targetIndex, items.length - 1)];
+      list.scrollTop = Math.max(0, item.offsetTop - (list.clientHeight - item.offsetHeight) / 2);
+    });
+    return () => cancelAnimationFrame(raf);
+  }, [open, position, value, options]);
 
   return (
     <>
