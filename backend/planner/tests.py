@@ -12,6 +12,7 @@ from rest_framework import status
 from rest_framework.test import APITestCase
 
 from accounts.constants import ROLE_ADMIN, ROLE_CLIENT, ROLE_COACH
+from accounts.models import UserProfile
 
 from . import zoom
 from .models import Event, EventCategory, Task
@@ -294,6 +295,12 @@ class PlannerRBACAPITests(APITestCase):
 
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(response.data["assigned_coach_id"], self.coach_two.id)
+        # Assert at the DB layer too — the response echoing the new coach is
+        # not proof it persisted (see Item 3 of the July 2026 UX round).
+        self.assertEqual(
+            UserProfile.objects.get(user=self.client_one).assigned_coach_id,
+            self.coach_two.id,
+        )
 
     def test_admin_can_bulk_create_coaches_and_clients(self):
         self.authenticate(self.admin)
