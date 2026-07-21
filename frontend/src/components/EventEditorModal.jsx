@@ -290,9 +290,12 @@ export function EventEditorModal({ mode, initialStart, initialEnd, event, onClos
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [activeClientId]);
 
-  // Update end if start moves past it on the same day.
+  // Moving the start preserves the event duration (end follows), like any calendar.
   function setStartTime(newStart) {
+    const dur = end - start;
+    const preserved = dur > 0 ? dur : 60 * 60 * 1000; // fall back to 1h if state was inverted
     setStart(newStart);
+    setEnd(new Date(newStart.getTime() + preserved));
   }
 
   function setEndTime(newEnd) {
