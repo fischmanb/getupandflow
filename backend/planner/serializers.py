@@ -80,6 +80,9 @@ class EventSerializer(ClientScopedValidationMixin, serializers.ModelSerializer):
     )
     client = UserSummarySerializer(read_only=True)
     category_detail = EventCategorySerializer(source="category", read_only=True)
+    # Request-only flag: ask the API to create a Zoom meeting for this event.
+    create_zoom_meeting = serializers.BooleanField(write_only=True, required=False, default=False)
+    zoom_status = serializers.SerializerMethodField()
 
     class Meta:
         model = Event
@@ -99,10 +102,17 @@ class EventSerializer(ClientScopedValidationMixin, serializers.ModelSerializer):
             "client",
             "client_id",
             "client_name",
+            "zoom_meeting_id",
+            "create_zoom_meeting",
+            "zoom_status",
             "created_at",
             "updated_at",
         ]
-        read_only_fields = ["client_name", "created_at", "updated_at"]
+        read_only_fields = ["client_name", "zoom_meeting_id", "created_at", "updated_at"]
+
+    def get_zoom_status(self, obj) -> str | None:
+        # Set by EventViewSet after a write that touched Zoom: "ok" | "failed" | None.
+        return getattr(obj, "_zoom_status", None)
 
     def validate(self, attrs):
         attrs = super().validate(attrs)
@@ -180,6 +190,7 @@ class AdminManagedUserSerializer(serializers.ModelSerializer):
         required=False,
     )
     phone_number = serializers.CharField(source="profile.phone_number", allow_blank=True, required=False)
+    zoom_user_email = serializers.EmailField(source="profile.zoom_user_email", allow_null=True, required=False)
     password = serializers.CharField(write_only=True, required=False, allow_blank=False)
 
     class Meta:
@@ -192,6 +203,7 @@ class AdminManagedUserSerializer(serializers.ModelSerializer):
             "email",
             "role",
             "phone_number",
+            "zoom_user_email",
             "assigned_coach_id",
             "password",
         ]
@@ -233,6 +245,7 @@ class AdminManagedUserSerializer(serializers.ModelSerializer):
 
         profile = user.profile
         profile.phone_number = profile_data.get("phone_number", "")
+        profile.zoom_user_email = profile_data.get("zoom_user_email")
         profile.assigned_coach = profile_data.get("assigned_coach")
         profile.save()
 
@@ -255,6 +268,8 @@ class AdminManagedUserSerializer(serializers.ModelSerializer):
         profile = instance.profile
         if "phone_number" in profile_data:
             profile.phone_number = profile_data["phone_number"]
+        if "zoom_user_email" in profile_data:
+            profile.zoom_user_email = profile_data["zoom_user_email"]
         if "assigned_coach" in profile_data or role == ROLE_COACH:
             profile.assigned_coach = None if role == ROLE_COACH else profile_data.get("assigned_coach")
         profile.save()

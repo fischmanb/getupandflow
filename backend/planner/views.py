@@ -1,5 +1,6 @@
 import csv
 import io
+import logging
 
 from django.contrib.auth.models import User
 from django.db import transaction
@@ -16,6 +17,7 @@ from drf_spectacular.utils import extend_schema
 from accounts.constants import ROLE_ADMIN, ROLE_CLIENT, ROLE_COACH
 from accounts.models import UserProfile
 
+from . import zoom
 from .models import Event, EventCategory, Task
 from .pagination import StandardResultsSetPagination
 from .permissions import RBACScope
@@ -29,6 +31,8 @@ from .serializers import (
     TaskSerializer,
     UserSummarySerializer,
 )
+
+logger = logging.getLogger(__name__)
 
 
 class AdminOrReadOnlyForAuthenticated(permissions.BasePermission):
@@ -191,6 +195,80 @@ class EventViewSet(RoleScopedQuerysetMixin, viewsets.ModelViewSet):
     serializer_class = EventSerializer
     permission_classes = [permissions.IsAuthenticated]
     pagination_class = None
+
+    ZOOM_SCHEDULE_FIELDS = ("event_date", "start_time", "end_time")
+
+    def _resolve_zoom_host_email(self, event):
+        """Host the meeting as the event owner's assigned coach; fall back to the
+        requesting user's own Zoom email if they are a coach.
+        """
+        profile = getattr(event.client, "profile", None)
+        coach = profile.assigned_coach if profile else None
+        coach_profile = getattr(coach, "profile", None)
+        if coach_profile and coach_profile.zoom_user_email:
+            return coach_profile.zoom_user_email
+        creator = self.request.user
+        if RBACScope.is_coach(creator):
+            creator_profile = getattr(creator, "profile", None)
+            if creator_profile and creator_profile.zoom_user_email:
+                return creator_profile.zoom_user_email
+        return None
+
+    def _create_zoom_meeting(self, event):
+        # FAILURE RULE: a Zoom problem must never fail the event write.
+        try:
+            host_email = self._resolve_zoom_host_email(event)
+            if not host_email:
+                raise zoom.ZoomNotConfigured("No Zoom host email configured for this event's coach.")
+            meeting = zoom.create_meeting(host_email, event)
+            event.zoom_meeting_id = meeting["id"]
+            event.meeting_link = meeting["join_url"]
+            event.save()
+            event._zoom_status = "ok"
+        except Exception:
+            logger.exception("Failed to create Zoom meeting for event %s", event.pk)
+            event._zoom_status = "failed"
+
+    def _update_zoom_meeting(self, event):
+        try:
+            zoom.update_meeting(event.zoom_meeting_id, event)
+            event._zoom_status = "ok"
+        except Exception:
+            logger.exception("Failed to update Zoom meeting %s for event %s", event.zoom_meeting_id, event.pk)
+            event._zoom_status = "failed"
+
+    def perform_create(self, serializer):
+        wants_zoom = serializer.validated_data.pop("create_zoom_meeting", False)
+        event = serializer.save()
+        if wants_zoom:
+            self._create_zoom_meeting(event)
+
+    def perform_update(self, serializer):
+        wants_zoom = serializer.validated_data.pop("create_zoom_meeting", False)
+        instance = serializer.instance
+        schedule_changed = any(
+            field in serializer.validated_data and serializer.validated_data[field] != getattr(instance, field)
+            for field in self.ZOOM_SCHEDULE_FIELDS
+        )
+        event = serializer.save()
+        if event.zoom_meeting_id is None:
+            if wants_zoom:
+                self._create_zoom_meeting(event)
+        elif schedule_changed:
+            self._update_zoom_meeting(event)
+
+    def perform_destroy(self, instance):
+        meeting_id = instance.zoom_meeting_id
+        instance.delete()
+        if meeting_id is None:
+            return
+        try:
+            zoom.delete_meeting(meeting_id)
+        except zoom.ZoomError as exc:
+            if exc.status_code != 404:  # a meeting already gone in Zoom is fine
+                logger.exception("Failed to delete Zoom meeting %s", meeting_id)
+        except Exception:
+            logger.exception("Failed to delete Zoom meeting %s", meeting_id)
 
 
 class TaskViewSet(RoleScopedQuerysetMixin, viewsets.ModelViewSet):

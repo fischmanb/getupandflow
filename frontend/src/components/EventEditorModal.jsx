@@ -230,6 +230,8 @@ export function EventEditorModal({ mode, initialStart, initialEnd, event, onClos
   const [description, setDescription] = useState(event?.description || "");
   const [recurrenceType, setRecurrenceType] = useState(event?.recurrence_type || "none");
   const [recurrenceUntil, setRecurrenceUntil] = useState(event?.recurrence_until || "");
+  const [addZoomMeeting, setAddZoomMeeting] = useState(false);
+  const hasZoomMeeting = Boolean(event?.zoom_meeting_id);
   const [category, setCategory] = useState(event?.category || "");
   const [categories, setCategories] = useState([]);
   const [isLoadingCategories, setIsLoadingCategories] = useState(false);
@@ -338,13 +340,15 @@ export function EventEditorModal({ mode, initialStart, initialEnd, event, onClos
       recurrence_type: recurrenceType,
       recurrence_until: recurrenceType === "none" ? null : recurrenceUntil || null,
       client_id: Number(activeClientId),
+      create_zoom_meeting: !hasZoomMeeting && addZoomMeeting,
     };
 
     try {
-      if (event?.id) {
-        await apiClient.put(`/events/${event.id}/`, payload);
-      } else {
-        await apiClient.post("/events/", payload);
+      const response = event?.id
+        ? await apiClient.put(`/events/${event.id}/`, payload)
+        : await apiClient.post("/events/", payload);
+      if (response?.data?.zoom_status === "failed") {
+        window.alert("Event saved, but the Zoom meeting could not be set up. Please try again or contact your coach.");
       }
       onSaved();
     } catch (err) {
@@ -453,14 +457,45 @@ export function EventEditorModal({ mode, initialStart, initialEnd, event, onClos
               </div>
 
               <div className="gcal-modal-row">
-                <input
-                  className="gcal-modal-input"
-                  type="url"
-                  placeholder="Add meeting link (Zoom, Meet, etc.)"
-                  value={meetingLink}
-                  onChange={(e) => setMeetingLink(e.target.value)}
-                />
+                <label className="gcal-zoom-toggle">
+                  <input
+                    type="checkbox"
+                    checked={hasZoomMeeting || addZoomMeeting}
+                    disabled={hasZoomMeeting || isSubmitting}
+                    onChange={(e) => setAddZoomMeeting(e.target.checked)}
+                  />
+                  <span>Add Zoom meeting</span>
+                </label>
+                {hasZoomMeeting ? (
+                  <span className="subtle-copy">Zoom link is managed automatically.</span>
+                ) : null}
               </div>
+
+              {hasZoomMeeting ? (
+                <div className="gcal-modal-row">
+                  <input
+                    className="gcal-modal-input"
+                    type="url"
+                    aria-label="Zoom meeting link"
+                    value={meetingLink}
+                    readOnly
+                  />
+                </div>
+              ) : addZoomMeeting ? (
+                <div className="gcal-modal-row">
+                  <span className="subtle-copy">A Zoom link will be added when you save.</span>
+                </div>
+              ) : (
+                <div className="gcal-modal-row">
+                  <input
+                    className="gcal-modal-input"
+                    type="url"
+                    placeholder="Add meeting link (Zoom, Meet, etc.)"
+                    value={meetingLink}
+                    onChange={(e) => setMeetingLink(e.target.value)}
+                  />
+                </div>
+              )}
 
               <div className="gcal-modal-row">
                 <div className="gcal-select-wrap">
