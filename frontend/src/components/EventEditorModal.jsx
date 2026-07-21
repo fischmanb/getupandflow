@@ -521,8 +521,10 @@ export function EventEditorModal({ mode, initialStart, initialEnd, event, onClos
               )}
 
               <div className="gcal-modal-row">
+                <label className="gcal-field-label" htmlFor="event-recurrence-type">Repeats</label>
                 <div className="gcal-select-wrap">
                   <select
+                    id="event-recurrence-type"
                     className="gcal-modal-select"
                     value={recurrenceType}
                     onChange={(e) => setRecurrenceType(e.target.value)}

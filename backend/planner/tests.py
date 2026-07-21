@@ -5,6 +5,7 @@ from unittest import mock
 import requests
 from django.contrib.auth.models import Group, User
 from django.core.files.uploadedfile import SimpleUploadedFile
+from django.test import SimpleTestCase
 from django.urls import reverse
 from django.utils import timezone
 from rest_framework import status
@@ -14,6 +15,7 @@ from accounts.constants import ROLE_ADMIN, ROLE_CLIENT, ROLE_COACH
 
 from . import zoom
 from .models import Event, EventCategory, Task
+from .recurrence import expand_event_dates
 
 
 def get_list_results(response):
@@ -1054,3 +1056,202 @@ class ZoomEventLifecycleTests(APITestCase):
 
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
         zoom_requests.request.assert_not_called()
+
+
+class ExpandEventDatesTests(SimpleTestCase):
+    """Pure expansion logic: recurrence types, until boundary, range clipping."""
+
+    def test_non_recurring_returns_base_date(self):
+        self.assertEqual(
+            expand_event_dates(date(2026, 3, 20), "none", None),
+            [date(2026, 3, 20)],
+        )
+
+    def test_non_recurring_outside_range_is_clipped(self):
+        self.assertEqual(
+            expand_event_dates(date(2026, 3, 20), "none", None, range_start=date(2026, 4, 1)),
+            [],
+        )
+
+    def test_daily_includes_every_day_through_until(self):
+        self.assertEqual(
+            expand_event_dates(date(2026, 3, 20), "daily", date(2026, 3, 24)),
+            [date(2026, 3, 20 + offset) for offset in range(5)],
+        )
+
+    def test_weekly_until_boundary_is_inclusive(self):
+        self.assertEqual(
+            expand_event_dates(date(2026, 3, 20), "weekly", date(2026, 4, 3)),
+            [date(2026, 3, 20), date(2026, 3, 27), date(2026, 4, 3)],
+        )
+
+    def test_weekly_until_between_occurrences_stops_before_it(self):
+        self.assertEqual(
+            expand_event_dates(date(2026, 3, 20), "weekly", date(2026, 4, 9)),
+            [date(2026, 3, 20), date(2026, 3, 27), date(2026, 4, 3)],
+        )
+
+    def test_monthly_repeats_on_same_day_of_month(self):
+        self.assertEqual(
+            expand_event_dates(date(2026, 1, 15), "monthly", date(2026, 4, 15)),
+            [date(2026, 1, 15), date(2026, 2, 15), date(2026, 3, 15), date(2026, 4, 15)],
+        )
+
+    def test_monthly_skips_months_without_the_day(self):
+        self.assertEqual(
+            expand_event_dates(date(2026, 1, 31), "monthly", date(2026, 5, 31)),
+            [date(2026, 1, 31), date(2026, 3, 31), date(2026, 5, 31)],
+        )
+
+    def test_range_clips_daily_expansion(self):
+        self.assertEqual(
+            expand_event_dates(
+                date(2026, 3, 20),
+                "daily",
+                date(2026, 3, 31),
+                range_start=date(2026, 3, 22),
+                range_end=date(2026, 3, 23),
+            ),
+            [date(2026, 3, 22), date(2026, 3, 23)],
+        )
+
+    def test_range_after_until_yields_nothing(self):
+        self.assertEqual(
+            expand_event_dates(
+                date(2026, 3, 20),
+                "daily",
+                date(2026, 3, 24),
+                range_start=date(2026, 4, 1),
+            ),
+            [],
+        )
+
+
+class RecurringEventExpansionTests(APITestCase):
+    """The events list expands recurring events into per-occurrence entries."""
+
+    @classmethod
+    def setUpTestData(cls):
+        coach_group = Group.objects.get(name=ROLE_COACH)
+        client_group = Group.objects.get(name=ROLE_CLIENT)
+
+        cls.coach = User.objects.create_user(username="reccoach", password="Pass12345!")
+        cls.coach.groups.add(coach_group)
+
+        cls.client_user = User.objects.create_user(username="recclient", password="Pass12345!")
+        cls.client_user.groups.add(client_group)
+        cls.client_user.profile.assigned_coach = cls.coach
+        cls.client_user.profile.save()
+
+        cls.category = EventCategory.objects.create(name="Routine", color="emerald", client=cls.client_user)
+
+        cls.daily_event = Event.objects.create(
+            title="Morning Walk",
+            event_date=date(2026, 6, 1),
+            start_time=time(7, 0),
+            end_time=time(7, 30),
+            category=cls.category,
+            client=cls.client_user,
+            recurrence_type="daily",
+            recurrence_until=date(2026, 6, 4),
+        )
+        cls.single_event = Event.objects.create(
+            title="One-off Session",
+            event_date=date(2026, 6, 10),
+            start_time=time(9, 0),
+            end_time=time(10, 0),
+            category=cls.category,
+            client=cls.client_user,
+        )
+        cls.zoom_event = Event.objects.create(
+            title="Weekly Zoom Check-in",
+            event_date=date(2026, 6, 3),
+            start_time=time(11, 0),
+            end_time=time(11, 30),
+            category=cls.category,
+            client=cls.client_user,
+            recurrence_type="weekly",
+            recurrence_until=date(2026, 6, 17),
+            meeting_link="https://zoom.us/j/424242",
+            zoom_meeting_id=424242,
+        )
+
+    def authenticate(self, user):
+        response = self.client.post(
+            reverse("login"),
+            {"username": user.username, "password": "Pass12345!"},
+            format="json",
+        )
+        self.client.credentials(HTTP_AUTHORIZATION=f"Bearer {response.data['access']}")
+
+    def fetch_rows(self, params=None):
+        response = self.client.get(reverse("event-list"), params or {})
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        return get_list_results(response)
+
+    def rows_for(self, rows, event):
+        return [row for row in rows if row["id"] == event.id]
+
+    def test_daily_event_appears_on_every_day_through_until(self):
+        self.authenticate(self.client_user)
+        rows = self.rows_for(self.fetch_rows(), self.daily_event)
+        self.assertEqual(
+            [row["event_date"] for row in rows],
+            ["2026-06-01", "2026-06-02", "2026-06-03", "2026-06-04"],
+        )
+
+    def test_weekly_occurrences_share_id_and_meeting_link(self):
+        self.authenticate(self.client_user)
+        with mock.patch("planner.zoom.requests") as zoom_requests:
+            rows = self.rows_for(self.fetch_rows(), self.zoom_event)
+        self.assertEqual(
+            [row["event_date"] for row in rows],
+            ["2026-06-03", "2026-06-10", "2026-06-17"],
+        )
+        for row in rows:
+            self.assertEqual(row["meeting_link"], "https://zoom.us/j/424242")
+            self.assertEqual(row["zoom_meeting_id"], 424242)
+        # Rendering occurrences must never talk to Zoom.
+        zoom_requests.post.assert_not_called()
+        zoom_requests.request.assert_not_called()
+
+    def test_list_is_ordered_by_date_and_start_time(self):
+        self.authenticate(self.client_user)
+        rows = self.fetch_rows()
+        keys = [(row["event_date"], row["start_time"]) for row in rows]
+        self.assertEqual(keys, sorted(keys))
+
+    def test_range_params_clip_expansion_and_base_events(self):
+        self.authenticate(self.client_user)
+        rows = self.fetch_rows({"start": "2026-06-02", "end": "2026-06-10"})
+        self.assertEqual(
+            [row["event_date"] for row in self.rows_for(rows, self.daily_event)],
+            ["2026-06-02", "2026-06-03", "2026-06-04"],
+        )
+        self.assertEqual(
+            [row["event_date"] for row in self.rows_for(rows, self.zoom_event)],
+            ["2026-06-03", "2026-06-10"],
+        )
+        # Non-recurring event inside the range stays; outside it disappears.
+        self.assertEqual(len(self.rows_for(rows, self.single_event)), 1)
+        clipped = self.fetch_rows({"end": "2026-06-05"})
+        self.assertEqual(self.rows_for(clipped, self.single_event), [])
+
+    def test_invalid_range_param_is_rejected(self):
+        self.authenticate(self.client_user)
+        response = self.client.get(reverse("event-list"), {"start": "not-a-date"})
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertIn("start", response.data)
+
+    def test_editing_any_occurrence_edits_the_underlying_event(self):
+        self.authenticate(self.client_user)
+        response = self.client.patch(
+            reverse("event-detail", args=[self.daily_event.id]),
+            {"title": "Evening Walk"},
+            format="json",
+        )
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        rows = self.rows_for(self.fetch_rows(), self.daily_event)
+        self.assertEqual(len(rows), 4)
+        for row in rows:
+            self.assertEqual(row["title"], "Evening Walk")
