@@ -78,3 +78,12 @@
     });
   }
 })();
+
+// sticky header appears after scrolling past the hero brand row (mirrors original behavior)
+(function () {
+  var h = document.getElementById("site-header");
+  if (!h) return;
+  function onScroll() { h.style.display = window.scrollY > 80 ? "" : "none"; }
+  window.addEventListener("scroll", onScroll, { passive: true });
+  onScroll();
+})();
