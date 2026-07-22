@@ -36,7 +36,10 @@ PLANS = {
 
 
 def price_lookup_key(plan, interval):
-    return f"{plan}_{interval}"
+    # Brian's existing Stripe prices use display-style lookup keys, verbatim:
+    # "Full Support - Monthly", "Full Support - Weekly",
+    # "Focus Lite - Monthly", "Focus Lite - Weekly".
+    return f"{PLANS[plan]['name']} - {interval.title()}"
 
 
 def all_lookup_keys():

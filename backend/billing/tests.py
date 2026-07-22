@@ -16,7 +16,7 @@ PERIOD_END = 1893456000  # 2030-01-01T00:00:00Z
 
 def stripe_subscription_payload(
     sub_id="sub_123",
-    lookup_key="full_support_monthly",
+    lookup_key="Full Support - Monthly",
     sub_status="active",
     cancel_at_period_end=False,
     period_end=PERIOD_END,
@@ -99,7 +99,7 @@ class CheckoutTests(APITestCase):
         self.assertEqual(session_kwargs["client_reference_id"], str(user.id))
         self.assertEqual(session_kwargs["customer"], "cus_123")
         price_kwargs = mock_stripe.Price.list.call_args.kwargs
-        self.assertEqual(price_kwargs["lookup_keys"], ["full_support_monthly"])
+        self.assertEqual(price_kwargs["lookup_keys"], ["Full Support - Monthly"])
 
     def test_checkout_reuses_inactive_unpaid_user(self, mock_stripe):
         self.configure(mock_stripe)
@@ -234,7 +234,7 @@ class WebhookTests(APITestCase):
         Subscription.objects.create(
             user=self.user,
             stripe_subscription_id="sub_123",
-            price_lookup_key="full_support_monthly",
+            price_lookup_key="Full Support - Monthly",
             plan="full_support",
             interval="monthly",
             status="active",
@@ -242,7 +242,7 @@ class WebhookTests(APITestCase):
         mock_stripe.Webhook.construct_event.return_value = webhook_event(
             "customer.subscription.updated",
             stripe_subscription_payload(
-                lookup_key="focus_lite_weekly", cancel_at_period_end=True
+                lookup_key="Focus Lite - Weekly", cancel_at_period_end=True
             ),
         )
         response = self.post_webhook()
@@ -251,7 +251,7 @@ class WebhookTests(APITestCase):
         subscription = Subscription.objects.get(user=self.user)
         self.assertEqual(subscription.plan, "focus_lite")
         self.assertEqual(subscription.interval, "weekly")
-        self.assertEqual(subscription.price_lookup_key, "focus_lite_weekly")
+        self.assertEqual(subscription.price_lookup_key, "Focus Lite - Weekly")
         self.assertTrue(subscription.cancel_at_period_end)
         self.assertEqual(int(subscription.current_period_end.timestamp()), PERIOD_END)
 
@@ -414,7 +414,7 @@ class PortalAndSubscriptionTests(APITestCase):
         Subscription.objects.create(
             user=self.client_user,
             stripe_subscription_id="sub_123",
-            price_lookup_key="full_support_monthly",
+            price_lookup_key="Full Support - Monthly",
             plan="full_support",
             interval="monthly",
             status="active",
