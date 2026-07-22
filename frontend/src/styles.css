@@ -1942,6 +1942,13 @@ button {
   cursor: default;
 }
 
+/* Inline label for a control within a modal row (e.g. "Repeats"). */
+.gcal-field-label {
+  font-weight: 600;
+  font-size: 0.95rem;
+  color: #102033;
+}
+
 /* Custom-styled select wrapper to replace the bare native dropdown */
 .gcal-select-wrap {
   position: relative;

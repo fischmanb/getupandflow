@@ -229,6 +229,21 @@ class AdminManagedUserSerializer(serializers.ModelSerializer):
             raise serializers.ValidationError({"assigned_coach_id": "Client users must have an assigned coach."})
         if role == ROLE_COACH and assigned_coach:
             raise serializers.ValidationError({"assigned_coach_id": "Coach users cannot have an assigned coach."})
+        if (
+            self.instance
+            and role != ROLE_COACH
+            and get_user_role(self.instance) == ROLE_COACH
+        ):
+            client_count = UserProfile.objects.filter(assigned_coach=self.instance).count()
+            if client_count:
+                raise serializers.ValidationError(
+                    {
+                        "role": (
+                            f"This coach still has {client_count} assigned client(s). "
+                            "Reassign them to another coach before changing the role."
+                        )
+                    }
+                )
         return attrs
 
     def create(self, validated_data):

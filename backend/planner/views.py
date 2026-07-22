@@ -6,6 +6,7 @@ from django.contrib.auth.models import User
 from django.db import transaction
 from django.db.models import Count, F, Q
 from django.utils import timezone
+from django.utils.dateparse import parse_date
 from rest_framework import permissions, viewsets
 from rest_framework.decorators import action
 from rest_framework.exceptions import ValidationError
@@ -20,6 +21,7 @@ from accounts.models import UserProfile
 from . import zoom
 from .models import Event, EventCategory, Task
 from .pagination import StandardResultsSetPagination
+from .recurrence import expand_event_dates
 from .permissions import RBACScope
 from .serializers import (
     AdminManagedUserSerializer,
@@ -197,6 +199,44 @@ class EventViewSet(RoleScopedQuerysetMixin, viewsets.ModelViewSet):
     pagination_class = None
 
     ZOOM_SCHEDULE_FIELDS = ("event_date", "start_time", "end_time")
+
+    def list(self, request, *args, **kwargs):
+        """Expand recurring events into one entry per occurrence.
+
+        Each occurrence repeats the base event's payload (same id and
+        meeting_link — it is one underlying event and one Zoom meeting) with
+        only event_date swapped, so edits/deletes from any occurrence hit the
+        single source of truth. Optional ?start=YYYY-MM-DD / ?end=YYYY-MM-DD
+        clip the expansion to a visible range; without them, expansion is
+        bounded by recurrence_until (required for recurring events).
+        """
+        range_start = self._parse_range_param(request, "start")
+        range_end = self._parse_range_param(request, "end")
+        events = list(self.filter_queryset(self.get_queryset()))
+        serialized = self.get_serializer(events, many=True).data
+        rows = []
+        for event, row in zip(events, serialized):
+            for day in expand_event_dates(
+                event.event_date,
+                event.recurrence_type,
+                event.recurrence_until,
+                range_start,
+                range_end,
+            ):
+                rows.append(row if day == event.event_date else {**row, "event_date": day.isoformat()})
+        # Keep the model's ordering contract across expanded occurrences.
+        rows.sort(key=lambda item: (item["event_date"], item["start_time"], item["title"]))
+        return Response(rows)
+
+    @staticmethod
+    def _parse_range_param(request, name):
+        raw = request.query_params.get(name)
+        if not raw:
+            return None
+        parsed = parse_date(raw)
+        if parsed is None:
+            raise ValidationError({name: "Enter a valid date (YYYY-MM-DD)."})
+        return parsed
 
     def _resolve_zoom_host_email(self, event):
         """Host the meeting as the event owner's assigned coach; fall back to the
