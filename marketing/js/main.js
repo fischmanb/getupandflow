@@ -166,7 +166,7 @@
 // --- Billing period: one state, synced across pricing cards and the signup form ---
 (function () {
   var ACTIVE = ["bg-white", "text-slate-900", "shadow-sm"];
-  var IDLE = ["text-slate-500"];
+  var IDLE = ["text-slate-600"];
   function apply(period) {
     document.querySelectorAll(".billing-toggle button").forEach(function (btn) {
       var on = btn.dataset.billing === period;
