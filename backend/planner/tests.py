@@ -1262,3 +1262,46 @@ class RecurringEventExpansionTests(APITestCase):
         self.assertEqual(len(rows), 4)
         for row in rows:
             self.assertEqual(row["title"], "Evening Walk")
+
+
+class CoachRoleChangeGuardTests(APITestCase):
+    """Role change away from Coach is blocked while clients remain assigned."""
+
+    @classmethod
+    def setUpTestData(cls):
+        cls.admin = User.objects.create_user(username="admin9", password="Pass12345!")
+        cls.admin.groups.add(Group.objects.get(name=ROLE_ADMIN))
+        cls.coach = User.objects.create_user(username="coach9", password="Pass12345!")
+        cls.coach.groups.add(Group.objects.get(name=ROLE_COACH))
+        cls.other_coach = User.objects.create_user(username="coach10", password="Pass12345!")
+        cls.other_coach.groups.add(Group.objects.get(name=ROLE_COACH))
+        cls.client_user = User.objects.create_user(username="client9", password="Pass12345!")
+        cls.client_user.groups.add(Group.objects.get(name=ROLE_CLIENT))
+        cls.client_user.profile.assigned_coach = cls.coach
+        cls.client_user.profile.save()
+
+    def _auth(self):
+        self.client.force_authenticate(self.admin)
+
+    def test_role_flip_blocked_while_clients_assigned(self):
+        self._auth()
+        resp = self.client.patch(
+            f"/api/admin/users/{self.coach.id}/",
+            {"role": ROLE_CLIENT, "assigned_coach_id": self.other_coach.id},
+            format="json",
+        )
+        self.assertEqual(resp.status_code, 400)
+        self.assertIn("role", resp.data)
+        self.coach.refresh_from_db()
+        self.assertTrue(self.coach.groups.filter(name=ROLE_COACH).exists())
+
+    def test_role_flip_allowed_after_reassignment(self):
+        self._auth()
+        self.client_user.profile.assigned_coach = self.other_coach
+        self.client_user.profile.save()
+        resp = self.client.patch(
+            f"/api/admin/users/{self.coach.id}/",
+            {"role": ROLE_CLIENT, "assigned_coach_id": self.other_coach.id},
+            format="json",
+        )
+        self.assertEqual(resp.status_code, 200, resp.data)
