@@ -8,5 +8,7 @@ backend/staticfiles/
 frontend/node_modules/
 frontend/dist/
 
+marketing/node_modules/
+
 .DS_Store
 Thumbs.db

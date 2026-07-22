@@ -1,0 +1,12 @@
+{
+  "name": "getupandflow-marketing",
+  "private": true,
+  "version": "0.0.0",
+  "scripts": {
+    "build": "tailwindcss -i src/input.css -o assets/site.css --minify"
+  },
+  "devDependencies": {
+    "@tailwindcss/cli": "^4.1.0",
+    "tailwindcss": "^4.1.0"
+  }
+}

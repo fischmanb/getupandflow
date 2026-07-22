@@ -1,0 +1,21 @@
+@import "tailwindcss";
+
+@theme {
+  --animate-ticker: ticker 45s linear infinite;
+
+  @keyframes ticker {
+    from {
+      transform: translateX(0);
+    }
+    to {
+      transform: translateX(-50%);
+    }
+  }
+}
+
+/* Pause the ticker for users who prefer reduced motion. */
+@media (prefers-reduced-motion: reduce) {
+  .animate-ticker {
+    animation: none;
+  }
+}
