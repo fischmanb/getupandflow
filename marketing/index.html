@@ -308,17 +308,17 @@
           <p class="mt-2 font-bold text-slate-900">That's 80% less for daily support</p>
         </div>
 
-        <div class="mt-16 grid items-start gap-8 lg:grid-cols-3">
+        <div class="mt-16 grid items-stretch gap-8 lg:grid-cols-3">
           <!-- Full Support -->
-          <article class="relative overflow-hidden rounded-2xl border-2 border-blue-600 bg-white p-8 shadow-xl lg:col-span-2 lg:p-10">
+          <article class="relative flex h-full flex-col overflow-hidden rounded-2xl border-2 border-blue-600 bg-white p-8 shadow-xl lg:col-span-2 lg:p-10">
             <span class="absolute right-0 top-0 rounded-bl-2xl bg-gradient-to-r from-blue-600 to-emerald-500 px-4 py-1.5 text-xs font-bold text-white">✦ MOST POPULAR</span>
             <h3 class="text-2xl font-bold text-slate-900">Full Support</h3>
             <p class="mt-2 text-slate-600">Your personal accountability partner — daily structure, coaching, and follow-through.</p>
-            <div class="mt-6 inline-flex rounded-full bg-slate-100 p-1 text-sm font-medium" role="group" aria-label="Billing period (Monthly shown)">
-              <span class="rounded-full bg-white px-4 py-1.5 text-slate-900 shadow-sm">Monthly</span>
-              <span class="px-4 py-1.5 text-slate-500">Weekly</span>
+            <div class="billing-toggle mt-6 inline-flex rounded-full bg-slate-100 p-1 text-sm font-medium" role="group" aria-label="Billing period">
+              <button type="button" data-billing="monthly" class="rounded-full px-4 py-1.5">Monthly</button>
+              <button type="button" data-billing="weekly" class="rounded-full px-4 py-1.5">Weekly</button>
             </div>
-            <p class="mt-4"><span class="text-5xl font-extrabold tracking-tight text-slate-900">$750</span><span class="text-lg text-slate-500">/month</span></p>
+            <p class="mt-4"><span class="text-5xl font-extrabold tracking-tight text-slate-900" data-price data-monthly="$750" data-weekly="$225">$750</span><span class="text-lg text-slate-500" data-suffix data-monthly="/month" data-weekly="/week">/month</span></p>
             <p class="mt-2 text-sm text-slate-600">Daily human support • Cancel anytime</p>
             <p class="mt-4 inline-block rounded-full bg-amber-100 px-4 py-1.5 text-sm font-semibold text-amber-800">$4-6,000 value. We built a better way.</p>
             <ul class="mt-8 space-y-4">
@@ -359,14 +359,19 @@
                 <span class="text-slate-700">No long-term contract required</span>
               </li>
             </ul>
-            <a href="#signup" class="mt-10 block rounded-full bg-gradient-to-r from-blue-600 to-emerald-500 px-8 py-4 text-center text-lg font-semibold text-white shadow-lg shadow-blue-600/20 transition hover:opacity-90">Start Tomorrow Morning</a>
+            <div class="mt-10"></div>
+            <a href="#signup" class="mt-auto block rounded-full bg-gradient-to-r from-blue-600 to-emerald-500 px-8 py-4 pt-4 text-center text-lg font-semibold text-white shadow-lg shadow-blue-600/20 transition hover:opacity-90" style="margin-top:auto;">Start Tomorrow Morning</a>
           </article>
 
           <!-- Focus Lite -->
-          <article class="rounded-2xl border border-slate-200 bg-white p-8 shadow-sm">
+          <article class="flex h-full flex-col rounded-2xl border border-slate-200 bg-white p-8 shadow-sm">
             <h3 class="text-2xl font-bold text-slate-900">Focus Lite</h3>
             <p class="mt-2 text-slate-600">Weekly planning and gentle reminders — stay organized without daily check-ins.</p>
-            <p class="mt-6"><span class="text-5xl font-extrabold tracking-tight text-slate-900">$200</span><span class="text-lg text-slate-500">/mo</span></p>
+            <div class="billing-toggle mt-6 inline-flex rounded-full bg-slate-100 p-1 text-sm font-medium" role="group" aria-label="Billing period">
+              <button type="button" data-billing="monthly" class="rounded-full px-4 py-1.5">Monthly</button>
+              <button type="button" data-billing="weekly" class="rounded-full px-4 py-1.5">Weekly</button>
+            </div>
+            <p class="mt-4"><span class="text-5xl font-extrabold tracking-tight text-slate-900" data-price data-monthly="$200" data-weekly="$95">$200</span><span class="text-lg text-slate-500" data-suffix data-monthly="/mo" data-weekly="/wk">/mo</span></p>
             <p class="mt-2 text-sm text-slate-600">Light accountability &amp; reminders</p>
             <ul class="mt-8 space-y-4">
               <li class="flex gap-3">
@@ -390,7 +395,7 @@
                 <span class="text-slate-700">No long-term contract required</span>
               </li>
             </ul>
-            <a href="#signup" class="mt-10 block rounded-full bg-slate-900 px-8 py-4 text-center text-lg font-semibold text-white transition hover:bg-slate-800">Start Lite</a>
+            <a href="#signup" class="mt-auto block rounded-full bg-slate-900 px-8 py-4 text-center text-lg font-semibold text-white transition hover:bg-slate-800">Start Lite</a>
           </article>
         </div>
 
@@ -420,7 +425,7 @@
                 <span class="block h-full rounded-xl border-2 border-slate-200 p-4 transition peer-checked:border-blue-600 peer-checked:bg-blue-50/50 peer-focus-visible:ring-2 peer-focus-visible:ring-blue-600 peer-focus-visible:ring-offset-2">
                   <span class="flex items-baseline justify-between gap-2">
                     <span class="font-semibold text-slate-900">Full Support</span>
-                    <span class="text-sm font-bold text-slate-900">$750/mo</span>
+                    <span class="text-sm font-bold text-slate-900" data-price-compact data-monthly="$750/mo" data-weekly="$225/wk">$750/mo</span>
                   </span>
                   <span class="mt-1 block text-sm text-slate-500">Daily 1:1 planning, wrap-up sessions, and up to 45 min ad-hoc support</span>
                 </span>
@@ -430,7 +435,7 @@
                 <span class="block h-full rounded-xl border-2 border-slate-200 p-4 transition peer-checked:border-blue-600 peer-checked:bg-blue-50/50 peer-focus-visible:ring-2 peer-focus-visible:ring-blue-600 peer-focus-visible:ring-offset-2">
                   <span class="flex items-baseline justify-between gap-2">
                     <span class="font-semibold text-slate-900">Focus Lite</span>
-                    <span class="text-sm font-bold text-slate-900">$200/mo</span>
+                    <span class="text-sm font-bold text-slate-900" data-price-compact data-monthly="$200/mo" data-weekly="$95/wk">$200/mo</span>
                   </span>
                   <span class="mt-1 block text-sm text-slate-500">Weekly planning call and daily reminders</span>
                 </span>

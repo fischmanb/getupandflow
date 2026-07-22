@@ -1,7 +1,7 @@
 @import "tailwindcss";
 
 @theme {
-  --animate-ticker: ticker 45s linear infinite;
+  --animate-ticker: ticker 90s linear infinite;
 
   @keyframes ticker {
     from {

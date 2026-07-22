@@ -162,3 +162,30 @@
     });
   }
 })();
+
+// --- Billing period: one state, synced across pricing cards and the signup form ---
+(function () {
+  var ACTIVE = ["bg-white", "text-slate-900", "shadow-sm"];
+  var IDLE = ["text-slate-500"];
+  function apply(period) {
+    document.querySelectorAll(".billing-toggle button").forEach(function (btn) {
+      var on = btn.dataset.billing === period;
+      ACTIVE.forEach(function (c) { btn.classList.toggle(c, on); });
+      IDLE.forEach(function (c) { btn.classList.toggle(c, !on); });
+      btn.setAttribute("aria-pressed", on ? "true" : "false");
+    });
+    document.querySelectorAll("[data-price],[data-suffix],[data-price-compact]").forEach(function (el) {
+      var v = el.dataset[period];
+      if (v) el.textContent = v;
+    });
+    var radio = document.querySelector('input[name="billing_period"][value="' + period + '"]');
+    if (radio && !radio.checked) radio.checked = true;
+  }
+  document.querySelectorAll(".billing-toggle button").forEach(function (btn) {
+    btn.addEventListener("click", function () { apply(btn.dataset.billing); });
+  });
+  document.querySelectorAll('input[name="billing_period"]').forEach(function (r) {
+    r.addEventListener("change", function () { if (r.checked) apply(r.value); });
+  });
+  apply("monthly");
+})();
