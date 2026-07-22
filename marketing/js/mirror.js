@@ -64,20 +64,19 @@
     }
   });
 
-  // who-we-are photo -> video modal
-  var photo = document.querySelector(".aspect-\\[4\\/3\\].cursor-pointer") || document.querySelector("div.cursor-pointer img[alt*=coach i]");
+  // who-we-are coach photo -> Cindy's video, swapped in place (original behavior)
+  var photo = document.querySelector(".aspect-\[4\/3\].cursor-pointer") || document.querySelector("div.cursor-pointer img[alt*=coach i]");
   var trigger = photo ? (photo.closest(".cursor-pointer") || photo) : null;
   if (trigger) {
     trigger.addEventListener("click", function () {
-      var overlay = document.createElement("div");
-      overlay.style.cssText = "position:fixed;inset:0;background:rgba(15,23,42,.8);z-index:9999;display:flex;align-items:center;justify-content:center;padding:24px";
-      overlay.innerHTML = "<div style=\"position:relative;width:min(960px,100%);aspect-ratio:16/9\"><iframe src=\"https://player.vimeo.com/video/1212047562?h=072c11c640&autoplay=1\" style=\"width:100%;height:100%;border:0;border-radius:16px\" allow=\"autoplay; fullscreen; picture-in-picture\"></iframe></div>";
-      overlay.addEventListener("click", function (e) { if (e.target === overlay) overlay.remove(); });
-      document.addEventListener("keydown", function esc(e) { if (e.key === "Escape") { overlay.remove(); document.removeEventListener("keydown", esc); } });
-      document.body.appendChild(overlay);
-    });
+      if (trigger.dataset.playing) return;
+      trigger.dataset.playing = "1";
+      trigger.style.aspectRatio = "16/9";
+      trigger.classList.remove("cursor-pointer");
+      trigger.innerHTML = "<iframe src=\"https://player.vimeo.com/video/1134719805?badge=0&autopause=0&autoplay=1&app_id=58479\" style=\"width:100%;height:100%;border:0\" allow=\"autoplay; fullscreen; picture-in-picture\" allowfullscreen title=\"Meet a GUAF coach\"></iframe>";
+    }, { once: false });
   }
-})();
+  })();
 
 // sticky header appears after scrolling past the hero brand row (mirrors original behavior)
 (function () {
