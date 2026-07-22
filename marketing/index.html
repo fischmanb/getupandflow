@@ -61,521 +61,447 @@
 <body class="bg-white text-slate-900 antialiased">
 
   <!-- Header -->
-  <header class="sticky top-0 z-40 border-b border-slate-200 bg-white/80 shadow-sm backdrop-blur-md">
-    <div class="mx-auto max-w-7xl px-6 py-3">
-      <div class="flex items-center justify-between">
-        <a href="/" class="flex items-center gap-2">
-          <img src="/assets/logo.png" alt="Get Up and Flow logo" class="h-8 w-8 rounded-lg" width="32" height="32" />
-          <span class="hidden text-lg font-bold text-slate-900 min-[480px]:block">Get Up and Flow</span>
-        </a>
-        <nav class="flex items-center gap-3 sm:gap-6" aria-label="Main">
-          <a href="/faq" class="hidden font-medium text-slate-700 hover:text-slate-900 sm:block">FAQ</a>
-          <a href="https://app.getupandflow.co/login" class="font-medium text-slate-700 hover:text-slate-900">Log in</a>
-          <a href="#signup" class="inline-flex h-9 items-center justify-center gap-2 whitespace-nowrap rounded-xl bg-gradient-to-r from-blue-600 to-emerald-500 px-6 py-2 text-sm font-medium text-white shadow-md transition hover:shadow-lg">Start Tomorrow Morning</a>
-        </nav>
-      </div>
+  <header class="sticky top-0 z-40 border-b border-slate-200/60 bg-white/80 backdrop-blur-md">
+    <div class="mx-auto flex h-16 max-w-7xl items-center justify-between px-4 sm:px-6 lg:px-8">
+      <a href="/" class="flex items-center gap-2.5">
+        <img src="/assets/logo.png" alt="Get Up and Flow logo" class="h-9 w-9 rounded-lg" width="36" height="36" />
+        <span class="hidden text-lg font-bold tracking-tight text-slate-900 min-[480px]:block">Get Up and Flow</span>
+      </a>
+      <nav class="flex items-center gap-3 sm:gap-6" aria-label="Main">
+        <a href="/faq" class="hidden text-sm font-medium text-slate-600 hover:text-slate-900 sm:block">FAQ</a>
+        <a href="https://app.getupandflow.co/login" class="text-sm font-medium text-slate-600 hover:text-slate-900">Log in</a>
+        <a href="#signup" class="whitespace-nowrap rounded-full bg-gradient-to-r from-blue-600 to-emerald-500 px-4 py-2 text-sm font-semibold text-white shadow-sm transition hover:opacity-90 sm:px-5">Start Tomorrow Morning</a>
+      </nav>
     </div>
   </header>
 
   <main>
     <!-- 1. Hero -->
-    <section class="relative flex min-h-[90vh] flex-col items-center justify-center overflow-hidden bg-gradient-to-b from-slate-50 to-white">
+    <section class="relative overflow-hidden bg-gradient-to-b from-slate-50 to-white">
       <div class="absolute inset-0 bg-[radial-gradient(circle,_rgba(148,163,184,0.25)_1px,_transparent_1px)] bg-[length:24px_24px] [mask-image:radial-gradient(ellipse_at_center,black_40%,transparent_75%)]" aria-hidden="true"></div>
-      <div class="relative mx-auto w-full max-w-7xl px-4 py-16 sm:px-6 sm:py-20 md:py-32">
-        <div class="mx-auto w-full max-w-4xl text-center">
-          <p class="mx-auto mb-6 inline-flex items-center gap-2 rounded-full border border-blue-100 bg-blue-50 px-3 py-2 text-xs font-medium text-blue-700 sm:mb-8 sm:px-4 sm:text-sm">
-            <span class="h-2 w-2 rounded-full bg-blue-600" aria-hidden="true"></span>
-            Now accepting pilot participants
+      <div class="relative mx-auto max-w-4xl px-4 pb-16 pt-20 text-center sm:px-6 sm:pt-28 lg:px-8">
+        <p class="mx-auto inline-flex items-center gap-2 rounded-full border border-blue-200 bg-blue-50 px-4 py-1.5 text-sm font-medium text-blue-700">
+          <span class="h-2 w-2 rounded-full bg-blue-600" aria-hidden="true"></span>
+          Now accepting pilot participants
+        </p>
+        <h1 class="mt-6 text-4xl font-extrabold tracking-tight text-slate-900 sm:text-5xl lg:text-6xl">
+          You're not lazy.<br />
+          <span class="bg-gradient-to-r from-blue-600 to-emerald-500 bg-clip-text text-transparent">Your brain just needs a <span class="whitespace-nowrap">co-pilot.</span></span>
+        </h1>
+        <p class="mx-auto mt-6 max-w-2xl text-lg leading-relaxed text-slate-600 sm:text-xl">
+          Affordable, daily executive-function support — guided by real people who help you plan, follow through, and actually get things done at a fraction of traditional coaching costs. Daily human support.
+        </p>
+        <div class="mt-8 flex flex-col items-center gap-4">
+          <a href="#signup" class="inline-flex items-center gap-2 rounded-full bg-gradient-to-r from-blue-600 to-emerald-500 px-8 py-4 text-lg font-semibold text-white shadow-lg shadow-blue-600/20 transition hover:opacity-90">
+            Start Tomorrow Morning
+            <svg class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
+          </a>
+          <p class="inline-flex items-center gap-2 rounded-full bg-emerald-50 px-4 py-1.5 text-sm font-medium text-emerald-700">
+            <span class="h-2 w-2 animate-pulse rounded-full bg-emerald-500" aria-hidden="true"></span>
+            7 spots remaining
           </p>
-          <h1 class="mb-4 text-3xl font-bold leading-[1.15] tracking-tight text-slate-900 sm:mb-6 sm:text-5xl md:text-7xl">
-            You're not lazy.<br />
-            <span class="bg-gradient-to-r from-blue-600 to-emerald-500 bg-clip-text text-transparent">Your brain just needs a <span class="whitespace-nowrap">co-pilot.</span></span>
-          </h1>
-          <p class="mx-auto mb-8 max-w-3xl text-base font-light leading-relaxed text-slate-600 sm:mb-12 sm:text-xl md:text-2xl">
-            Affordable, daily executive-function support — guided by real people who help you plan, follow through, and actually get things done at a fraction of traditional coaching costs. Daily human support.
-          </p>
-          <div class="mb-4 flex flex-col items-center sm:mb-6">
-            <a href="#signup" class="inline-flex h-10 w-full max-w-xs items-center justify-center gap-2 whitespace-nowrap rounded-xl bg-gradient-to-r from-blue-600 to-emerald-500 px-6 py-5 text-base font-medium text-white shadow-lg transition hover:shadow-xl sm:max-w-sm sm:px-8 sm:py-6 sm:text-lg">
-              Start Tomorrow Morning
-              <svg class="ml-2 h-4 w-4 sm:h-5 sm:w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
-            </a>
-            <p class="mt-3 inline-flex items-center gap-2 rounded-full bg-emerald-50 px-4 py-1.5 text-xs font-semibold text-slate-700 sm:text-sm">
-              <span class="h-2 w-2 animate-pulse rounded-full bg-emerald-500" aria-hidden="true"></span>
-              7 spots remaining
-            </p>
-          </div>
         </div>
       </div>
 
       <!-- Ticker -->
-      <div class="relative w-full py-3" aria-label="The mental load we help carry">
+      <div class="relative border-y border-slate-200/70 bg-white/60 py-4" aria-label="The mental load we help carry">
         <div class="overflow-hidden [mask-image:linear-gradient(to_right,transparent,black_10%,black_90%,transparent)]">
           <div class="flex w-max animate-ticker">
-            <div class="flex items-center whitespace-nowrap text-sm font-semibold text-slate-500 sm:text-base md:text-lg">
-              <span class="inline-block">The 47 browser tabs you swear you'll read</span><span class="mx-4 inline-block text-slate-300 sm:mx-6" aria-hidden="true">•</span>
-              <span class="inline-block">That expense report from three months ago</span><span class="mx-4 inline-block text-slate-300 sm:mx-6" aria-hidden="true">•</span>
-              <span class="inline-block">The birthday card sitting on your desk for two weeks</span><span class="mx-4 inline-block text-slate-300 sm:mx-6" aria-hidden="true">•</span>
-              <span class="inline-block">The laundry in the washer since yesterday</span><span class="mx-4 inline-block text-slate-300 sm:mx-6" aria-hidden="true">•</span>
-              <span class="inline-block">The prescription that's been 'ready for pickup' for 9 days</span><span class="mx-4 inline-block text-slate-300 sm:mx-6" aria-hidden="true">•</span>
-              <span class="inline-block">The oil change you've needed for 2,000 miles</span><span class="mx-4 inline-block text-slate-300 sm:mx-6" aria-hidden="true">•</span>
-              <span class="inline-block">The thank you note you mentally wrote but never sent</span><span class="mx-4 inline-block text-slate-300 sm:mx-6" aria-hidden="true">•</span>
-              <span class="inline-block">The Amazon returns expiring tomorrow</span><span class="mx-4 inline-block text-slate-300 sm:mx-6" aria-hidden="true">•</span>
-              <span class="inline-block">The password reset email you'll request five more times</span><span class="mx-4 inline-block text-slate-300 sm:mx-6" aria-hidden="true">•</span>
-              <span class="inline-block">The gym membership you haven't cancelled in 18 months</span><span class="mx-4 inline-block text-slate-300 sm:mx-6" aria-hidden="true">•</span>
-              <span class="inline-block">The text you read but didn't reply to</span><span class="mx-4 inline-block text-slate-300 sm:mx-6" aria-hidden="true">•</span>
-              <span class="inline-block">The meeting you forgot wasn't on your calendar</span><span class="mx-4 inline-block text-slate-300 sm:mx-6" aria-hidden="true">•</span>
-              <span class="inline-block">The deadline you remembered at 11:47pm</span><span class="mx-4 inline-block text-slate-300 sm:mx-6" aria-hidden="true">•</span>
-              <span class="inline-block">The grocery list you left on the counter</span><span class="mx-4 inline-block text-slate-300 sm:mx-6" aria-hidden="true">•</span>
-              <span class="inline-block">The bill on autopay that's hitting an expired card</span><span class="mx-4 inline-block text-slate-300 sm:mx-6" aria-hidden="true">•</span>
-              <span class="inline-block">The appointment you showed up for on the wrong day</span><span class="mx-4 inline-block text-slate-300 sm:mx-6" aria-hidden="true">•</span>
-              <span class="inline-block">The project you started with incredible energy then ghosted</span><span class="mx-4 inline-block text-slate-300 sm:mx-6" aria-hidden="true">•</span>
-              <span class="inline-block">The conversation you're rehearsing that will never happen</span><span class="mx-4 inline-block text-slate-300 sm:mx-6" aria-hidden="true">•</span>
-              <span class="inline-block">The Thing you put somewhere special so you wouldn't lose it</span><span class="mx-4 inline-block text-slate-300 sm:mx-6" aria-hidden="true">•</span>
-              <span class="inline-block">The meditation app you paid for annually</span><span class="mx-4 inline-block text-slate-300 sm:mx-6" aria-hidden="true">•</span>
-              <span class="inline-block">The vitamins expiring in your cabinet</span><span class="mx-4 inline-block text-slate-300 sm:mx-6" aria-hidden="true">•</span>
-              <span class="inline-block">The important document in one of six 'safe places'</span><span class="mx-4 inline-block text-slate-300 sm:mx-6" aria-hidden="true">•</span>
-              <span class="inline-block">The hobby supplies from your last fixation</span><span class="mx-4 inline-block text-slate-300 sm:mx-6" aria-hidden="true">•</span>
-              <span class="inline-block">The LinkedIn message marked unread 'so you won't forget'</span><span class="mx-4 inline-block text-slate-300 sm:mx-6" aria-hidden="true">•</span>
-              <span class="inline-block">The car registration renewal notice somewhere</span><span class="mx-4 inline-block text-slate-300 sm:mx-6" aria-hidden="true">•</span>
-              <span class="inline-block">The brilliant 3am idea you didn't write down</span><span class="mx-4 inline-block text-slate-300 sm:mx-6" aria-hidden="true">•</span>
-              <span class="inline-block">The phone call you'll definitely make after this one thing</span><span class="mx-4 inline-block text-slate-300 sm:mx-6" aria-hidden="true">•</span>
-              <span class="inline-block">The backup drive still in its packaging</span><span class="mx-4 inline-block text-slate-300 sm:mx-6" aria-hidden="true">•</span>
-              <span class="inline-block">The free trial that started charging you four months ago</span><span class="mx-4 inline-block text-slate-300 sm:mx-6" aria-hidden="true">•</span>
-              <span class="inline-block">The dentist calling about your missed appointment right now</span><span class="mx-4 inline-block text-slate-300 sm:mx-6" aria-hidden="true">•</span>
+            <div class="flex items-center whitespace-nowrap text-sm text-slate-500">
+              <span class="px-4">The 47 browser tabs you swear you'll read</span><span class="text-slate-300" aria-hidden="true">•</span>
+              <span class="px-4">That expense report from three months ago</span><span class="text-slate-300" aria-hidden="true">•</span>
+              <span class="px-4">The birthday card sitting on your desk for two weeks</span><span class="text-slate-300" aria-hidden="true">•</span>
+              <span class="px-4">The laundry in the washer since yesterday</span><span class="text-slate-300" aria-hidden="true">•</span>
+              <span class="px-4">The prescription that's been 'ready for pickup' for 9 days</span><span class="text-slate-300" aria-hidden="true">•</span>
+              <span class="px-4">The oil change you've needed for 2,000 miles</span><span class="text-slate-300" aria-hidden="true">•</span>
+              <span class="px-4">The thank you note you mentally wrote but never sent</span><span class="text-slate-300" aria-hidden="true">•</span>
+              <span class="px-4">The Amazon returns expiring tomorrow</span><span class="text-slate-300" aria-hidden="true">•</span>
+              <span class="px-4">The password reset email you'll request five more times</span><span class="text-slate-300" aria-hidden="true">•</span>
+              <span class="px-4">The gym membership you haven't cancelled in 18 months</span><span class="text-slate-300" aria-hidden="true">•</span>
+              <span class="px-4">The text you read but didn't reply to</span><span class="text-slate-300" aria-hidden="true">•</span>
+              <span class="px-4">The meeting you forgot wasn't on your calendar</span><span class="text-slate-300" aria-hidden="true">•</span>
+              <span class="px-4">The deadline you remembered at 11:47pm</span><span class="text-slate-300" aria-hidden="true">•</span>
+              <span class="px-4">The grocery list you left on the counter</span><span class="text-slate-300" aria-hidden="true">•</span>
+              <span class="px-4">The bill on autopay that's hitting an expired card</span><span class="text-slate-300" aria-hidden="true">•</span>
+              <span class="px-4">The appointment you showed up for on the wrong day</span><span class="text-slate-300" aria-hidden="true">•</span>
+              <span class="px-4">The project you started with incredible energy then ghosted</span><span class="text-slate-300" aria-hidden="true">•</span>
+              <span class="px-4">The conversation you're rehearsing that will never happen</span><span class="text-slate-300" aria-hidden="true">•</span>
+              <span class="px-4">The Thing you put somewhere special so you wouldn't lose it</span><span class="text-slate-300" aria-hidden="true">•</span>
+              <span class="px-4">The meditation app you paid for annually</span><span class="text-slate-300" aria-hidden="true">•</span>
+              <span class="px-4">The vitamins expiring in your cabinet</span><span class="text-slate-300" aria-hidden="true">•</span>
+              <span class="px-4">The important document in one of six 'safe places'</span><span class="text-slate-300" aria-hidden="true">•</span>
+              <span class="px-4">The hobby supplies from your last fixation</span><span class="text-slate-300" aria-hidden="true">•</span>
+              <span class="px-4">The LinkedIn message marked unread 'so you won't forget'</span><span class="text-slate-300" aria-hidden="true">•</span>
+              <span class="px-4">The car registration renewal notice somewhere</span><span class="text-slate-300" aria-hidden="true">•</span>
+              <span class="px-4">The brilliant 3am idea you didn't write down</span><span class="text-slate-300" aria-hidden="true">•</span>
+              <span class="px-4">The phone call you'll definitely make after this one thing</span><span class="text-slate-300" aria-hidden="true">•</span>
+              <span class="px-4">The backup drive still in its packaging</span><span class="text-slate-300" aria-hidden="true">•</span>
+              <span class="px-4">The free trial that started charging you four months ago</span><span class="text-slate-300" aria-hidden="true">•</span>
+              <span class="px-4">The dentist calling about your missed appointment right now</span><span class="text-slate-300" aria-hidden="true">•</span>
             </div>
-            <div class="flex items-center whitespace-nowrap text-sm font-semibold text-slate-500 sm:text-base md:text-lg" aria-hidden="true">
-              <span class="inline-block">The 47 browser tabs you swear you'll read</span><span class="mx-4 inline-block text-slate-300 sm:mx-6">•</span>
-              <span class="inline-block">That expense report from three months ago</span><span class="mx-4 inline-block text-slate-300 sm:mx-6">•</span>
-              <span class="inline-block">The birthday card sitting on your desk for two weeks</span><span class="mx-4 inline-block text-slate-300 sm:mx-6">•</span>
-              <span class="inline-block">The laundry in the washer since yesterday</span><span class="mx-4 inline-block text-slate-300 sm:mx-6">•</span>
-              <span class="inline-block">The prescription that's been 'ready for pickup' for 9 days</span><span class="mx-4 inline-block text-slate-300 sm:mx-6">•</span>
-              <span class="inline-block">The oil change you've needed for 2,000 miles</span><span class="mx-4 inline-block text-slate-300 sm:mx-6">•</span>
-              <span class="inline-block">The thank you note you mentally wrote but never sent</span><span class="mx-4 inline-block text-slate-300 sm:mx-6">•</span>
-              <span class="inline-block">The Amazon returns expiring tomorrow</span><span class="mx-4 inline-block text-slate-300 sm:mx-6">•</span>
-              <span class="inline-block">The password reset email you'll request five more times</span><span class="mx-4 inline-block text-slate-300 sm:mx-6">•</span>
-              <span class="inline-block">The gym membership you haven't cancelled in 18 months</span><span class="mx-4 inline-block text-slate-300 sm:mx-6">•</span>
-              <span class="inline-block">The text you read but didn't reply to</span><span class="mx-4 inline-block text-slate-300 sm:mx-6">•</span>
-              <span class="inline-block">The meeting you forgot wasn't on your calendar</span><span class="mx-4 inline-block text-slate-300 sm:mx-6">•</span>
-              <span class="inline-block">The deadline you remembered at 11:47pm</span><span class="mx-4 inline-block text-slate-300 sm:mx-6">•</span>
-              <span class="inline-block">The grocery list you left on the counter</span><span class="mx-4 inline-block text-slate-300 sm:mx-6">•</span>
-              <span class="inline-block">The bill on autopay that's hitting an expired card</span><span class="mx-4 inline-block text-slate-300 sm:mx-6">•</span>
-              <span class="inline-block">The appointment you showed up for on the wrong day</span><span class="mx-4 inline-block text-slate-300 sm:mx-6">•</span>
-              <span class="inline-block">The project you started with incredible energy then ghosted</span><span class="mx-4 inline-block text-slate-300 sm:mx-6">•</span>
-              <span class="inline-block">The conversation you're rehearsing that will never happen</span><span class="mx-4 inline-block text-slate-300 sm:mx-6">•</span>
-              <span class="inline-block">The Thing you put somewhere special so you wouldn't lose it</span><span class="mx-4 inline-block text-slate-300 sm:mx-6">•</span>
-              <span class="inline-block">The meditation app you paid for annually</span><span class="mx-4 inline-block text-slate-300 sm:mx-6">•</span>
-              <span class="inline-block">The vitamins expiring in your cabinet</span><span class="mx-4 inline-block text-slate-300 sm:mx-6">•</span>
-              <span class="inline-block">The important document in one of six 'safe places'</span><span class="mx-4 inline-block text-slate-300 sm:mx-6">•</span>
-              <span class="inline-block">The hobby supplies from your last fixation</span><span class="mx-4 inline-block text-slate-300 sm:mx-6">•</span>
-              <span class="inline-block">The LinkedIn message marked unread 'so you won't forget'</span><span class="mx-4 inline-block text-slate-300 sm:mx-6">•</span>
-              <span class="inline-block">The car registration renewal notice somewhere</span><span class="mx-4 inline-block text-slate-300 sm:mx-6">•</span>
-              <span class="inline-block">The brilliant 3am idea you didn't write down</span><span class="mx-4 inline-block text-slate-300 sm:mx-6">•</span>
-              <span class="inline-block">The phone call you'll definitely make after this one thing</span><span class="mx-4 inline-block text-slate-300 sm:mx-6">•</span>
-              <span class="inline-block">The backup drive still in its packaging</span><span class="mx-4 inline-block text-slate-300 sm:mx-6">•</span>
-              <span class="inline-block">The free trial that started charging you four months ago</span><span class="mx-4 inline-block text-slate-300 sm:mx-6">•</span>
-              <span class="inline-block">The dentist calling about your missed appointment right now</span><span class="mx-4 inline-block text-slate-300 sm:mx-6">•</span>
+            <div class="flex items-center whitespace-nowrap text-sm text-slate-500" aria-hidden="true">
+              <span class="px-4">The 47 browser tabs you swear you'll read</span><span class="text-slate-300">•</span>
+              <span class="px-4">That expense report from three months ago</span><span class="text-slate-300">•</span>
+              <span class="px-4">The birthday card sitting on your desk for two weeks</span><span class="text-slate-300">•</span>
+              <span class="px-4">The laundry in the washer since yesterday</span><span class="text-slate-300">•</span>
+              <span class="px-4">The prescription that's been 'ready for pickup' for 9 days</span><span class="text-slate-300">•</span>
+              <span class="px-4">The oil change you've needed for 2,000 miles</span><span class="text-slate-300">•</span>
+              <span class="px-4">The thank you note you mentally wrote but never sent</span><span class="text-slate-300">•</span>
+              <span class="px-4">The Amazon returns expiring tomorrow</span><span class="text-slate-300">•</span>
+              <span class="px-4">The password reset email you'll request five more times</span><span class="text-slate-300">•</span>
+              <span class="px-4">The gym membership you haven't cancelled in 18 months</span><span class="text-slate-300">•</span>
+              <span class="px-4">The text you read but didn't reply to</span><span class="text-slate-300">•</span>
+              <span class="px-4">The meeting you forgot wasn't on your calendar</span><span class="text-slate-300">•</span>
+              <span class="px-4">The deadline you remembered at 11:47pm</span><span class="text-slate-300">•</span>
+              <span class="px-4">The grocery list you left on the counter</span><span class="text-slate-300">•</span>
+              <span class="px-4">The bill on autopay that's hitting an expired card</span><span class="text-slate-300">•</span>
+              <span class="px-4">The appointment you showed up for on the wrong day</span><span class="text-slate-300">•</span>
+              <span class="px-4">The project you started with incredible energy then ghosted</span><span class="text-slate-300">•</span>
+              <span class="px-4">The conversation you're rehearsing that will never happen</span><span class="text-slate-300">•</span>
+              <span class="px-4">The Thing you put somewhere special so you wouldn't lose it</span><span class="text-slate-300">•</span>
+              <span class="px-4">The meditation app you paid for annually</span><span class="text-slate-300">•</span>
+              <span class="px-4">The vitamins expiring in your cabinet</span><span class="text-slate-300">•</span>
+              <span class="px-4">The important document in one of six 'safe places'</span><span class="text-slate-300">•</span>
+              <span class="px-4">The hobby supplies from your last fixation</span><span class="text-slate-300">•</span>
+              <span class="px-4">The LinkedIn message marked unread 'so you won't forget'</span><span class="text-slate-300">•</span>
+              <span class="px-4">The car registration renewal notice somewhere</span><span class="text-slate-300">•</span>
+              <span class="px-4">The brilliant 3am idea you didn't write down</span><span class="text-slate-300">•</span>
+              <span class="px-4">The phone call you'll definitely make after this one thing</span><span class="text-slate-300">•</span>
+              <span class="px-4">The backup drive still in its packaging</span><span class="text-slate-300">•</span>
+              <span class="px-4">The free trial that started charging you four months ago</span><span class="text-slate-300">•</span>
+              <span class="px-4">The dentist calling about your missed appointment right now</span><span class="text-slate-300">•</span>
             </div>
           </div>
         </div>
       </div>
 
-      <div class="relative mt-4 text-center text-xs text-slate-500 sm:text-sm">
-        <p class="px-4">Plans starting at <span class="font-semibold text-slate-700">$200/month</span> • <span class="font-semibold text-slate-700">Daily human support</span> • Cancel anytime, no questions</p>
+      <div class="relative py-6 text-center">
+        <p class="px-4 text-sm text-slate-600">Plans starting at <strong class="text-slate-900">$200/month</strong> • <strong class="text-slate-900">Daily human support</strong> • Cancel anytime, no questions</p>
       </div>
-      <div class="h-32" aria-hidden="true"></div>
     </section>
 
     <!-- 2. How it works -->
-    <section class="bg-white py-24 md:py-32" aria-labelledby="how-it-works-heading">
-      <div class="mx-auto max-w-7xl px-6">
-        <div class="mb-16 text-center">
-          <h2 id="how-it-works-heading" class="mb-4 text-4xl font-bold text-slate-900 md:text-5xl">How It Works</h2>
-          <p class="mx-auto max-w-2xl text-xl font-light text-slate-600">Simple, structured support that fits into your daily routine</p>
+    <section class="bg-white py-24 sm:py-32" aria-labelledby="how-it-works-heading">
+      <div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+        <div class="mx-auto max-w-2xl text-center">
+          <h2 id="how-it-works-heading" class="text-3xl font-bold tracking-tight text-slate-900 sm:text-4xl">How It Works</h2>
+          <p class="mt-4 text-lg text-slate-600">Simple, structured support that fits into your daily routine</p>
         </div>
-        <div class="grid gap-8 md:grid-cols-3">
-          <article class="rounded-2xl border-2 border-slate-100 bg-white p-8 transition hover:border-blue-200 hover:shadow-lg">
-            <div class="flex flex-col items-center text-center">
-              <div class="mb-6 flex h-16 w-16 items-center justify-center rounded-xl bg-blue-50">
-                <svg class="h-8 w-8 text-blue-600" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
-              </div>
-              <div class="mb-4 inline-flex h-8 w-8 items-center justify-center rounded-full bg-gradient-to-r from-blue-600 to-emerald-500 text-sm font-bold text-white" aria-hidden="true">1</div>
-              <h3 class="mb-4 text-2xl font-bold text-slate-900">Meet Your Coach</h3>
-              <p class="leading-relaxed text-slate-600">We match you with a trained executive function coach who understands your unique challenges and goals.</p>
-            </div>
+        <div class="mt-16 grid gap-8 md:grid-cols-3">
+          <article class="relative rounded-2xl border border-slate-200 bg-white p-8 shadow-sm">
+            <span class="absolute -top-4 left-8 flex h-8 w-8 items-center justify-center rounded-full bg-gradient-to-r from-blue-600 to-emerald-500 text-sm font-bold text-white" aria-hidden="true">1</span>
+            <span class="inline-flex h-12 w-12 items-center justify-center rounded-xl bg-blue-50 text-blue-600">
+              <svg class="h-6 w-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+            </span>
+            <h3 class="mt-5 text-xl font-semibold text-slate-900">Meet Your Coach</h3>
+            <p class="mt-3 leading-relaxed text-slate-600">We match you with a trained executive function coach who understands your unique challenges and goals.</p>
           </article>
-          <article class="rounded-2xl border-2 border-slate-100 bg-white p-8 transition hover:border-blue-200 hover:shadow-lg">
-            <div class="flex flex-col items-center text-center">
-              <div class="mb-6 flex h-16 w-16 items-center justify-center rounded-xl bg-blue-50">
-                <svg class="h-8 w-8 text-blue-600" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"/></svg>
-              </div>
-              <div class="mb-4 inline-flex h-8 w-8 items-center justify-center rounded-full bg-gradient-to-r from-blue-600 to-emerald-500 text-sm font-bold text-white" aria-hidden="true">2</div>
-              <h3 class="mb-4 text-2xl font-bold text-slate-900">Daily Check-Ins</h3>
-              <p class="leading-relaxed text-slate-600">Brief structured conversations every day to set schedules, plan and prioritize tasks, and build sustainable routines that actually stick.</p>
-            </div>
+          <article class="relative rounded-2xl border border-slate-200 bg-white p-8 shadow-sm">
+            <span class="absolute -top-4 left-8 flex h-8 w-8 items-center justify-center rounded-full bg-gradient-to-r from-blue-600 to-emerald-500 text-sm font-bold text-white" aria-hidden="true">2</span>
+            <span class="inline-flex h-12 w-12 items-center justify-center rounded-xl bg-blue-50 text-blue-600">
+              <svg class="h-6 w-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"/></svg>
+            </span>
+            <h3 class="mt-5 text-xl font-semibold text-slate-900">Daily Check-Ins</h3>
+            <p class="mt-3 leading-relaxed text-slate-600">Brief structured conversations every day to set schedules, plan and prioritize tasks, and build sustainable routines that actually stick.</p>
           </article>
-          <article class="rounded-2xl border-2 border-slate-100 bg-white p-8 transition hover:border-blue-200 hover:shadow-lg">
-            <div class="flex flex-col items-center text-center">
-              <div class="mb-6 flex h-16 w-16 items-center justify-center rounded-xl bg-blue-50">
-                <svg class="h-8 w-8 text-blue-600" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="22 7 13.5 15.5 8.5 10.5 2 17"/><polyline points="16 7 22 7 22 13"/></svg>
-              </div>
-              <div class="mb-4 inline-flex h-8 w-8 items-center justify-center rounded-full bg-gradient-to-r from-blue-600 to-emerald-500 text-sm font-bold text-white" aria-hidden="true">3</div>
-              <h3 class="mb-4 text-2xl font-bold text-slate-900">Real Progress</h3>
-              <p class="leading-relaxed text-slate-600">Track wins, adjust strategies, and develop the executive function skills that translate to every area of your life.</p>
-            </div>
+          <article class="relative rounded-2xl border border-slate-200 bg-white p-8 shadow-sm">
+            <span class="absolute -top-4 left-8 flex h-8 w-8 items-center justify-center rounded-full bg-gradient-to-r from-blue-600 to-emerald-500 text-sm font-bold text-white" aria-hidden="true">3</span>
+            <span class="inline-flex h-12 w-12 items-center justify-center rounded-xl bg-blue-50 text-blue-600">
+              <svg class="h-6 w-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="22 7 13.5 15.5 8.5 10.5 2 17"/><polyline points="16 7 22 7 22 13"/></svg>
+            </span>
+            <h3 class="mt-5 text-xl font-semibold text-slate-900">Real Progress</h3>
+            <p class="mt-3 leading-relaxed text-slate-600">Track wins, adjust strategies, and develop the executive function skills that translate to every area of your life.</p>
           </article>
         </div>
       </div>
     </section>
 
     <!-- 3. Why it works -->
-    <section class="bg-slate-50 py-24 md:py-32" aria-labelledby="why-it-works-heading">
-      <div class="mx-auto max-w-7xl px-6">
-        <div class="mb-20 text-center">
-          <h2 id="why-it-works-heading" class="mb-4 text-4xl font-bold text-slate-900 md:text-5xl">Why It Works</h2>
-          <p class="mx-auto max-w-3xl text-xl font-light text-slate-600">Executive function isn't about trying harder—it's about having the right scaffolding in place</p>
+    <section class="bg-slate-50 py-24 sm:py-32" aria-labelledby="why-it-works-heading">
+      <div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+        <div class="mx-auto max-w-2xl text-center">
+          <h2 id="why-it-works-heading" class="text-3xl font-bold tracking-tight text-slate-900 sm:text-4xl">Why It Works</h2>
+          <p class="mt-4 text-lg text-slate-600">Executive function isn't about trying harder—it's about having the right scaffolding in place</p>
         </div>
-        <div class="grid gap-8 md:grid-cols-2">
-          <article class="rounded-2xl border border-slate-100 bg-white p-8 shadow-sm transition hover:shadow-xl">
-            <div class="flex items-start gap-6">
-              <div class="flex h-14 w-14 flex-shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-blue-500 to-blue-600">
-                <svg class="h-7 w-7 text-white" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9.5 2A2.5 2.5 0 0 1 12 4.5v15a2.5 2.5 0 0 1-4.96.44 2.5 2.5 0 0 1-2.96-3.08 3 3 0 0 1-.34-5.58 2.5 2.5 0 0 1 1.32-4.24 2.5 2.5 0 0 1 1.98-3A2.5 2.5 0 0 1 9.5 2Z"/><path d="M14.5 2A2.5 2.5 0 0 0 12 4.5v15a2.5 2.5 0 0 0 4.96.44 2.5 2.5 0 0 0 2.96-3.08 3 3 0 0 0 .34-5.58 2.5 2.5 0 0 0-1.32-4.24 2.5 2.5 0 0 0-1.98-3A2.5 2.5 0 0 0 14.5 2Z"/></svg>
-              </div>
-              <div>
-                <h3 class="mb-3 text-xl font-bold text-slate-900">Executive Function Scaffolding</h3>
-                <p class="leading-relaxed text-slate-600">We provide the external structure and support your brain needs to plan, prioritize, and execute—no extra willpower required.</p>
-              </div>
-            </div>
+        <div class="mt-16 grid gap-8 md:grid-cols-2">
+          <article class="rounded-2xl border border-slate-200 bg-white p-8 shadow-sm">
+            <span class="inline-flex h-12 w-12 items-center justify-center rounded-xl bg-blue-50 text-blue-600">
+              <svg class="h-6 w-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9.5 2A2.5 2.5 0 0 1 12 4.5v15a2.5 2.5 0 0 1-4.96.44 2.5 2.5 0 0 1-2.96-3.08 3 3 0 0 1-.34-5.58 2.5 2.5 0 0 1 1.32-4.24 2.5 2.5 0 0 1 1.98-3A2.5 2.5 0 0 1 9.5 2Z"/><path d="M14.5 2A2.5 2.5 0 0 0 12 4.5v15a2.5 2.5 0 0 0 4.96.44 2.5 2.5 0 0 0 2.96-3.08 3 3 0 0 0 .34-5.58 2.5 2.5 0 0 0-1.32-4.24 2.5 2.5 0 0 0-1.98-3A2.5 2.5 0 0 0 14.5 2Z"/></svg>
+            </span>
+            <h3 class="mt-5 text-xl font-semibold text-slate-900">Executive Function Scaffolding</h3>
+            <p class="mt-3 leading-relaxed text-slate-600">We provide the external structure and support your brain needs to plan, prioritize, and execute—no extra willpower required.</p>
           </article>
-          <article class="relative rounded-2xl border-0 bg-gradient-to-br from-blue-600 to-emerald-500 p-8 text-white shadow-xl transition hover:shadow-2xl">
-            <span class="absolute -top-3 left-8 whitespace-nowrap rounded-full bg-amber-400 px-3 py-1 text-xs font-bold text-amber-900 shadow-md">⭐ What Makes Us Different</span>
-            <div class="flex items-start gap-6">
-              <div class="flex h-14 w-14 flex-shrink-0 items-center justify-center rounded-xl bg-white/20">
-                <svg class="h-7 w-7 text-white" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
-              </div>
-              <div>
-                <h3 class="mb-3 text-xl font-bold text-white">Your Dedicated Coach</h3>
-                <p class="leading-relaxed text-blue-50">Not an app. Not a bot. The same real person every single day who knows your name, your goals, and what you're working toward. Consistent, personalized support from a trusted partner.</p>
-              </div>
-            </div>
+          <article class="relative rounded-2xl bg-gradient-to-br from-blue-600 to-emerald-500 p-8 text-white shadow-lg">
+            <span class="absolute -top-3 left-8 rounded-full bg-amber-400 px-3 py-1 text-xs font-bold text-amber-950">⭐ What Makes Us Different</span>
+            <span class="inline-flex h-12 w-12 items-center justify-center rounded-xl bg-white/20 text-white">
+              <svg class="h-6 w-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+            </span>
+            <h3 class="mt-5 text-xl font-semibold">Your Dedicated Coach</h3>
+            <p class="mt-3 leading-relaxed text-blue-50">Not an app. Not a bot. The same real person every single day who knows your name, your goals, and what you're working toward. Consistent, personalized support from a trusted partner.</p>
           </article>
-          <article class="rounded-2xl border border-slate-100 bg-white p-8 shadow-sm transition hover:shadow-xl">
-            <div class="flex items-start gap-6">
-              <div class="flex h-14 w-14 flex-shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-emerald-500 to-emerald-600">
-                <svg class="h-7 w-7 text-white" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
-              </div>
-              <div>
-                <h3 class="mb-3 text-xl font-bold text-slate-900">Radically Affordable</h3>
-                <p class="leading-relaxed text-slate-600">World-class support at 1/5 the cost of traditional ADHD coaching. Our innovative model makes daily accountability accessible to everyone who needs it.</p>
-              </div>
-            </div>
+          <article class="rounded-2xl border border-slate-200 bg-white p-8 shadow-sm">
+            <span class="inline-flex h-12 w-12 items-center justify-center rounded-xl bg-emerald-50 text-emerald-600">
+              <svg class="h-6 w-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
+            </span>
+            <h3 class="mt-5 text-xl font-semibold text-slate-900">Radically Affordable</h3>
+            <p class="mt-3 leading-relaxed text-slate-600">World-class support at 1/5 the cost of traditional ADHD coaching. Our innovative model makes daily accountability accessible to everyone who needs it.</p>
           </article>
-          <article class="rounded-2xl border border-slate-100 bg-white p-8 shadow-sm transition hover:shadow-xl">
-            <div class="flex items-start gap-6">
-              <div class="flex h-14 w-14 flex-shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-rose-400 to-rose-500">
-                <svg class="h-7 w-7 text-white" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>
-              </div>
-              <div>
-                <h3 class="mb-3 text-xl font-bold text-slate-900">Judgment-Free Support</h3>
-                <p class="leading-relaxed text-slate-600">Built by people who live with these challenges. We get it. No shame, no lectures—just practical, compassionate guidance.</p>
-              </div>
-            </div>
+          <article class="rounded-2xl border border-slate-200 bg-white p-8 shadow-sm">
+            <span class="inline-flex h-12 w-12 items-center justify-center rounded-xl bg-rose-50 text-rose-500">
+              <svg class="h-6 w-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>
+            </span>
+            <h3 class="mt-5 text-xl font-semibold text-slate-900">Judgment-Free Support</h3>
+            <p class="mt-3 leading-relaxed text-slate-600">Built by people who live with these challenges. We get it. No shame, no lectures—just practical, compassionate guidance.</p>
           </article>
         </div>
 
-        <div class="mt-20">
-          <figure class="rounded-3xl bg-gradient-to-r from-blue-600 to-emerald-500 p-8 text-white shadow-2xl md:p-12">
-            <div class="mb-8 text-center">
-              <p class="mb-2 text-sm font-medium tracking-wide text-blue-100">The Get Up and Flow difference</p>
-            </div>
-            <div class="mx-auto max-w-4xl">
-              <div class="flex min-h-[200px] items-center justify-center">
-                <div class="text-center">
-                  <blockquote class="mb-4 text-lg leading-relaxed text-blue-100 md:text-xl">
-                    "I was skeptical about seeking support at first, but my coach is phenomenal. She's smart, kind, and keeps me honest with myself. This service has been life-changing at a fraction of what I thought ADHD coaches cost."
-                  </blockquote>
-                  <figcaption class="font-medium text-blue-200">— Paula M.</figcaption>
-                </div>
-              </div>
-            </div>
-          </figure>
-        </div>
-        <p class="mx-auto mt-6 max-w-2xl text-center text-lg font-light text-slate-700 md:text-xl">Trusted by busy professionals, students, and creatives who finally found structure that sticks.</p>
+        <figure class="mt-16 rounded-3xl bg-gradient-to-r from-blue-600 to-emerald-500 p-10 text-white shadow-lg sm:p-14">
+          <p class="text-sm font-semibold uppercase tracking-wider text-blue-100">The Get Up and Flow difference</p>
+          <blockquote class="mt-4 text-xl font-medium leading-relaxed sm:text-2xl">
+            "I was skeptical about seeking support at first, but my coach is phenomenal. She's smart, kind, and keeps me honest with myself. This service has been life-changing at a fraction of what I thought ADHD coaches cost."
+          </blockquote>
+          <figcaption class="mt-6 font-semibold text-blue-50">— Paula M.</figcaption>
+        </figure>
+        <p class="mt-8 text-center text-slate-600">Trusted by busy professionals, students, and creatives who finally found structure that sticks.</p>
       </div>
     </section>
 
     <!-- 4. Who we are -->
-    <section class="bg-white py-24 md:py-32" aria-labelledby="who-we-are-heading">
-      <div class="mx-auto max-w-7xl px-6">
-        <div class="grid items-center gap-16 md:grid-cols-2">
-          <div class="relative">
-            <div class="aspect-[4/3] overflow-hidden rounded-3xl shadow-2xl">
-              <img src="/assets/whoweare.png" alt="A Get Up and Flow coach on a video call with a client" class="h-full w-full object-cover" width="1024" height="683" loading="lazy" />
-            </div>
-            <button type="button" data-video-open class="absolute inset-0 flex items-center justify-center rounded-3xl bg-slate-900/10 transition hover:bg-slate-900/20" aria-label="Play the founder video">
-              <span class="flex h-20 w-20 items-center justify-center rounded-full bg-white/90 shadow-lg transition hover:scale-105">
-                <svg class="ml-1 h-10 w-10 text-blue-600" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><polygon points="5 3 19 12 5 21 5 3"/></svg>
-              </span>
-            </button>
-            <div class="absolute -bottom-6 -right-4 rounded-2xl border border-slate-100 bg-white p-6 shadow-xl sm:-right-6">
-              <div class="mb-1 text-3xl font-bold text-blue-600">1:1</div>
-              <div class="text-sm text-slate-600">Dedicated Support</div>
-            </div>
+    <section class="bg-white py-24 sm:py-32" aria-labelledby="who-we-are-heading">
+      <div class="mx-auto grid max-w-7xl items-center gap-12 px-4 sm:px-6 lg:grid-cols-2 lg:gap-16 lg:px-8">
+        <div class="relative">
+          <div class="overflow-hidden rounded-3xl shadow-xl">
+            <img src="/assets/whoweare.png" alt="A Get Up and Flow coach on a video call with a client" class="h-auto w-full object-cover" width="1024" height="683" loading="lazy" />
           </div>
-          <div>
-            <h2 id="who-we-are-heading" class="mb-6 text-4xl font-bold text-slate-900 md:text-5xl">Who We Are</h2>
-            <div class="space-y-6 text-lg leading-relaxed text-slate-600">
-              <p>Our global coaching team is carefully selected and trained for empathy, reliability, and structure.</p>
-              <p>Each rigorously evaluated coach completes a 30-day immersive training program focused on executive-function strategies for neurodivergent adults.</p>
-              <p>Through our proprietary coaching framework, they learn to balance encouragement with practical systems — helping you plan, prioritize, and follow through, one day at a time.</p>
-              <p>Our innovative approach makes professional executive function support accessible to everyone who needs it, not just those who can afford $200+/hour coaching.</p>
-            </div>
-            <ul class="mt-10 grid grid-cols-1 gap-4 sm:grid-cols-3">
-              <li class="flex items-center gap-3 rounded-xl bg-slate-50 p-4">
-                <svg class="h-5 w-5 flex-shrink-0 text-blue-600" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
-                <span class="text-sm font-medium text-slate-900">NYC-Based Leadership</span>
-              </li>
-              <li class="flex items-center gap-3 rounded-xl bg-slate-50 p-4">
-                <svg class="h-5 w-5 flex-shrink-0 text-blue-600" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
-                <span class="text-sm font-medium text-slate-900">Trained Specialists</span>
-              </li>
-              <li class="flex items-center gap-3 rounded-xl bg-slate-50 p-4">
-                <svg class="h-5 w-5 flex-shrink-0 text-blue-600" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
-                <span class="text-sm font-medium text-slate-900">Global Team</span>
-              </li>
-            </ul>
+          <button type="button" data-video-open class="absolute inset-0 flex items-center justify-center rounded-3xl bg-slate-900/10 transition hover:bg-slate-900/20" aria-label="Play the founder video">
+            <span class="flex h-20 w-20 items-center justify-center rounded-full bg-white/90 text-blue-600 shadow-lg transition hover:scale-105">
+              <svg class="ml-1 h-8 w-8" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+            </span>
+          </button>
+          <div class="absolute -bottom-6 -right-4 rounded-2xl border border-slate-100 bg-white px-6 py-4 shadow-xl sm:-right-6">
+            <p class="text-2xl font-bold text-slate-900">1:1</p>
+            <p class="text-sm text-slate-500">Dedicated Support</p>
           </div>
+        </div>
+        <div>
+          <h2 id="who-we-are-heading" class="text-3xl font-bold tracking-tight text-slate-900 sm:text-4xl">Who We Are</h2>
+          <p class="mt-6 leading-relaxed text-slate-600">Our global coaching team is carefully selected and trained for empathy, reliability, and structure.</p>
+          <p class="mt-4 leading-relaxed text-slate-600">Each rigorously evaluated coach completes a 30-day immersive training program focused on executive-function strategies for neurodivergent adults.</p>
+          <p class="mt-4 leading-relaxed text-slate-600">Through our proprietary coaching framework, they learn to balance encouragement with practical systems — helping you plan, prioritize, and follow through, one day at a time.</p>
+          <p class="mt-4 leading-relaxed text-slate-600">Our innovative approach makes professional executive function support accessible to everyone who needs it, not just those who can afford $200+/hour coaching.</p>
+          <ul class="mt-8 flex flex-wrap gap-3">
+            <li class="rounded-full bg-slate-100 px-4 py-2 text-sm font-medium text-slate-700">NYC-Based Leadership</li>
+            <li class="rounded-full bg-slate-100 px-4 py-2 text-sm font-medium text-slate-700">Trained Specialists</li>
+            <li class="rounded-full bg-slate-100 px-4 py-2 text-sm font-medium text-slate-700">Global Team</li>
+          </ul>
         </div>
       </div>
     </section>
 
     <!-- 5. Pricing -->
-    <section class="bg-slate-50 py-16 md:py-20" aria-labelledby="pricing-heading">
-      <div class="mx-auto max-w-7xl px-6">
-        <div class="mb-8 text-center">
-          <h2 id="pricing-heading" class="mb-4 text-3xl font-bold text-slate-900 md:text-4xl">Simple, Transparent Pricing</h2>
-          <p class="mx-auto mb-2 max-w-3xl text-lg font-light text-slate-600">Professional executive function support at a fraction of traditional coaching costs</p>
-          <p class="mb-2 text-slate-600">Compare to traditional ADHD coaching at <s class="text-slate-400">$200-400/hour</s></p>
-          <p class="text-lg font-bold text-slate-900 md:text-xl">That's 80% less for daily support</p>
+    <section class="bg-slate-50 py-24 sm:py-32" aria-labelledby="pricing-heading">
+      <div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+        <div class="mx-auto max-w-2xl text-center">
+          <h2 id="pricing-heading" class="text-3xl font-bold tracking-tight text-slate-900 sm:text-4xl">Simple, Transparent Pricing</h2>
+          <p class="mt-4 text-lg text-slate-600">Professional executive function support at a fraction of traditional coaching costs</p>
+          <p class="mt-2 text-slate-600">Compare to traditional ADHD coaching at <s class="text-slate-400">$200-400/hour</s></p>
+          <p class="mt-2 font-bold text-slate-900">That's 80% less for daily support</p>
         </div>
 
-        <div class="mx-auto mb-8 grid max-w-6xl items-stretch gap-6 md:grid-cols-3">
+        <div class="mt-16 grid items-stretch gap-8 lg:grid-cols-3">
           <!-- Full Support -->
-          <article class="relative overflow-hidden rounded-2xl border-2 border-blue-200 bg-white shadow-xl transition hover:shadow-2xl md:col-span-2">
-            <span class="absolute right-0 top-0 flex items-center gap-1.5 rounded-bl-xl bg-gradient-to-r from-blue-600 to-emerald-500 px-4 py-1.5 text-xs font-bold text-white">✦ MOST POPULAR</span>
-            <div class="flex h-full flex-col p-6">
-            <h3 class="mb-1.5 text-2xl font-bold text-slate-900">Full Support</h3>
-            <p class="mb-4 text-sm text-slate-600">Your personal accountability partner — daily structure, coaching, and follow-through.</p>
-            <div class="mb-4 flex justify-center">
-              <div class="billing-toggle inline-flex items-center rounded-lg bg-slate-100 p-0.5" role="group" aria-label="Billing period">
-                <button type="button" data-billing="monthly" class="rounded-md px-4 py-1.5 text-xs font-medium hover:text-slate-900">Monthly</button>
-                <button type="button" data-billing="weekly" class="rounded-md px-4 py-1.5 text-xs font-medium hover:text-slate-900">Weekly</button>
-              </div>
+          <article class="relative flex h-full flex-col overflow-hidden rounded-2xl border-2 border-blue-600 bg-white p-8 shadow-xl lg:col-span-2 lg:p-10">
+            <span class="absolute right-0 top-0 rounded-bl-2xl bg-gradient-to-r from-blue-600 to-emerald-500 px-4 py-1.5 text-xs font-bold text-white">✦ MOST POPULAR</span>
+            <h3 class="text-2xl font-bold text-slate-900">Full Support</h3>
+            <p class="mt-2 text-slate-600">Your personal accountability partner — daily structure, coaching, and follow-through.</p>
+            <div class="billing-toggle mx-auto mt-6 inline-flex self-center rounded-full bg-slate-100 p-1 text-sm font-medium" role="group" aria-label="Billing period">
+              <button type="button" data-billing="monthly" class="rounded-full px-4 py-1.5">Monthly</button>
+              <button type="button" data-billing="weekly" class="rounded-full px-4 py-1.5">Weekly</button>
             </div>
-            <div class="mb-2 text-center">
-              <div class="flex items-baseline justify-center gap-1.5"><span class="text-4xl font-bold text-slate-900" data-price data-monthly="$750" data-weekly="$225">$750</span><span class="text-lg text-slate-500" data-suffix data-monthly="/month" data-weekly="/week">/month</span></div>
-            </div>
-            <p class="mb-3 text-center text-sm text-slate-600">Daily human support • Cancel anytime</p>
-            <div class="mb-4 flex justify-center">
-              <div class="inline-flex items-center gap-1.5 rounded-full border border-amber-200 bg-amber-50 px-3 py-1.5"><span class="text-xs font-bold text-amber-900">$4-6,000 value. We built a better way.</span></div>
-            </div>
-            <div class="mb-4 flex-grow">
-            <ul class="space-y-2">
-              <li class="flex items-start gap-2">
+            <p class="mt-4 text-center"><span class="text-5xl font-extrabold tracking-tight text-slate-900" data-price data-monthly="$750" data-weekly="$225">$750</span><span class="text-lg text-slate-500" data-suffix data-monthly="/month" data-weekly="/week">/month</span></p>
+            <p class="mt-2 text-center text-sm text-slate-600">Daily human support • Cancel anytime</p>
+            <p class="mx-auto mt-4 inline-block self-center rounded-full bg-amber-100 px-4 py-1.5 text-sm font-semibold text-amber-800">$4-6,000 value. We built a better way.</p>
+            <ul class="mt-8 space-y-4">
+              <li class="flex gap-3">
                 <span class="mt-0.5 flex h-4 w-4 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-blue-500 to-emerald-500" aria-hidden="true"><svg class="h-2.5 w-2.5 text-white" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg></span>
-                <span class="text-xs leading-snug text-slate-700"><strong class="font-semibold text-slate-900">Jump Start</strong> → Never stare at a blank day again</span>
+                <span class="text-slate-700"><strong class="font-semibold text-slate-900">Jump Start</strong> → Never stare at a blank day again</span>
               </li>
-              <li class="flex items-start gap-2">
+              <li class="flex gap-3">
                 <span class="mt-0.5 flex h-4 w-4 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-blue-500 to-emerald-500" aria-hidden="true"><svg class="h-2.5 w-2.5 text-white" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg></span>
-                <span class="text-xs leading-snug text-slate-700"><strong class="font-semibold text-slate-900">Retro</strong> → Actually learn what worked today</span>
+                <span class="text-slate-700"><strong class="font-semibold text-slate-900">Retro</strong> → Actually learn what worked today</span>
               </li>
-              <li class="flex items-start gap-2">
+              <li class="flex gap-3">
                 <span class="mt-0.5 flex h-4 w-4 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-blue-500 to-emerald-500" aria-hidden="true"><svg class="h-2.5 w-2.5 text-white" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg></span>
-                <span class="text-xs leading-snug text-slate-700"><strong class="font-semibold text-slate-900">Bonus Time</strong> → Panic button for when sh*t hits the fan</span>
+                <span class="text-slate-700"><strong class="font-semibold text-slate-900">Bonus Time</strong> → Panic button for when sh*t hits the fan</span>
               </li>
-              <li class="flex items-start gap-2">
+              <li class="flex gap-3">
                 <span class="mt-0.5 flex h-4 w-4 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-blue-500 to-emerald-500" aria-hidden="true"><svg class="h-2.5 w-2.5 text-white" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg></span>
-                <span class="text-xs leading-snug text-slate-700"><strong class="font-semibold text-slate-900">Coach-assisted schedule</strong> → Someone who won't let you overcommit</span>
+                <span class="text-slate-700"><strong class="font-semibold text-slate-900">Coach-assisted schedule</strong> → Someone who won't let you overcommit</span>
               </li>
-              <li class="flex items-start gap-2">
+              <li class="flex gap-3">
                 <span class="mt-0.5 flex h-4 w-4 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-blue-500 to-emerald-500" aria-hidden="true"><svg class="h-2.5 w-2.5 text-white" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg></span>
-                <span class="text-xs leading-snug text-slate-700">Accountability and follow-through support</span>
+                <span class="text-slate-700">Accountability and follow-through support</span>
               </li>
-              <li class="flex items-start gap-2">
+              <li class="flex gap-3">
                 <span class="mt-0.5 flex h-4 w-4 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-blue-500 to-emerald-500" aria-hidden="true"><svg class="h-2.5 w-2.5 text-white" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg></span>
-                <span class="text-xs leading-snug text-slate-700">Progress tracking and adjustments</span>
+                <span class="text-slate-700">Progress tracking and adjustments</span>
               </li>
-              <li class="flex items-start gap-2">
+              <li class="flex gap-3">
                 <span class="mt-0.5 flex h-4 w-4 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-blue-500 to-emerald-500" aria-hidden="true"><svg class="h-2.5 w-2.5 text-white" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg></span>
-                <span class="text-xs leading-snug text-slate-700">WhatsApp/text reminders during work hours</span>
+                <span class="text-slate-700">WhatsApp/text reminders during work hours</span>
               </li>
-              <li class="flex items-start gap-2">
+              <li class="flex gap-3">
                 <span class="mt-0.5 flex h-4 w-4 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-blue-500 to-emerald-500" aria-hidden="true"><svg class="h-2.5 w-2.5 text-white" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg></span>
-                <span class="text-xs leading-snug text-slate-700">Dedicated coach – same person every day</span>
+                <span class="text-slate-700">Dedicated coach – same person every day</span>
               </li>
-              <li class="flex items-start gap-2">
+              <li class="flex gap-3">
                 <span class="mt-0.5 flex h-4 w-4 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-blue-500 to-emerald-500" aria-hidden="true"><svg class="h-2.5 w-2.5 text-white" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg></span>
-                <span class="text-xs leading-snug text-slate-700">No long-term contract required</span>
+                <span class="text-slate-700">No long-term contract required</span>
               </li>
             </ul>
-            </div>
-            <a href="#signup" class="mt-auto inline-flex h-10 w-full items-center justify-center gap-2 whitespace-nowrap rounded-xl bg-gradient-to-r from-blue-600 to-emerald-500 px-8 py-5 text-sm font-medium text-white shadow-lg transition hover:shadow-xl">Start Tomorrow Morning</a>
-            </div>
+            <div class="mt-10"></div>
+            <a href="#signup" class="mt-auto block rounded-2xl bg-gradient-to-r from-blue-600 to-emerald-500 px-8 py-4 text-center text-lg font-semibold text-white shadow-lg shadow-blue-600/20 transition hover:opacity-90" style="margin-top:auto;">Start Tomorrow Morning</a>
           </article>
 
           <!-- Focus Lite -->
-          <article class="rounded-2xl border-2 border-slate-100 bg-white shadow-lg transition hover:shadow-xl">
-            <div class="flex h-full flex-col p-6">
-            <h3 class="mb-1.5 text-2xl font-bold text-slate-900">Focus Lite</h3>
-            <p class="mb-4 text-sm text-slate-600">Weekly planning and gentle reminders — stay organized without daily check-ins.</p>
-            <div class="mb-4 flex justify-center">
-              <div class="billing-toggle inline-flex items-center rounded-lg bg-slate-100 p-0.5" role="group" aria-label="Billing period">
-                <button type="button" data-billing="monthly" class="rounded-md px-4 py-1.5 text-xs font-medium hover:text-slate-900">Monthly</button>
-                <button type="button" data-billing="weekly" class="rounded-md px-4 py-1.5 text-xs font-medium hover:text-slate-900">Weekly</button>
-              </div>
+          <article class="flex h-full flex-col rounded-2xl border border-slate-200 bg-white p-8 shadow-sm">
+            <h3 class="text-2xl font-bold text-slate-900">Focus Lite</h3>
+            <p class="mt-2 text-slate-600">Weekly planning and gentle reminders — stay organized without daily check-ins.</p>
+            <div class="billing-toggle mx-auto mt-6 inline-flex self-center rounded-full bg-slate-100 p-1 text-sm font-medium" role="group" aria-label="Billing period">
+              <button type="button" data-billing="monthly" class="rounded-full px-4 py-1.5">Monthly</button>
+              <button type="button" data-billing="weekly" class="rounded-full px-4 py-1.5">Weekly</button>
             </div>
-            <div class="mb-2 text-center">
-              <div class="flex items-baseline justify-center gap-1.5"><span class="text-4xl font-bold text-slate-900" data-price data-monthly="$200" data-weekly="$95">$200</span><span class="text-lg text-slate-500" data-suffix data-monthly="/mo" data-weekly="/wk">/mo</span></div>
-            </div>
-            <p class="mb-6 text-center text-sm text-slate-600">Light accountability &amp; reminders</p>
-            <div class="mb-4 flex-grow">
-            <ul class="space-y-2">
-              <li class="flex items-start gap-2">
+            <p class="mt-4 text-center"><span class="text-5xl font-extrabold tracking-tight text-slate-900" data-price data-monthly="$200" data-weekly="$95">$200</span><span class="text-lg text-slate-500" data-suffix data-monthly="/mo" data-weekly="/wk">/mo</span></p>
+            <p class="mt-2 text-center text-sm text-slate-600">Light accountability &amp; reminders</p>
+            <ul class="mt-8 space-y-4">
+              <li class="flex gap-3">
                 <span class="mt-0.5 flex h-4 w-4 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-blue-500 to-emerald-500" aria-hidden="true"><svg class="h-2.5 w-2.5 text-white" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg></span>
-                <span class="text-xs leading-snug text-slate-700">1× weekly 20-minute planning call</span>
+                <span class="text-slate-700">1× weekly 20-minute planning call</span>
               </li>
-              <li class="flex items-start gap-2">
+              <li class="flex gap-3">
                 <span class="mt-0.5 flex h-4 w-4 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-blue-500 to-emerald-500" aria-hidden="true"><svg class="h-2.5 w-2.5 text-white" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg></span>
-                <span class="text-xs leading-snug text-slate-700">Daily WhatsApp/text reminders</span>
+                <span class="text-slate-700">Daily WhatsApp/text reminders</span>
               </li>
-              <li class="flex items-start gap-2">
+              <li class="flex gap-3">
                 <span class="mt-0.5 flex h-4 w-4 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-blue-500 to-emerald-500" aria-hidden="true"><svg class="h-2.5 w-2.5 text-white" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg></span>
-                <span class="text-xs leading-snug text-slate-700">Shared Google Calendar + task dashboard</span>
+                <span class="text-slate-700">Shared Google Calendar + task dashboard</span>
               </li>
-              <li class="flex items-start gap-2">
+              <li class="flex gap-3">
                 <span class="mt-0.5 flex h-4 w-4 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-blue-500 to-emerald-500" aria-hidden="true"><svg class="h-2.5 w-2.5 text-white" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg></span>
-                <span class="text-xs leading-snug text-slate-700">Weekly progress summary</span>
+                <span class="text-slate-700">Weekly progress summary</span>
               </li>
-              <li class="flex items-start gap-2">
+              <li class="flex gap-3">
                 <span class="mt-0.5 flex h-4 w-4 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-blue-500 to-emerald-500" aria-hidden="true"><svg class="h-2.5 w-2.5 text-white" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg></span>
-                <span class="text-xs leading-snug text-slate-700">No long-term contract required</span>
+                <span class="text-slate-700">No long-term contract required</span>
               </li>
             </ul>
-            </div>
-            <a href="#signup" class="mt-auto inline-flex h-10 w-full items-center justify-center gap-2 whitespace-nowrap rounded-xl bg-slate-900 px-8 py-5 text-sm font-medium text-white shadow-md transition hover:bg-slate-800 hover:shadow-lg">Start Lite</a>
-            </div>
+            <a href="#signup" class="mt-auto block rounded-2xl bg-slate-900 px-8 py-4 text-center text-lg font-semibold text-white transition hover:bg-slate-800">Start Lite</a>
           </article>
         </div>
 
-        <div class="text-center">
-          <p class="text-base font-medium text-slate-600">Pause or cancel anytime. You'll always work with the same coach.</p>
-          <p class="mt-1 text-sm text-slate-500">Monday - Friday service</p>
+        <div class="mt-10 text-center text-sm text-slate-600">
+          <p>Pause or cancel anytime. You'll always work with the same coach.</p>
+          <p class="mt-1">Monday - Friday service</p>
         </div>
       </div>
     </section>
 
     <!-- 6. Signup -->
-    <section id="signup" class="relative overflow-hidden bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 py-24 md:py-32" aria-labelledby="signup-heading">
+    <section id="signup" class="relative overflow-hidden bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 py-24 sm:py-32" aria-labelledby="signup-heading">
       <div class="absolute -left-32 top-0 h-96 w-96 rounded-full bg-blue-500/20 blur-3xl" aria-hidden="true"></div>
       <div class="absolute -right-32 bottom-0 h-96 w-96 rounded-full bg-emerald-500/20 blur-3xl" aria-hidden="true"></div>
-      <div class="relative mx-auto max-w-3xl px-6">
-        <div class="mb-12 text-center">
-          <h2 id="signup-heading" class="mb-4 text-4xl font-bold text-white md:text-5xl">Start Tomorrow Morning</h2>
-          <p class="mx-auto max-w-2xl text-xl font-light text-slate-300">Limited spots available. Get early access and help shape the future of affordable executive function support.</p>
+      <div class="relative mx-auto max-w-3xl px-4 sm:px-6 lg:px-8">
+        <div class="text-center">
+          <h2 id="signup-heading" class="text-3xl font-bold tracking-tight text-white sm:text-4xl">Start Tomorrow Morning</h2>
+          <p class="mx-auto mt-4 max-w-xl text-lg text-slate-300">Limited spots available. Get early access and help shape the future of affordable executive function support.</p>
         </div>
 
-        <form id="lead-form" class="space-y-5 rounded-3xl bg-white p-6 shadow-2xl md:p-8" novalidate>
+        <form id="lead-form" class="mt-12 rounded-2xl bg-white p-6 shadow-2xl sm:p-10" novalidate>
           <fieldset>
-            <legend class="mb-3 block text-base font-semibold text-slate-900">Choose your plan</legend>
-            <div class="space-y-2.5">
-              <label class="flex cursor-pointer items-start gap-4 rounded-xl border-2 border-slate-200 p-3.5 transition hover:border-slate-300 has-[:checked]:border-blue-500 has-[:checked]:bg-blue-50/50">
-                <input type="radio" name="plan" value="full_support" class="mt-1 h-5 w-5 accent-blue-600" checked />
-                <span class="flex-1">
-                  <span class="mb-1 flex items-center justify-between">
-                    <span class="font-bold text-slate-900">Full Support</span>
+            <legend class="text-sm font-semibold text-slate-900">Choose your plan</legend>
+            <div class="mt-3 grid gap-4 sm:grid-cols-2">
+              <label class="cursor-pointer">
+                <input type="radio" name="plan" value="full_support" class="peer sr-only" checked />
+                <span class="block h-full rounded-xl border-2 border-slate-200 p-4 transition peer-checked:border-blue-600 peer-checked:bg-blue-50/50 peer-focus-visible:ring-2 peer-focus-visible:ring-blue-600 peer-focus-visible:ring-offset-2">
+                  <span class="flex items-baseline justify-between gap-2">
+                    <span class="font-semibold text-slate-900">Full Support</span>
                     <span class="text-sm font-bold text-slate-900" data-price-compact data-monthly="$750/mo" data-weekly="$225/wk">$750/mo</span>
                   </span>
-                  <span class="block text-sm text-slate-600">Daily 1:1 planning, wrap-up sessions, and up to 45 min ad-hoc support</span>
+                  <span class="mt-1 block text-sm text-slate-500">Daily 1:1 planning, wrap-up sessions, and up to 45 min ad-hoc support</span>
                 </span>
               </label>
-              <label class="flex cursor-pointer items-start gap-4 rounded-xl border-2 border-slate-200 p-3.5 transition hover:border-slate-300 has-[:checked]:border-blue-500 has-[:checked]:bg-blue-50/50">
-                <input type="radio" name="plan" value="focus_lite" class="mt-1 h-5 w-5 accent-blue-600" />
-                <span class="flex-1">
-                  <span class="mb-1 flex items-center justify-between">
-                    <span class="font-bold text-slate-900">Focus Lite</span>
+              <label class="cursor-pointer">
+                <input type="radio" name="plan" value="focus_lite" class="peer sr-only" />
+                <span class="block h-full rounded-xl border-2 border-slate-200 p-4 transition peer-checked:border-blue-600 peer-checked:bg-blue-50/50 peer-focus-visible:ring-2 peer-focus-visible:ring-blue-600 peer-focus-visible:ring-offset-2">
+                  <span class="flex items-baseline justify-between gap-2">
+                    <span class="font-semibold text-slate-900">Focus Lite</span>
                     <span class="text-sm font-bold text-slate-900" data-price-compact data-monthly="$200/mo" data-weekly="$95/wk">$200/mo</span>
                   </span>
-                  <span class="block text-sm text-slate-600">Weekly planning call and daily reminders</span>
+                  <span class="mt-1 block text-sm text-slate-500">Weekly planning call and daily reminders</span>
                 </span>
               </label>
             </div>
           </fieldset>
 
-          <fieldset>
-            <legend class="sr-only">Billing</legend>
-            <div class="mt-3 flex justify-center">
-              <div class="inline-flex items-center rounded-xl bg-slate-100 p-1">
-                <label class="cursor-pointer">
-                  <input type="radio" name="billing_period" value="monthly" class="peer sr-only" checked />
-                  <span class="block rounded-lg px-5 py-1.5 text-sm font-medium text-slate-500 transition peer-checked:bg-white peer-checked:text-slate-900 peer-checked:shadow-sm peer-focus-visible:ring-2 peer-focus-visible:ring-blue-600">Monthly</span>
-                </label>
-                <label class="cursor-pointer">
-                  <input type="radio" name="billing_period" value="weekly" class="peer sr-only" />
-                  <span class="block rounded-lg px-5 py-1.5 text-sm font-medium text-slate-500 transition peer-checked:bg-white peer-checked:text-slate-900 peer-checked:shadow-sm peer-focus-visible:ring-2 peer-focus-visible:ring-blue-600">Weekly</span>
-                </label>
-              </div>
+          <fieldset class="mt-6">
+            <legend class="text-sm font-semibold text-slate-900">Billing</legend>
+            <div class="mt-3 inline-flex rounded-full bg-slate-100 p-1 text-sm font-medium">
+              <label class="cursor-pointer">
+                <input type="radio" name="billing_period" value="monthly" class="peer sr-only" checked />
+                <span class="block rounded-full px-5 py-2 text-slate-500 transition peer-checked:bg-white peer-checked:text-slate-900 peer-checked:shadow-sm peer-focus-visible:ring-2 peer-focus-visible:ring-blue-600">Monthly</span>
+              </label>
+              <label class="cursor-pointer">
+                <input type="radio" name="billing_period" value="weekly" class="peer sr-only" />
+                <span class="block rounded-full px-5 py-2 text-slate-500 transition peer-checked:bg-white peer-checked:text-slate-900 peer-checked:shadow-sm peer-focus-visible:ring-2 peer-focus-visible:ring-blue-600">Weekly</span>
+              </label>
             </div>
           </fieldset>
 
-          <div>
-            <label for="full_name" class="mb-2 block text-base font-semibold text-slate-900">Full Name</label>
-            <input type="text" id="full_name" name="full_name" required autocomplete="name" class="flex h-12 w-full rounded-xl border border-slate-300 px-3 py-1 text-base text-slate-900 shadow-sm placeholder-slate-400 focus:border-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-600/20" placeholder="Your name" />
-          </div>
-          <div>
-            <label for="email" class="mb-2 block text-base font-semibold text-slate-900">Email Address</label>
-            <input type="email" id="email" name="email" required autocomplete="email" class="flex h-12 w-full rounded-xl border border-slate-300 px-3 py-1 text-base text-slate-900 shadow-sm placeholder-slate-400 focus:border-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-600/20" placeholder="you@example.com" />
-          </div>
-
-          <div>
-            <label for="notes" class="mb-2 block text-base font-semibold text-slate-900">What would you like help with? (Optional)</label>
-            <textarea id="notes" name="notes" rows="3" class="flex min-h-24 w-full rounded-xl border border-slate-300 px-3 py-2 text-base text-slate-900 shadow-sm placeholder-slate-400 focus:border-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-600/20" placeholder="Tell us a little about what's on your plate…"></textarea>
+          <div class="mt-6 grid gap-6 sm:grid-cols-2">
+            <div>
+              <label for="full_name" class="block text-sm font-semibold text-slate-900">Full Name</label>
+              <input type="text" id="full_name" name="full_name" required autocomplete="name" class="mt-2 w-full rounded-xl border border-slate-300 px-4 py-3 text-slate-900 placeholder-slate-400 focus:border-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-600/20" placeholder="Your name" />
+            </div>
+            <div>
+              <label for="email" class="block text-sm font-semibold text-slate-900">Email Address</label>
+              <input type="email" id="email" name="email" required autocomplete="email" class="mt-2 w-full rounded-xl border border-slate-300 px-4 py-3 text-slate-900 placeholder-slate-400 focus:border-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-600/20" placeholder="you@example.com" />
+            </div>
           </div>
 
-          <button type="submit" class="inline-flex h-10 w-full items-center justify-center gap-2 whitespace-nowrap rounded-xl bg-gradient-to-r from-blue-600 to-emerald-500 px-8 py-5 text-base font-medium text-white shadow-lg transition hover:shadow-xl disabled:pointer-events-none disabled:cursor-not-allowed disabled:opacity-60">Get Flowing</button>
-          <p id="form-status" class="hidden text-center text-sm" role="status" aria-live="polite"></p>
-          <p class="text-center text-sm text-slate-500">We'll reach out within 48 hours to schedule your onboarding call.</p>
+          <div class="mt-6">
+            <label for="notes" class="block text-sm font-semibold text-slate-900">What would you like help with? (Optional)</label>
+            <textarea id="notes" name="notes" rows="3" class="mt-2 w-full rounded-xl border border-slate-300 px-4 py-3 text-slate-900 placeholder-slate-400 focus:border-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-600/20" placeholder="Tell us a little about what's on your plate…"></textarea>
+          </div>
+
+          <button type="submit" class="mt-8 w-full rounded-full bg-gradient-to-r from-blue-600 to-emerald-500 px-8 py-4 text-lg font-semibold text-white shadow-lg shadow-blue-600/20 transition hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-60">Get Flowing</button>
+          <p id="form-status" class="mt-4 hidden text-center text-sm" role="status" aria-live="polite"></p>
+          <p class="mt-4 text-center text-sm text-slate-500">We'll reach out within 48 hours to schedule your onboarding call.</p>
         </form>
       </div>
     </section>
   </main>
 
   <!-- 7. Footer -->
-  <footer class="bg-slate-900 py-12 text-slate-300">
-    <div class="mx-auto max-w-7xl px-6">
-      <div class="flex flex-col items-center justify-between gap-6 md:flex-row">
-        <div class="text-center md:text-left">
-          <div class="mb-2 text-2xl font-bold text-white">Get Up and Flow</div>
-          <p class="text-slate-400">Daily accountability for your executive function challenges</p>
-        </div>
-        <div class="flex items-center gap-2 text-slate-300">
-          <svg class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>
-          <a href="mailto:hello@getupandflow.co" class="hover:text-white">hello@getupandflow.co</a>
-        </div>
-      </div>
-      <div class="mt-8 border-t border-slate-800 pt-8 text-center text-sm text-slate-400">© 2026 Get Up and Flow. All rights reserved.</div>
+  <footer class="bg-slate-900 py-16">
+    <div class="mx-auto max-w-7xl px-4 text-center sm:px-6 lg:px-8">
+      <p class="text-lg font-bold text-white">Get Up and Flow</p>
+      <p class="mt-2 text-slate-400">Daily accountability for your executive function challenges</p>
+      <p class="mt-4"><a href="mailto:hello@getupandflow.co" class="text-slate-300 underline-offset-4 hover:text-white hover:underline">hello@getupandflow.co</a></p>
+      <p class="mt-8 text-sm text-slate-500">© 2026 Get Up and Flow. All rights reserved.</p>
     </div>
   </footer>
 
   <!-- Founder video bubble -->
-  <aside id="video-bubble" class="fixed bottom-6 left-6 z-50 flex flex-col items-center gap-2" aria-label="Founder video">
+  <aside id="video-bubble" class="fixed bottom-6 left-6 z-50 flex flex-col items-start gap-2" aria-label="Founder video">
     <span class="rounded-full bg-white px-3 py-1.5 text-xs font-semibold text-slate-700 shadow-lg">👋 Hear from our founder</span>
     <div class="relative">
-      <button type="button" data-video-open class="block h-36 w-36 overflow-hidden rounded-full border-4 border-white shadow-2xl transition hover:scale-105 sm:h-40 sm:w-40" aria-label="Play the founder video">
+      <button type="button" data-video-open class="block h-24 w-24 overflow-hidden rounded-full shadow-2xl ring-4 ring-white transition hover:scale-105" aria-label="Play the founder video">
         <span id="bubble-video-slot" class="pointer-events-none flex h-full w-full items-center justify-center bg-gradient-to-br from-blue-600 to-emerald-500 text-white">
           <svg class="ml-1 h-8 w-8" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><polygon points="5 3 19 12 5 21 5 3"/></svg>
         </span>
       </button>
       <button type="button" id="video-bubble-dismiss" class="absolute -right-1 -top-1 flex h-6 w-6 items-center justify-center rounded-full bg-slate-900 text-white shadow hover:bg-slate-700" aria-label="Dismiss the founder video">
-        <svg class="h-3 w-3 text-white" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" aria-hidden="true"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+        <svg class="h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" aria-hidden="true"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
       </button>
     </div>
   </aside>
