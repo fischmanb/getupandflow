@@ -87,3 +87,26 @@
   window.addEventListener("scroll", onScroll, { passive: true });
   onScroll();
 })();
+
+// FAQ accordion (single-open, mirrors Radix data-state behavior; chevron rotation is pure CSS)
+(function () {
+  var buttons = [].slice.call(document.querySelectorAll("button[aria-controls][data-state]"));
+  if (!buttons.length) return;
+  function setState(btn, open) {
+    var region = document.getElementById(btn.getAttribute("aria-controls"));
+    var item = btn.closest("[data-state][class*=border]");
+    var st = open ? "open" : "closed";
+    btn.setAttribute("data-state", st);
+    btn.setAttribute("aria-expanded", open ? "true" : "false");
+    if (item) item.setAttribute("data-state", st);
+    if (region) { region.setAttribute("data-state", st); if (open) { region.removeAttribute("hidden"); region.style.height = "auto"; } else { region.setAttribute("hidden", ""); } }
+  }
+  buttons.forEach(function (b) { setState(b, false); });
+  buttons.forEach(function (b) {
+    b.addEventListener("click", function () {
+      var willOpen = b.getAttribute("data-state") !== "open";
+      buttons.forEach(function (o) { setState(o, false); });
+      if (willOpen) setState(b, true);
+    });
+  });
+})();
