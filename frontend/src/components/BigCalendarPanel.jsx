@@ -255,7 +255,7 @@ export function BigCalendarPanel({ className }) {
 
       <div
         className="rbc-shell"
-        style={{ height: "75vh", minHeight: 600 }}
+        style={{ height: "calc(100vh - 200px)", minHeight: 620 }}
         onTouchStart={handleTouchStart}
         onTouchEnd={handleTouchEnd}
       >
