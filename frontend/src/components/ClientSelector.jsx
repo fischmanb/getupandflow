@@ -19,8 +19,8 @@ export function ClientSelector() {
   return (
     <section className="client-selector">
       <div className="client-selector-header">
-        <p className="menu-section-title">Client Filter</p>
-        <span className="client-selector-count">{selectedClientIds.length} selected</span>
+        <p className="menu-section-title">Show calendars for</p>
+        <span className="client-selector-count">{selectedClientIds.length}</span>
       </div>
       {isLoadingClients ? <p className="subtle-copy">Loading clients...</p> : null}
       {clientError ? <p className="form-error">{clientError}</p> : null}
@@ -44,7 +44,7 @@ export function ClientSelector() {
                 <span className="client-option-swatch" />
                 <span className="client-option-text">
                   <strong>{client.label}</strong>
-                  <small>@{client.username}</small>
+                  <small>{"@" + client.username}</small>
                 </span>
               </label>
             );

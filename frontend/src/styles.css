@@ -272,7 +272,7 @@ button {
   position: absolute;
   right: 0;
   top: calc(100% + 12px);
-  width: 250px;
+  width: 280px;
   background: #ffffff;
   border: 1px solid rgba(16, 32, 51, 0.18);
   border-radius: 22px;
@@ -281,15 +281,35 @@ button {
   z-index: 10;
 }
 
-.menu-heading {
-  margin: 0 0 12px;
-  font-weight: 700;
+.menu-identity {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding-bottom: 12px;
+  margin-bottom: 12px;
+  border-bottom: 1px solid rgba(16, 32, 51, 0.08);
 }
 
-.menu-user-label {
-  margin: 14px 0 0;
-  color: #46607d;
-  font-size: 0.92rem;
+.menu-identity-name {
+  margin: 0;
+  font-weight: 700;
+  color: #102033;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.menu-role-chip {
+  flex: none;
+  font-size: 0.72rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: #2f57c7;
+  background: rgba(47, 87, 199, 0.1);
+  border-radius: 999px;
+  padding: 3px 9px;
 }
 
 .menu-section-title {
@@ -312,17 +332,26 @@ button {
   display: block;
   width: 100%;
   border: 0;
-  border-radius: 14px;
-  padding: 12px 14px;
+  border-radius: 10px;
+  padding: 9px 10px;
   text-decoration: none;
   color: #102033;
-  background: #f4f7fb;
+  background: transparent;
   font-weight: 600;
   text-align: left;
 }
 
+.menu-links a:hover,
+.menu-logout:hover {
+  background: #f4f7fb;
+}
+
 .menu-logout {
-  margin-top: 14px;
+  margin-top: 12px;
+  padding-top: 12px;
+  border-top: 1px solid rgba(16, 32, 51, 0.08);
+  border-radius: 0 0 10px 10px;
+  color: #b42318;
 }
 
 .client-selector {
@@ -383,6 +412,12 @@ button {
 }
 
 .client-option-text {
+  display: flex;
+  align-items: baseline;
+  gap: 6px;
+  min-width: 0;
+  white-space: nowrap;
+  overflow: hidden;
   display: grid;
   gap: 2px;
 }

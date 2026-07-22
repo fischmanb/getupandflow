@@ -47,7 +47,10 @@ export function HamburgerMenu() {
       </button>
       {isOpen ? (
         <div className="menu-popover">
-          <p className="menu-heading">{user?.role || "User"} Menu</p>
+          <div className="menu-identity">
+            <p className="menu-identity-name">{getDisplayName(user)}</p>
+            <span className="menu-role-chip">{user?.role || "User"}</span>
+          </div>
           <nav className="menu-links">
             {menuItems.map((item) => (
               <Link key={item.to} onClick={() => setIsOpen(false)} to={item.to}>
@@ -56,7 +59,6 @@ export function HamburgerMenu() {
             ))}
           </nav>
           <ClientSelector />
-          <p className="menu-user-label">Logged in as {getDisplayName(user)}</p>
           <button className="menu-logout" onClick={logout} type="button">
             Log out
           </button>
