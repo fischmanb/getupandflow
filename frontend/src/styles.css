@@ -303,7 +303,7 @@ button {
 .menu-role-chip {
   flex: none;
   font-size: 0.72rem;
-  font-weight: 700;
+  font-weight: 600;
   text-transform: uppercase;
   letter-spacing: 0.06em;
   color: #2f57c7;
@@ -315,7 +315,7 @@ button {
 .menu-section-title {
   margin: 0;
   font-size: 0.85rem;
-  font-weight: 800;
+  font-weight: 600;
   text-transform: uppercase;
   letter-spacing: 0.08em;
   color: #46607d;
@@ -337,7 +337,7 @@ button {
   text-decoration: none;
   color: #102033;
   background: transparent;
-  font-weight: 600;
+  font-weight: 500;
   text-align: left;
 }
 
@@ -2613,4 +2613,8 @@ textarea.gcal-modal-input {
   display: inline-flex;
   align-items: center;
   justify-content: center;
+}
+
+.client-option-text strong {
+  font-weight: 500;
 }
