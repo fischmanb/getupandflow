@@ -36,6 +36,7 @@ INSTALLED_APPS = [
     "rest_framework_simplejwt.token_blacklist",
     "accounts",
     "planner",
+    "leads",
 ]
 
 MIDDLEWARE = [
@@ -113,6 +114,13 @@ CSRF_TRUSTED_ORIGINS = get_list_env(
 )
 CORS_ALLOWED_ORIGIN_REGEXES = get_list_env("CORS_ALLOWED_ORIGIN_REGEXES", "")
 
+# The marketing site posts leads to this API from its own domain; keep its
+# origins allowed even when CORS_ALLOWED_ORIGINS is overridden by the env.
+MARKETING_ORIGINS = ["https://getupandflow.co", "https://www.getupandflow.co"]
+for _origin in MARKETING_ORIGINS:
+    if _origin not in CORS_ALLOWED_ORIGINS:
+        CORS_ALLOWED_ORIGINS.append(_origin)
+
 SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")
 USE_X_FORWARDED_HOST = True
 
@@ -134,6 +142,9 @@ REST_FRAMEWORK = {
     "DEFAULT_SCHEMA_CLASS": "drf_spectacular.openapi.AutoSchema",
     "DEFAULT_PAGINATION_CLASS": "planner.pagination.StandardResultsSetPagination",
     "PAGE_SIZE": 10,
+    "DEFAULT_THROTTLE_RATES": {
+        "leads": os.getenv("LEADS_THROTTLE_RATE", "10/hour"),
+    },
 }
 
 SIMPLE_JWT = {
