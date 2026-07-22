@@ -3,6 +3,7 @@ from django.core.exceptions import ValidationError
 from django.db import models
 
 from .constants import ROLE_ADMIN, ROLE_CLIENT, ROLE_COACH
+from .storage import select_photo_storage
 
 
 class UserProfile(models.Model):
@@ -16,6 +17,10 @@ class UserProfile(models.Model):
     )
     phone_number = models.CharField(max_length=30, blank=True)
     zoom_user_email = models.EmailField(null=True, blank=True)
+    bio = models.TextField(blank=True)
+    contact_email = models.EmailField(blank=True)
+    contact_phone = models.CharField(max_length=30, blank=True)
+    photo = models.ImageField(upload_to="coach-photos/", null=True, blank=True, storage=select_photo_storage)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 

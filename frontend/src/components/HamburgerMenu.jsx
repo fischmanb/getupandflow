@@ -6,18 +6,17 @@ import { useOutsideClick } from "../hooks/useOutsideClick";
 import { ClientSelector } from "./ClientSelector";
 
 function getMenuItems(role) {
+  const commonItems = [
+    { to: "/app", label: "Home" },
+    { to: "/app/calendar", label: "Calendar" },
+    { to: "/app/settings", label: "Account Settings" },
+  ];
+
   if (role === "Admin") {
-    return [
-      { to: "/app/settings", label: "Account Settings" },
-      { to: "/app/admin-dashboard", label: "Admin Dashboard" },
-    ];
+    return [...commonItems, { to: "/app/admin-dashboard", label: "Admin Dashboard" }];
   }
 
-  if (role === "Coach") {
-    return [{ to: "/app/settings", label: "Account Settings" }];
-  }
-
-  return [{ to: "/app/settings", label: "Account Settings" }];
+  return commonItems;
 }
 
 function getDisplayName(user) {

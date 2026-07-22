@@ -536,6 +536,129 @@ button {
     linear-gradient(180deg, rgba(255, 255, 255, 0.92), rgba(236, 243, 255, 0.96));
 }
 
+.home-grid {
+  display: grid;
+  margin-top: 12px;
+}
+
+.home-panel {
+  width: min(720px, 100%);
+  min-height: 0;
+  display: grid;
+  gap: 20px;
+  align-content: start;
+  padding: 24px 26px;
+}
+
+.home-greeting {
+  margin: 0;
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: #102033;
+}
+
+.home-coach-section {
+  display: grid;
+  gap: 4px;
+}
+
+.home-coach-empty {
+  margin: 0;
+}
+
+.coach-card {
+  display: flex;
+  gap: 16px;
+  align-items: flex-start;
+  padding: 18px;
+  border-radius: 20px;
+  background: rgba(255, 255, 255, 0.76);
+  border: 1px solid rgba(16, 32, 51, 0.08);
+}
+
+.coach-card-photo,
+.coach-card-avatar {
+  flex: none;
+  width: 72px;
+  height: 72px;
+  border-radius: 999px;
+  object-fit: cover;
+}
+
+.coach-card-avatar {
+  display: grid;
+  place-items: center;
+  background: rgba(37, 99, 235, 0.12);
+  color: #2563eb;
+  font-size: 1.6rem;
+  font-weight: 700;
+}
+
+.coach-card-body {
+  display: grid;
+  gap: 10px;
+  min-width: 0;
+}
+
+.coach-card-name {
+  margin: 0;
+  font-size: 1.05rem;
+  font-weight: 700;
+}
+
+.coach-card-about {
+  display: grid;
+  gap: 4px;
+}
+
+.coach-card-label {
+  margin: 0;
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: #46607d;
+}
+
+.coach-card-bio {
+  margin: 0;
+  font-size: 0.95rem;
+  color: #46607d;
+  line-height: 1.5;
+  white-space: pre-line;
+}
+
+.coach-card-contacts {
+  display: grid;
+  gap: 4px;
+  font-size: 0.95rem;
+}
+
+.coach-card-contacts a {
+  color: #2563eb;
+  text-decoration: none;
+  overflow-wrap: anywhere;
+}
+
+.coach-card-contacts a:hover {
+  text-decoration: underline;
+}
+
+.home-calendar-launcher {
+  justify-self: start;
+  display: inline-flex;
+  align-items: center;
+  text-decoration: none;
+}
+
+.profile-photo-row {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.profile-photo-input {
+  flex: 1;
+}
+
 .task-panel-header {
   display: flex;
   justify-content: space-between;

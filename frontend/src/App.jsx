@@ -6,6 +6,7 @@ import { RoleRoute } from "./components/RoleRoute";
 import { AccountSettingsPage } from "./pages/AccountSettingsPage";
 import { AdminDashboardPage } from "./pages/AdminDashboardPage";
 import { AssignedClientsPage } from "./pages/AssignedClientsPage";
+import { CalendarPage } from "./pages/CalendarPage";
 import { CategoryManagementPage } from "./pages/CategoryManagementPage";
 import { ClientListPage } from "./pages/ClientListPage";
 import { HomePage } from "./pages/HomePage";
@@ -24,6 +25,7 @@ export default function App() {
         }
         >
           <Route index element={<HomePage />} />
+          <Route path="calendar" element={<CalendarPage />} />
           <Route path="settings" element={<AccountSettingsPage />} />
           <Route
             path="categories"
