@@ -58,6 +58,10 @@ export function AuthProvider({ children }) {
       setUser(response.data.user);
       return response.data.user;
     },
+    updateUser(nextUser) {
+      setStoredUser(nextUser);
+      setUser(nextUser);
+    },
     logout() {
       clearTokens();
       setUser(null);

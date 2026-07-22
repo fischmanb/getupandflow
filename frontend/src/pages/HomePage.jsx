@@ -1,74 +1,92 @@
-import { useState } from "react";
+import { Link } from "react-router-dom";
 
-import { BigCalendarPanel } from "../components/BigCalendarPanel";
-import { ErrorBoundary } from "../components/ErrorBoundary";
-import { TaskPanel } from "../components/TaskPanel";
+import { useAuth } from "../auth/AuthContext";
+import { useClientFilter } from "../filters/ClientFilterContext";
 
-function CalendarIcon() {
-  return (
-    <svg aria-hidden="true" className="toggle-button-icon" viewBox="0 0 24 24">
-      <rect x="3.5" y="5.5" width="17" height="15" rx="2.5" fill="none" stroke="currentColor" strokeWidth="1.8" />
-      <path d="M7 3.75v3.5M17 3.75v3.5M3.5 9.5h17" fill="none" stroke="currentColor" strokeWidth="1.8" />
-    </svg>
-  );
+function getDisplayName(user) {
+  if (!user) return "";
+  return [user.first_name, user.last_name].filter(Boolean).join(" ") || user.username;
 }
 
-function TaskIcon() {
+function CoachCard({ coach }) {
+  if (!coach) {
+    return <p className="subtle-copy home-coach-empty">Your coach will be introduced shortly.</p>;
+  }
+
   return (
-    <svg aria-hidden="true" className="toggle-button-icon" viewBox="0 0 24 24">
-      <path d="M9 7h10M9 12h10M9 17h10M4.5 7.5l1.75 1.75L8.75 6.5M4.5 12.5l1.75 1.75L8.75 11.5M4.5 17.5l1.75 1.75L8.75 16.5" fill="none" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.8" />
-    </svg>
+    <div className="coach-card">
+      {coach.photo_url ? (
+        <img alt={coach.name} className="coach-card-photo" src={coach.photo_url} />
+      ) : (
+        <div aria-hidden="true" className="coach-card-avatar">
+          {(coach.name || "?").charAt(0).toUpperCase()}
+        </div>
+      )}
+      <div className="coach-card-body">
+        <h3 className="coach-card-name">{coach.name}</h3>
+        {coach.bio ? (
+          <div className="coach-card-about">
+            <p className="coach-card-label">About your coach</p>
+            <p className="coach-card-bio">{coach.bio}</p>
+          </div>
+        ) : null}
+        {coach.contact_email || coach.contact_phone ? (
+          <div className="coach-card-contacts">
+            {coach.contact_email ? <a href={`mailto:${coach.contact_email}`}>{coach.contact_email}</a> : null}
+            {coach.contact_phone ? <a href={`tel:${coach.contact_phone}`}>{coach.contact_phone}</a> : null}
+          </div>
+        ) : null}
+      </div>
+    </div>
   );
 }
 
 export function HomePage() {
-  const [activeMobileView, setActiveMobileView] = useState("calendar");
-  const [taskPanelState, setTaskPanelState] = useState({
-    isEmpty: false,
-    isExpanded: false,
-    isMinimized: false,
-    totalTaskCount: 0,
-  });
+  const { user } = useAuth();
+  const { isLoadingClients, selectedClients, supportsClientFiltering } = useClientFilter();
 
-  const shouldPrioritizeCalendar = taskPanelState.isEmpty && taskPanelState.isMinimized;
+  // Mirror-view: a coach/admin with one client selected sees exactly what that
+  // client sees on their own home page.
+  let greetingName = null;
+  let coach = null;
+  let promptMessage = "";
+
+  if (!supportsClientFiltering) {
+    greetingName = getDisplayName(user);
+    coach = user?.my_coach || null;
+  } else if (selectedClients.length === 1) {
+    greetingName = selectedClients[0].label;
+    coach = selectedClients[0].coach || null;
+  } else if (isLoadingClients) {
+    promptMessage = "Loading your clients...";
+  } else if (selectedClients.length === 0) {
+    promptMessage = "Choose a client from the menu to see their home page.";
+  } else {
+    promptMessage = "Select a single client from the menu to see their home page.";
+  }
 
   return (
     <main className="workspace-shell">
-      <section className="mobile-toggle-bar" aria-label="Mobile view toggle">
-        <button
-          className={activeMobileView === "calendar" ? "toggle-button active" : "toggle-button"}
-          onClick={() => setActiveMobileView("calendar")}
-          type="button"
-        >
-          <CalendarIcon />
-          <span>Calendar</span>
-        </button>
-        <button
-          className={activeMobileView === "tasks" ? "toggle-button active" : "toggle-button"}
-          onClick={() => setActiveMobileView("tasks")}
-          type="button"
-        >
-          <TaskIcon />
-          <span>Tasks</span>
-        </button>
-      </section>
-
-      <section className={shouldPrioritizeCalendar ? "workspace-grid workspace-grid-prioritize-calendar" : "workspace-grid"}>
-        <ErrorBoundary>
-          <BigCalendarPanel
-            className={
-              activeMobileView === "calendar"
-                ? "workspace-panel calendar-panel"
-                : "workspace-panel calendar-panel mobile-hidden"
-            }
-          />
-        </ErrorBoundary>
-        <ErrorBoundary>
-          <TaskPanel
-            onStateChange={setTaskPanelState}
-            className={activeMobileView === "tasks" ? "workspace-panel tasks-panel" : "workspace-panel tasks-panel mobile-hidden"}
-          />
-        </ErrorBoundary>
+      <section className="home-grid">
+        <section className="workspace-panel home-panel">
+          {greetingName ? (
+            <>
+              <h2 className="home-greeting">Welcome, {greetingName}</h2>
+              <div className="home-coach-section">
+                <p className="panel-label">Your coach</p>
+                <CoachCard coach={coach} />
+              </div>
+              <Link className="task-create-button home-calendar-launcher" to="/app/calendar">
+                Open calendar
+              </Link>
+            </>
+          ) : (
+            <div className="selection-prompt">
+              <h4>Select a client</h4>
+              <p className="subtle-copy">{promptMessage}</p>
+            </div>
+          )}
+        </section>
       </section>
     </main>
   );

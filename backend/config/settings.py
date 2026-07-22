@@ -93,6 +93,11 @@ USE_TZ = True
 STATIC_URL = "static/"
 STATIC_ROOT = BASE_DIR / "staticfiles"
 
+# Local fallback for uploaded media; profile photos use Cloudflare R2 when the
+# R2_* environment variables are set (see accounts.storage.select_photo_storage).
+MEDIA_URL = "/media/"
+MEDIA_ROOT = BASE_DIR / "media"
+
 STORAGES = {
     "default": {
         "BACKEND": "django.core.files.storage.FileSystemStorage",
