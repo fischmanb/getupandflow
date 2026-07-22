@@ -65,8 +65,10 @@
   });
 
   // who-we-are coach photo -> Cindy's video, swapped in place (original behavior)
-  var photo = document.querySelector(".aspect-\[4\/3\].cursor-pointer") || document.querySelector("div.cursor-pointer img[alt*=coach i]");
-  var trigger = photo ? (photo.closest(".cursor-pointer") || photo) : null;
+  var trigger = [].slice.call(document.querySelectorAll("div")).filter(function (d) {
+    var c = typeof d.className === "string" ? d.className : "";
+    return c.indexOf("aspect-[4/3]") > -1 && c.indexOf("cursor-pointer") > -1;
+  })[0] || null;
   if (trigger) {
     trigger.addEventListener("click", function () {
       if (trigger.dataset.playing) return;
