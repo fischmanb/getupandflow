@@ -251,6 +251,7 @@ export function EventEditorModal({ mode, initialStart, initialEnd, event, onClos
   const [recurrenceType, setRecurrenceType] = useState(event?.recurrence_type || "none");
   const [recurrenceUntil, setRecurrenceUntil] = useState(event?.recurrence_until || "");
   const [addZoomMeeting, setAddZoomMeeting] = useState(false);
+  const [linkCopied, setLinkCopied] = useState(false);
   const hasZoomMeeting = Boolean(event?.zoom_meeting_id);
   const [category, setCategory] = useState(event?.category || "");
   const [categories, setCategories] = useState([]);
@@ -457,19 +458,6 @@ export function EventEditorModal({ mode, initialStart, initialEnd, event, onClos
 
           {isExpanded ? (
             <>
-              {event?.meeting_link ? (
-                <div className="gcal-modal-row">
-                  <a
-                    className="gcal-join-link"
-                    href={event.meeting_link}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                  >
-                    Join meeting →
-                  </a>
-                </div>
-              ) : null}
-
               <div className="gcal-modal-row">
                 <input
                   className="gcal-modal-input"
@@ -479,7 +467,7 @@ export function EventEditorModal({ mode, initialStart, initialEnd, event, onClos
                 />
               </div>
 
-              <div className="gcal-modal-row">
+              <div className="gcal-modal-row gcal-meeting-row">
                 <label className="gcal-zoom-toggle">
                   <input
                     type="checkbox"
@@ -487,28 +475,38 @@ export function EventEditorModal({ mode, initialStart, initialEnd, event, onClos
                     disabled={hasZoomMeeting || isSubmitting}
                     onChange={(e) => setAddZoomMeeting(e.target.checked)}
                   />
-                  <span>Add Zoom meeting</span>
+                  <span>{hasZoomMeeting ? "Zoom meeting" : "Add Zoom meeting"}</span>
                 </label>
-                {hasZoomMeeting ? (
-                  <span className="subtle-copy">Zoom link is managed automatically.</span>
-                ) : null}
+                <span className="gcal-meeting-actions">
+                  {event?.meeting_link ? (
+                    <>
+                      <a
+                        className="gcal-join-link"
+                        href={event.meeting_link}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                      >
+                        Join meeting →
+                      </a>
+                      <button
+                        className="gcal-copy-link"
+                        type="button"
+                        onClick={() => {
+                          navigator.clipboard?.writeText(event.meeting_link);
+                          setLinkCopied(true);
+                          window.setTimeout(() => setLinkCopied(false), 2000);
+                        }}
+                      >
+                        {linkCopied ? "Copied" : "Copy link"}
+                      </button>
+                    </>
+                  ) : addZoomMeeting && !hasZoomMeeting ? (
+                    <span className="subtle-copy">Link added when you save</span>
+                  ) : null}
+                </span>
               </div>
 
-              {hasZoomMeeting ? (
-                <div className="gcal-modal-row">
-                  <input
-                    className="gcal-modal-input"
-                    type="url"
-                    aria-label="Zoom meeting link"
-                    value={meetingLink}
-                    readOnly
-                  />
-                </div>
-              ) : addZoomMeeting ? (
-                <div className="gcal-modal-row">
-                  <span className="subtle-copy">A Zoom link will be added when you save.</span>
-                </div>
-              ) : (
+              {!hasZoomMeeting && !addZoomMeeting ? (
                 <div className="gcal-modal-row">
                   <input
                     className="gcal-modal-input"
@@ -518,7 +516,7 @@ export function EventEditorModal({ mode, initialStart, initialEnd, event, onClos
                     onChange={(e) => setMeetingLink(e.target.value)}
                   />
                 </div>
-              )}
+              ) : null}
 
               <div className="gcal-modal-row">
                 <label className="gcal-field-label" htmlFor="event-recurrence-type">Repeats</label>

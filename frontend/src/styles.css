@@ -1984,7 +1984,7 @@ button {
 
 /* Inline label for a control within a modal row (e.g. "Repeats"). */
 .gcal-field-label {
-  font-weight: 600;
+  font-weight: 500;
   font-size: 0.95rem;
   color: #102033;
 }
@@ -2617,4 +2617,31 @@ textarea.gcal-modal-input {
 
 .client-option-text strong {
   font-weight: 500;
+}
+
+.gcal-meeting-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.gcal-meeting-actions {
+  display: inline-flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.gcal-copy-link {
+  border: 0;
+  background: transparent;
+  padding: 0;
+  color: #2f57c7;
+  font-weight: 500;
+  cursor: pointer;
+}
+
+.gcal-copy-link:hover {
+  text-decoration: underline;
 }
