@@ -145,7 +145,9 @@ class ClientAssignmentViewSet(viewsets.ReadOnlyModelViewSet):
     def get_queryset(self):
         user = self.request.user
         role = RBACScope.role_for(user)
-        queryset = UserProfile.objects.select_related("user", "assigned_coach").order_by("user__username")
+        queryset = UserProfile.objects.select_related(
+            "user", "assigned_coach", "assigned_coach__profile"
+        ).order_by("user__username")
 
         if role == ROLE_ADMIN:
             return queryset.filter(user__groups__name=ROLE_CLIENT)

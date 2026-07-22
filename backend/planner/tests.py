@@ -13,6 +13,7 @@ from rest_framework.test import APITestCase
 
 from accounts.constants import ROLE_ADMIN, ROLE_CLIENT, ROLE_COACH
 from accounts.models import UserProfile
+from accounts.tests import R2_ENV, make_photo_upload
 
 from . import zoom
 from .models import Event, EventCategory, Task
@@ -301,6 +302,40 @@ class PlannerRBACAPITests(APITestCase):
             UserProfile.objects.get(user=self.client_one).assigned_coach_id,
             self.coach_two.id,
         )
+
+    def test_admin_can_update_profile_card_fields(self):
+        self.authenticate(self.admin)
+
+        response = self.client.patch(
+            reverse("admin-user-detail", args=[self.coach_one.id]),
+            {
+                "role": ROLE_COACH,
+                "bio": "Movement and recovery specialist.",
+                "contact_email": "casey@coaching.example.com",
+                "contact_phone": "+1 555 0101",
+            },
+            format="json",
+        )
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(response.data["bio"], "Movement and recovery specialist.")
+        profile = UserProfile.objects.get(user=self.coach_one)
+        self.assertEqual(profile.bio, "Movement and recovery specialist.")
+        self.assertEqual(profile.contact_email, "casey@coaching.example.com")
+        self.assertEqual(profile.contact_phone, "+1 555 0101")
+
+    @mock.patch.dict(os.environ, {name: "" for name in R2_ENV})
+    def test_admin_photo_upload_without_storage_env_returns_clear_400(self):
+        self.authenticate(self.admin)
+
+        response = self.client.patch(
+            reverse("admin-user-detail", args=[self.coach_one.id]),
+            {"photo": make_photo_upload()},
+            format="multipart",
+        )
+
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertIn("Photo storage is not configured yet.", response.data["photo"])
 
     def test_admin_can_bulk_create_coaches_and_clients(self):
         self.authenticate(self.admin)

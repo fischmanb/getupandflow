@@ -4,6 +4,7 @@ from rest_framework import serializers
 
 from accounts.constants import ROLE_CLIENT, ROLE_COACH
 from accounts.models import UserProfile, get_user_role
+from accounts.serializers import CoachCardSerializer, validate_photo_upload
 
 from .models import Event, EventCategory, Task
 from .permissions import RBACScope
@@ -23,10 +24,11 @@ class UserSummarySerializer(serializers.ModelSerializer):
 
 class ClientAssignmentSerializer(serializers.ModelSerializer):
     user = UserSummarySerializer(read_only=True)
+    coach = CoachCardSerializer(source="assigned_coach", read_only=True)
 
     class Meta:
         model = UserProfile
-        fields = ["id", "user", "assigned_coach", "phone_number", "created_at", "updated_at"]
+        fields = ["id", "user", "assigned_coach", "coach", "phone_number", "created_at", "updated_at"]
 
 
 class EventCategorySerializer(serializers.ModelSerializer):
@@ -191,6 +193,12 @@ class AdminManagedUserSerializer(serializers.ModelSerializer):
     )
     phone_number = serializers.CharField(source="profile.phone_number", allow_blank=True, required=False)
     zoom_user_email = serializers.EmailField(source="profile.zoom_user_email", allow_null=True, required=False)
+    bio = serializers.CharField(source="profile.bio", allow_blank=True, required=False)
+    contact_email = serializers.EmailField(source="profile.contact_email", allow_blank=True, required=False)
+    contact_phone = serializers.CharField(source="profile.contact_phone", allow_blank=True, required=False)
+    photo = serializers.ImageField(
+        source="profile.photo", allow_null=True, required=False, validators=[validate_photo_upload]
+    )
     password = serializers.CharField(write_only=True, required=False, allow_blank=False)
 
     class Meta:
@@ -204,6 +212,10 @@ class AdminManagedUserSerializer(serializers.ModelSerializer):
             "role",
             "phone_number",
             "zoom_user_email",
+            "bio",
+            "contact_email",
+            "contact_phone",
+            "photo",
             "assigned_coach_id",
             "password",
         ]
@@ -262,6 +274,11 @@ class AdminManagedUserSerializer(serializers.ModelSerializer):
         profile.phone_number = profile_data.get("phone_number", "")
         profile.zoom_user_email = profile_data.get("zoom_user_email")
         profile.assigned_coach = profile_data.get("assigned_coach")
+        profile.bio = profile_data.get("bio", "")
+        profile.contact_email = profile_data.get("contact_email", "")
+        profile.contact_phone = profile_data.get("contact_phone", "")
+        if profile_data.get("photo"):
+            profile.photo = profile_data["photo"]
         profile.save()
 
         return user
@@ -285,6 +302,9 @@ class AdminManagedUserSerializer(serializers.ModelSerializer):
             profile.phone_number = profile_data["phone_number"]
         if "zoom_user_email" in profile_data:
             profile.zoom_user_email = profile_data["zoom_user_email"]
+        for field in ("bio", "contact_email", "contact_phone", "photo"):
+            if field in profile_data:
+                setattr(profile, field, profile_data[field])
         if "assigned_coach" in profile_data or role == ROLE_COACH:
             profile.assigned_coach = None if role == ROLE_COACH else profile_data.get("assigned_coach")
         profile.save()

@@ -23,6 +23,7 @@ function normalizeClient(profile) {
     id: user.id,
     label: [user.first_name, user.last_name].filter(Boolean).join(" ") || user.username,
     username: user.username,
+    coach: profile.coach || null,
   };
 }
 
