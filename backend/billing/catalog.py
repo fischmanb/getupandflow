@@ -1,0 +1,70 @@
+"""Plan catalog for Stripe billing.
+
+Amounts are in USD cents. Price lookup_keys (``<plan>_<interval>``) are the
+single link between Stripe objects and app plans -- no Stripe ids are
+hardcoded anywhere; the catalog is materialized in Stripe by the
+``ensure_stripe_catalog`` management command.
+"""
+
+PLAN_FULL_SUPPORT = "full_support"
+PLAN_FOCUS_LITE = "focus_lite"
+PLAN_CHOICES = [
+    (PLAN_FULL_SUPPORT, "Full Support"),
+    (PLAN_FOCUS_LITE, "Focus Lite"),
+]
+
+INTERVAL_MONTHLY = "monthly"
+INTERVAL_WEEKLY = "weekly"
+INTERVAL_CHOICES = [
+    (INTERVAL_MONTHLY, "Monthly"),
+    (INTERVAL_WEEKLY, "Weekly"),
+]
+
+# Stripe recurring interval per app interval.
+STRIPE_INTERVALS = {INTERVAL_MONTHLY: "month", INTERVAL_WEEKLY: "week"}
+
+PLANS = {
+    PLAN_FULL_SUPPORT: {
+        "name": "Full Support",
+        "amounts": {INTERVAL_MONTHLY: 75000, INTERVAL_WEEKLY: 22500},
+    },
+    PLAN_FOCUS_LITE: {
+        "name": "Focus Lite",
+        "amounts": {INTERVAL_MONTHLY: 20000, INTERVAL_WEEKLY: 9500},
+    },
+}
+
+
+def price_lookup_key(plan, interval):
+    return f"{plan}_{interval}"
+
+
+def all_lookup_keys():
+    return [price_lookup_key(plan, interval) for plan in PLANS for interval in STRIPE_INTERVALS]
+
+
+def parse_lookup_key(key):
+    """Return (plan, interval) for a known lookup key, else (None, None)."""
+    for plan in PLANS:
+        for interval in STRIPE_INTERVALS:
+            if key == price_lookup_key(plan, interval):
+                return plan, interval
+    return None, None
+
+
+def plan_catalog():
+    """Plan catalog for the signup UI (amounts in whole dollars)."""
+    return [
+        {
+            "id": plan,
+            "name": spec["name"],
+            "prices": {
+                interval: {
+                    "amount": spec["amounts"][interval] // 100,
+                    "lookup_key": price_lookup_key(plan, interval),
+                }
+                for interval in STRIPE_INTERVALS
+            },
+        }
+        for plan, spec in PLANS.items()
+    ]

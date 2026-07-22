@@ -37,6 +37,7 @@ INSTALLED_APPS = [
     "accounts",
     "planner",
     "leads",
+    "billing",
 ]
 
 MIDDLEWARE = [
@@ -149,6 +150,7 @@ REST_FRAMEWORK = {
     "PAGE_SIZE": 10,
     "DEFAULT_THROTTLE_RATES": {
         "leads": os.getenv("LEADS_THROTTLE_RATE", "10/hour"),
+        "billing_checkout": os.getenv("BILLING_CHECKOUT_THROTTLE_RATE", "20/hour"),
     },
 }
 
@@ -160,8 +162,20 @@ SIMPLE_JWT = {
     "AUTH_HEADER_TYPES": ("Bearer",),
 }
 
+# Stripe billing. Keys come from the environment only; the webhook secret is
+# the signing secret of the dashboard webhook endpoint pointing at
+# /api/billing/webhook/.
+STRIPE_SECRET_KEY = os.getenv("STRIPE_SECRET_KEY", "")
+STRIPE_PUBLISHABLE_KEY = os.getenv("STRIPE_PUBLISHABLE_KEY", "")
+STRIPE_WEBHOOK_SECRET = os.getenv("STRIPE_WEBHOOK_SECRET", "")
+# Base URL of the client app, used for Checkout/Portal redirect URLs.
+APP_BASE_URL = os.getenv("APP_BASE_URL", "http://localhost:5173").rstrip("/")
+
 SPECTACULAR_SETTINGS = {
     "TITLE": "Get Up and Flow API",
+    # leads.billing_period and billing.interval share the monthly/weekly
+    # choice set; give the enum one canonical name.
+    "ENUM_NAME_OVERRIDES": {"BillingPeriodEnum": "billing.catalog.INTERVAL_CHOICES"},
     "DESCRIPTION": "API schema for the Get Up and Flow calendar application backend.",
     "VERSION": "1.0.0",
     "SERVE_INCLUDE_SCHEMA": False,

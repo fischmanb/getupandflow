@@ -1,6 +1,7 @@
 import { Link } from "react-router-dom";
 
 import { useAuth } from "../auth/AuthContext";
+import { BillingCard, PastDueBanner, useBillingSubscription } from "../components/BillingCard";
 import { useClientFilter } from "../filters/ClientFilterContext";
 
 function getDisplayName(user) {
@@ -45,6 +46,11 @@ export function HomePage() {
   const { user } = useAuth();
   const { isLoadingClients, selectedClients, supportsClientFiltering } = useClientFilter();
 
+  // Billing renders ONLY for the client viewing their own home -- never in
+  // coach/admin mirror view (deliberate exception to mirroring).
+  const isClientSelf = !supportsClientFiltering && user?.role === "Client";
+  const subscription = useBillingSubscription(isClientSelf);
+
   // Mirror-view: a coach/admin with one client selected sees exactly what that
   // client sees on their own home page.
   let greetingName = null;
@@ -71,11 +77,13 @@ export function HomePage() {
         <section className="workspace-panel home-panel">
           {greetingName ? (
             <>
+              {isClientSelf ? <PastDueBanner subscription={subscription} /> : null}
               <h2 className="home-greeting">Welcome, {greetingName}</h2>
               <div className="home-coach-section">
                 <p className="panel-label">Your coach</p>
                 <CoachCard coach={coach} />
               </div>
+              {isClientSelf ? <BillingCard subscription={subscription} /> : null}
               <Link className="task-create-button home-calendar-launcher" to="/app/calendar">
                 Open calendar
               </Link>
