@@ -29,6 +29,9 @@ export function ClientSelector() {
           {clients.map((client) => {
             const isSelected = isClientSelected(client.id);
             const accentColor = colorMap[client.id];
+            const labelIsAmbiguous =
+              client.label !== client.username &&
+              clients.some((other) => other.id !== client.id && other.label === client.label);
 
             return (
               <label
@@ -44,7 +47,7 @@ export function ClientSelector() {
                 <span className="client-option-swatch" />
                 <span className="client-option-text">
                   <strong>{client.label}</strong>
-                  <small>{"@" + client.username}</small>
+                  {labelIsAmbiguous ? <small>{"@" + client.username}</small> : null}
                 </span>
               </label>
             );
