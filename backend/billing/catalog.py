@@ -29,13 +29,9 @@ PLANS = {
         "amounts": {INTERVAL_MONTHLY: 75000, INTERVAL_WEEKLY: 22500},
         "featured": True,
         "badge": "Most popular",
-        "tagline": "Your personal accountability partner \u2014 daily structure, coaching, and follow-through.",
-        "highlights": [
-            "Daily 1:1 planning with the same coach every day",
-            "Panic-button support when things fall apart",
-            "WhatsApp/text reminders during work hours",
-        ],
-        "value_note": "80% less than traditional coaching",
+        "tagline": "Your personal accountability partner \u2014 daily structure, coaching, and follow-through at 80% less than traditional cost.",
+        "highlights": [],
+        "value_note": None,
     },
     PLAN_FOCUS_LITE: {
         "name": "Focus Lite",
