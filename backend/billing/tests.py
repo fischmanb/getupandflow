@@ -430,7 +430,7 @@ class PortalAndSubscriptionTests(APITestCase):
 
 
 
-class StripeObjectCompatTests(TestCase):
+class StripeObjectCompatTests(APITestCase):
     """Guard the mock-reality gap: real stripe objects lack dict.get()."""
 
     class FakeStripeObject:
