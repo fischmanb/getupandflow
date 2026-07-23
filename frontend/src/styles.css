@@ -3086,3 +3086,96 @@ textarea.gcal-modal-input {
 @supports (min-height: 100svh) {
   .auth-layout { min-height: 100svh; }
 }
+
+
+/* Signup flow stitch: matching state, onboarding prompt, onboarding form */
+
+.matching-card {
+  background: linear-gradient(135deg, rgba(37, 99, 235, 0.06), rgba(16, 185, 129, 0.07));
+}
+
+.matching-card-avatar {
+  background: linear-gradient(135deg, rgba(37, 99, 235, 0.16), rgba(16, 185, 129, 0.16));
+}
+
+.matching-card-copy {
+  margin: 6px 0 0;
+  color: #334155;
+  font-size: 0.95rem;
+  line-height: 1.5;
+}
+
+.onboarding-prompt {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 12px;
+  padding: 12px 14px;
+  border: 1px solid rgba(37, 99, 235, 0.25);
+  border-radius: 14px;
+  background: rgba(37, 99, 235, 0.07);
+  color: #1e3a8a;
+}
+
+.onboarding-prompt p {
+  margin: 0;
+  font-size: 0.95rem;
+  line-height: 1.4;
+}
+
+.onboarding-prompt-cta {
+  flex-shrink: 0;
+}
+
+.onboarding-card {
+  max-width: 44rem;
+}
+
+.onboarding-form {
+  margin-top: 18px;
+}
+
+.onboarding-contact-method {
+  margin: 0;
+  padding: 0;
+  border: 0;
+}
+
+.onboarding-contact-method legend {
+  padding: 0;
+  margin-bottom: 6px;
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: #33475e;
+}
+
+.onboarding-contact-options {
+  display: flex;
+  gap: 18px;
+  flex-wrap: wrap;
+}
+
+.onboarding-contact-option {
+  display: flex !important;
+  flex-direction: row !important;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.95rem;
+  font-weight: 400 !important;
+}
+
+.onboarding-contact-option input[type="radio"] {
+  width: 18px;
+  height: 18px;
+  margin: 0;
+  accent-color: #2563eb;
+}
+
+.onboarding-skip-link {
+  margin-left: 14px;
+}
+
+.login-forgot-link {
+  margin-top: 14px;
+}

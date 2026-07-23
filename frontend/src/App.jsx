@@ -10,8 +10,11 @@ import { BillingSuccessPage } from "./pages/BillingSuccessPage";
 import { CalendarPage } from "./pages/CalendarPage";
 import { CategoryManagementPage } from "./pages/CategoryManagementPage";
 import { ClientListPage } from "./pages/ClientListPage";
+import { ForgotPasswordPage } from "./pages/ForgotPasswordPage";
 import { HomePage } from "./pages/HomePage";
 import { LoginPage } from "./pages/LoginPage";
+import { OnboardingPage } from "./pages/OnboardingPage";
+import { ResetPasswordPage } from "./pages/ResetPasswordPage";
 import { SignupPage } from "./pages/SignupPage";
 
 export default function App() {
@@ -19,6 +22,8 @@ export default function App() {
     <Routes>
       <Route path="/login" element={<LoginPage />} />
       <Route path="/signup" element={<SignupPage />} />
+      <Route path="/forgot-password" element={<ForgotPasswordPage />} />
+      <Route path="/reset-password" element={<ResetPasswordPage />} />
       <Route path="/billing/success" element={<BillingSuccessPage />} />
       <Route
         path="/app"
@@ -31,6 +36,14 @@ export default function App() {
           <Route index element={<HomePage />} />
           <Route path="calendar" element={<CalendarPage />} />
           <Route path="settings" element={<AccountSettingsPage />} />
+          <Route
+            path="onboarding"
+            element={
+              <RoleRoute allowedRoles={["Client"]}>
+                <OnboardingPage />
+              </RoleRoute>
+            }
+          />
           <Route
             path="categories"
             element={

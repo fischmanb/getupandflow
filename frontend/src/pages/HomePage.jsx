@@ -9,6 +9,36 @@ function getDisplayName(user) {
   return [user.first_name, user.last_name].filter(Boolean).join(" ") || user.username;
 }
 
+function MatchingCard() {
+  return (
+    <div className="coach-card matching-card">
+      <div aria-hidden="true" className="coach-card-avatar matching-card-avatar">
+        ~
+      </div>
+      <div className="coach-card-body">
+        <h3 className="coach-card-name">Your coach is on the way</h3>
+        <p className="matching-card-copy">
+          We are matching you with your coach — guaranteed within 48 hours, usually within 12-24.
+        </p>
+      </div>
+    </div>
+  );
+}
+
+function OnboardingPrompt() {
+  return (
+    <div className="onboarding-prompt">
+      <p>
+        Tell us a little about you — your check-in preferences help your coach hit the ground
+        running.
+      </p>
+      <Link className="task-create-button onboarding-prompt-cta" to="/app/onboarding">
+        Complete onboarding
+      </Link>
+    </div>
+  );
+}
+
 function CoachCard({ coach }) {
   if (!coach) {
     return <p className="subtle-copy home-coach-empty">Your coach will be introduced shortly.</p>;
@@ -79,9 +109,10 @@ export function HomePage() {
             <>
               {isClientSelf ? <PastDueBanner subscription={subscription} /> : null}
               <h2 className="home-greeting">Welcome, {greetingName}</h2>
+              {isClientSelf && user?.onboarding_complete === false ? <OnboardingPrompt /> : null}
               <div className="home-coach-section">
                 <p className="panel-label">Your coach</p>
-                <CoachCard coach={coach} />
+                {isClientSelf && !coach ? <MatchingCard /> : <CoachCard coach={coach} />}
               </div>
               {isClientSelf ? <BillingCard subscription={subscription} /> : null}
               <Link className="task-create-button home-calendar-launcher" to="/app/calendar">

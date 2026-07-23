@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Navigate, useNavigate } from "react-router-dom";
+import { Link, Navigate, useNavigate } from "react-router-dom";
 
 import { getErrorMessage } from "../api/utils";
 import { useAuth } from "../auth/AuthContext";
@@ -21,8 +21,14 @@ export function LoginPage() {
     setIsSubmitting(true);
 
     try {
-      await login(formData);
-      navigate("/app", { replace: true });
+      const user = await login(formData);
+      // New self-serve clients land on the onboarding form first; the
+      // dashboard stays reachable (no hard gate -- there's a skip link).
+      if (user?.role === "Client" && user?.onboarding_complete === false) {
+        navigate("/app/onboarding", { replace: true });
+      } else {
+        navigate("/app", { replace: true });
+      }
     } catch (error) {
       setErrorMessage(getErrorMessage(error, "Invalid username or password."));
     } finally {
@@ -62,6 +68,11 @@ export function LoginPage() {
             {isSubmitting ? "Signing in..." : "Sign in"}
           </button>
         </form>
+        <p className="subtle-copy login-forgot-link">
+          <Link className="back-link" to="/forgot-password">
+            Forgot your password?
+          </Link>
+        </p>
       </section>
     </main>
   );
