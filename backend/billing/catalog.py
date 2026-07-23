@@ -35,7 +35,7 @@ PLANS = {
             "Panic-button support when things fall apart",
             "WhatsApp/text reminders during work hours",
         ],
-        "value_note": "$4\u20136,000 value at 80% less than traditional coaching",
+        "value_note": "80% less than traditional coaching",
     },
     PLAN_FOCUS_LITE: {
         "name": "Focus Lite",
@@ -45,7 +45,6 @@ PLANS = {
         "tagline": "A lighter starting point \u2014 weekly planning and gentle reminders.",
         "highlights": [],
         "value_note": None,
-        "footnote": "Not ready for daily support? Start here \u2014 upgrade to Full Support anytime.",
     },
 }
 
