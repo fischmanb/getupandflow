@@ -3051,3 +3051,12 @@ textarea.gcal-modal-input {
 .plan-option-highlights li::before { content: "\2713"; position: absolute; left: 0; color: #10b981; font-weight: 700; }
 .plan-option:not(.is-featured) { opacity: 0.92; }
 .plan-option-footnote { display: block; margin-top: 0.3rem; color: #64748b; font-size: 0.75rem; font-style: italic; }
+
+
+/* Signup layout: wide desktop, aligned prices */
+.signup-card { max-width: 44rem; width: 100%; }
+@media (min-width: 900px) { .signup-card { max-width: 52rem; } }
+.plan-picker { display: grid; grid-template-columns: 1fr; gap: 0.9rem; align-items: stretch; }
+@media (min-width: 640px) { .plan-picker { grid-template-columns: 1fr 1fr; } }
+.plan-option { display: flex; flex-direction: column; height: 100%; text-align: left; }
+.plan-option-price { margin-top: auto; padding-top: 0.6rem; }
