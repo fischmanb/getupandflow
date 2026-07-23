@@ -29,7 +29,7 @@ PLANS = {
         "amounts": {INTERVAL_MONTHLY: 75000, INTERVAL_WEEKLY: 22500},
         "featured": True,
         "badge": "Most popular",
-        "tagline": "Your personal accountability partner \u2014 daily structure, coaching, and follow-through. A $6,000/month level of support.",
+        "tagline": "Your personal accountability partner \u2014 daily structure, coaching, and follow-through.",
         "highlights": [],
         "value_note": None,
     },
