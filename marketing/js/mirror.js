@@ -16,6 +16,17 @@
       var v = el.dataset[period];
       if (v) el.textContent = v;
     });
+    // Signup CTAs (hero + pricing cards) deep-link the app signup page with
+    // the plan they sit on and the currently toggled billing interval.
+    document.querySelectorAll("a[data-signup-plan]").forEach(function (a) {
+      a.setAttribute(
+        "href",
+        "https://app.getupandflow.co/signup?plan=" +
+          a.getAttribute("data-signup-plan") +
+          "&interval=" +
+          period
+      );
+    });
     window.__billing = period;
   }
   groups.forEach(function (b) {
