@@ -3071,3 +3071,15 @@ textarea.gcal-modal-input {
 @media (min-width: 640px) { .plan-picker { grid-template-columns: 1fr 1fr; } }
 .plan-option { display: flex; flex-direction: column; height: 100%; text-align: left; }
 .plan-option-price { margin-top: auto; padding-top: 0.6rem; }
+
+
+/* Signup card: compact vertical rhythm — whole card in one desktop viewport */
+.signup-card { padding: 24px 32px 22px; }
+.signup-card h1 { margin: 6px 0 8px; font-size: 1.9rem; }
+.signup-card > .subtle-copy { margin: 0 0 4px; }
+.signup-card .interval-toggle { margin-top: 12px; }
+.signup-card .plan-picker { margin-top: 12px; }
+.signup-card .auth-form { gap: 12px; margin-top: 14px; }
+.signup-card .auth-form input { padding-top: 10px; padding-bottom: 10px; }
+.signup-card .signup-footnote { margin-top: 12px; margin-bottom: 0; }
+.signup-card .eyebrow { margin-bottom: 0; }
