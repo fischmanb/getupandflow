@@ -427,3 +427,58 @@ class PortalAndSubscriptionTests(APITestCase):
         self.assertEqual(response.data["plan_name"], "Full Support")
         self.assertEqual(response.data["amount"], 750)
         self.assertEqual(response.data["card_last4"], "4242")
+
+
+
+class StripeObjectCompatTests(TestCase):
+    """Guard the mock-reality gap: real stripe objects lack dict.get()."""
+
+    class FakeStripeObject:
+        """Mimics stripe._stripe_object.StripeObject access semantics."""
+
+        def __init__(self, data):
+            self._data = {
+                k: (self.__class__(v) if isinstance(v, dict) else v)
+                for k, v in data.items()
+            }
+
+        def __getitem__(self, key):
+            return self._data[key]
+
+        def __getattr__(self, key):
+            try:
+                return self._data[key]
+            except KeyError as err:
+                raise AttributeError(*err.args) from err
+
+    def test_sget_on_stripe_like_object(self):
+        from billing.views import sget
+
+        obj = self.FakeStripeObject({"a": {"b": 1}, "none": None})
+        self.assertEqual(sget(sget(obj, "a"), "b"), 1)
+        self.assertIsNone(sget(obj, "missing"))
+        self.assertEqual(sget(obj, "none", "fallback"), "fallback")
+        self.assertIsNone(sget(None, "anything"))
+
+    def test_subscription_defaults_accepts_stripe_like_object(self):
+        from billing.views import _subscription_defaults
+
+        payload = self.FakeStripeObject(
+            {
+                "id": "sub_123",
+                "status": "active",
+                "cancel_at_period_end": False,
+                "current_period_end": 1760000000,
+                "items": {"data": [{"price": {"lookup_key": "Full Support - Monthly"}}]},
+                "default_payment_method": {"card": {"brand": "visa", "last4": "4242"}},
+            }
+        )
+        # items.data list entries built via nested dict conversion need list handling
+        payload._data["items"]._data["data"] = [
+            self.FakeStripeObject({"price": {"lookup_key": "Full Support - Monthly"}})
+        ]
+        defaults = _subscription_defaults(payload)
+        self.assertEqual(defaults["stripe_subscription_id"], "sub_123")
+        self.assertEqual(defaults["plan"], "full_support")
+        self.assertEqual(defaults["interval"], "monthly")
+        self.assertEqual(defaults["card_last4"], "4242")

@@ -225,22 +225,37 @@ class SubscriptionView(APIView):
         return Response(SubscriptionSerializer(subscription).data)
 
 
+def sget(obj, key, default=None):
+    """dict.get that also works on stripe StripeObject instances.
+
+    Newer stripe-python objects implement __getitem__ but not ``.get``;
+    plain dicts (and our test doubles) work identically through this path.
+    """
+    if obj is None:
+        return default
+    try:
+        value = obj[key]
+    except (KeyError, IndexError, TypeError):
+        return default
+    return default if value is None else value
+
+
 def _subscription_defaults(stripe_subscription):
     """Extract local Subscription fields from a Stripe subscription payload."""
-    items = (stripe_subscription.get("items") or {}).get("data") or []
+    items = sget(sget(stripe_subscription, "items"), "data") or []
     first_item = items[0] if items else {}
-    price = first_item.get("price") or {}
-    lookup_key = price.get("lookup_key") or ""
+    price = sget(first_item, "price") or {}
+    lookup_key = sget(price, "lookup_key") or ""
     plan, interval = parse_lookup_key(lookup_key)
     # Newer Stripe API versions report the period on the subscription item.
-    period_end = stripe_subscription.get("current_period_end") or first_item.get(
-        "current_period_end"
+    period_end = sget(stripe_subscription, "current_period_end") or sget(
+        first_item, "current_period_end"
     )
     defaults = {
         "stripe_subscription_id": stripe_subscription["id"],
         "price_lookup_key": lookup_key,
-        "status": stripe_subscription.get("status") or "",
-        "cancel_at_period_end": bool(stripe_subscription.get("cancel_at_period_end")),
+        "status": sget(stripe_subscription, "status") or "",
+        "cancel_at_period_end": bool(sget(stripe_subscription, "cancel_at_period_end")),
         "current_period_end": (
             datetime.fromtimestamp(period_end, tz=dt_timezone.utc) if period_end else None
         ),
@@ -248,17 +263,16 @@ def _subscription_defaults(stripe_subscription):
     if plan:
         defaults["plan"] = plan
         defaults["interval"] = interval
-    payment_method = stripe_subscription.get("default_payment_method")
-    if isinstance(payment_method, dict):
-        card = payment_method.get("card") or {}
-        if card.get("last4"):
-            defaults["card_brand"] = card.get("brand") or ""
-            defaults["card_last4"] = card["last4"]
+    payment_method = sget(stripe_subscription, "default_payment_method")
+    card = sget(payment_method, "card") or {}
+    if sget(card, "last4"):
+        defaults["card_brand"] = sget(card, "brand") or ""
+        defaults["card_last4"] = card["last4"]
     return defaults
 
 
 def _handle_checkout_completed(session):
-    user_id = session.get("client_reference_id")
+    user_id = sget(session, "client_reference_id")
     if not user_id:
         return
     user = User.objects.filter(pk=user_id).first()
@@ -267,16 +281,16 @@ def _handle_checkout_completed(session):
     if not user.is_active:
         user.is_active = True
         user.save(update_fields=["is_active"])
-    customer_id = session.get("customer")
+    customer_id = sget(session, "customer")
     if customer_id:
         Customer.objects.update_or_create(
             user=user, defaults={"stripe_customer_id": customer_id}
         )
-    subscription_id = session.get("subscription")
+    subscription_id = sget(session, "subscription")
     if not subscription_id:
         return
-    if isinstance(subscription_id, dict):
-        subscription_id = subscription_id.get("id")
+    if not isinstance(subscription_id, str):
+        subscription_id = sget(subscription_id, "id")
     stripe_subscription = get_stripe().Subscription.retrieve(
         subscription_id, expand=["default_payment_method"]
     )
@@ -304,14 +318,14 @@ def _handle_subscription_change(stripe_subscription, deleted=False):
 
 
 def _handle_payment_failed(invoice):
-    subscription_id = invoice.get("subscription")
+    subscription_id = sget(invoice, "subscription")
     if not subscription_id:
         # Newer Stripe API versions nest the subscription under invoice.parent.
-        parent = invoice.get("parent") or {}
-        details = parent.get("subscription_details") or {}
-        subscription_id = details.get("subscription")
-    if isinstance(subscription_id, dict):
-        subscription_id = subscription_id.get("id")
+        parent = sget(invoice, "parent") or {}
+        details = sget(parent, "subscription_details") or {}
+        subscription_id = sget(details, "subscription")
+    if subscription_id is not None and not isinstance(subscription_id, str):
+        subscription_id = sget(subscription_id, "id")
     if not subscription_id:
         return
     subscription = Subscription.objects.filter(

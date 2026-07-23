@@ -10,6 +10,7 @@ from django.conf import settings
 from django.core.management.base import BaseCommand, CommandError
 from stripe import InvalidRequestError
 
+from billing.views import sget
 from billing.catalog import PLANS, STRIPE_INTERVALS, all_lookup_keys, price_lookup_key
 from billing.models import PortalConfiguration
 
@@ -35,7 +36,7 @@ class Command(BaseCommand):
         products_by_plan = {}
         product_list = stripe.Product.list(active=True, limit=100)
         for product in product_list["data"]:
-            plan = (product.get("metadata") or {}).get(PRODUCT_METADATA_KEY)
+            plan = sget(sget(product, "metadata"), PRODUCT_METADATA_KEY)
             if plan in PLANS and plan not in products_by_plan:
                 products_by_plan[plan] = product["id"]
 
@@ -73,10 +74,10 @@ class Command(BaseCommand):
                     self.stdout.write(f"Created price {key} ({price['id']})")
                 else:
                     self.stdout.write(f"Reusing price {key} ({price['id']})")
-                    if price.get("unit_amount") != amount:
+                    if sget(price, "unit_amount") != amount:
                         self.stderr.write(
                             f"WARNING: price {key} has unit_amount "
-                            f"{price.get('unit_amount')}, expected {amount}. Stripe "
+                            f"{sget(price, 'unit_amount')}, expected {amount}. Stripe "
                             "prices are immutable; correct this manually if unintended."
                         )
                 plan_price_ids.append(price["id"])
