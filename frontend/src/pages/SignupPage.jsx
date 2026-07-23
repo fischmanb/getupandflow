@@ -92,15 +92,26 @@ export function SignupPage() {
             <button
               key={planOption.id}
               aria-pressed={plan === planOption.id}
-              className={`plan-option${plan === planOption.id ? " is-selected" : ""}`}
+              className={`plan-option${plan === planOption.id ? " is-selected" : ""}${planOption.featured ? " is-featured" : ""}`}
               onClick={() => setPlan(planOption.id)}
               type="button"
             >
+              {planOption.badge ? <span className="plan-option-badge">{planOption.badge}</span> : null}
               <span className="plan-option-name">{planOption.name}</span>
+              {planOption.tagline ? <span className="plan-option-tagline">{planOption.tagline}</span> : null}
               <span className="plan-option-price">
                 ${planOption.prices[interval].amount}
                 <span className="plan-option-unit">/{INTERVAL_UNITS[interval]}</span>
               </span>
+              {planOption.value_note ? <span className="plan-option-value">{planOption.value_note}</span> : null}
+              {(planOption.highlights || []).length ? (
+                <ul className="plan-option-highlights">
+                  {planOption.highlights.map((item) => (
+                    <li key={item}>{item}</li>
+                  ))}
+                </ul>
+              ) : null}
+              {planOption.footnote ? <span className="plan-option-footnote">{planOption.footnote}</span> : null}
             </button>
           ))}
           {!plans && !catalogError ? <p className="subtle-copy">Loading plans...</p> : null}

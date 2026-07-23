@@ -27,10 +27,25 @@ PLANS = {
     PLAN_FULL_SUPPORT: {
         "name": "Full Support",
         "amounts": {INTERVAL_MONTHLY: 75000, INTERVAL_WEEKLY: 22500},
+        "featured": True,
+        "badge": "Most popular",
+        "tagline": "Your personal accountability partner \u2014 daily structure, coaching, and follow-through.",
+        "highlights": [
+            "Daily 1:1 planning with the same coach every day",
+            "Panic-button support when things fall apart",
+            "WhatsApp/text reminders during work hours",
+        ],
+        "value_note": "$4\u20136,000 value at 80% less than traditional coaching",
     },
     PLAN_FOCUS_LITE: {
         "name": "Focus Lite",
         "amounts": {INTERVAL_MONTHLY: 20000, INTERVAL_WEEKLY: 9500},
+        "featured": False,
+        "badge": None,
+        "tagline": "A lighter starting point \u2014 weekly planning and gentle reminders.",
+        "highlights": [],
+        "value_note": None,
+        "footnote": "Not ready for daily support? Start here \u2014 upgrade to Full Support anytime.",
     },
 }
 
@@ -61,6 +76,12 @@ def plan_catalog():
         {
             "id": plan,
             "name": spec["name"],
+            "featured": spec.get("featured", False),
+            "badge": spec.get("badge"),
+            "tagline": spec.get("tagline"),
+            "highlights": spec.get("highlights", []),
+            "value_note": spec.get("value_note"),
+            "footnote": spec.get("footnote"),
             "prices": {
                 interval: {
                     "amount": spec["amounts"][interval] // 100,
