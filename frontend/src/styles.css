@@ -3023,7 +3023,6 @@ textarea.gcal-modal-input {
 }
 .plan-option.is-selected,
 .plan-option.is-featured.is-selected {
-  border-width: 2px;
   border-color: #2563eb;
 }
 .plan-option:not(.is-selected) {
