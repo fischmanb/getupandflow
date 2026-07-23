@@ -3073,6 +3073,6 @@ textarea.gcal-modal-input {
 .plan-option-price { margin-top: auto; padding-top: 0.6rem; }
 
 
-/* Signup card ends at the log-in link: trim bottom padding + footnote margin only */
-.signup-card { padding-bottom: 20px; }
+/* Signup card ends at the log-in link: 80% of the below-footnote whitespace removed */
+.auth-card.signup-card { padding-bottom: 6px; }
 .signup-card .signup-footnote { margin-bottom: 0; }
