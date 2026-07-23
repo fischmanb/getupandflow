@@ -3080,3 +3080,9 @@ textarea.gcal-modal-input {
 /* Signup card ends at the log-in link: 80% of the below-footnote whitespace removed */
 .auth-card.signup-card { padding-bottom: 6px; }
 .signup-card .signup-footnote { margin-bottom: 0; }
+
+
+/* iOS: stable centering (toolbar-independent) */
+@supports (min-height: 100svh) {
+  .auth-layout { min-height: 100svh; }
+}

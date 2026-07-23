@@ -78,6 +78,7 @@ export function SignupPage() {
               key={value}
               aria-pressed={interval === value}
               className={interval === value ? "is-selected" : ""}
+              onMouseDown={(event) => event.preventDefault()}
               onClick={() => setInterval(value)}
               type="button"
             >
@@ -94,6 +95,7 @@ export function SignupPage() {
               aria-pressed={plan === planOption.id}
               className={`plan-option${plan === planOption.id ? " is-selected" : ""}${planOption.featured ? " is-featured" : ""}`}
               onClick={() => setPlan(planOption.id)}
+              onMouseDown={(event) => event.preventDefault()}
               type="button"
             >
               {planOption.badge ? <span className="plan-option-badge">{planOption.badge}</span> : null}
