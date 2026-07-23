@@ -21,6 +21,8 @@ from rest_framework.views import APIView
 from stripe import SignatureVerificationError, StripeError
 
 from accounts.constants import ROLE_CLIENT
+from notifications.emails import send_welcome_email
+from notifications.ntfy import notify_new_paid_signup
 
 from .catalog import parse_lookup_key, plan_catalog, price_lookup_key
 from .models import Customer, PortalConfiguration, Subscription
@@ -278,6 +280,9 @@ def _handle_checkout_completed(session):
     user = User.objects.filter(pk=user_id).first()
     if user is None:
         return
+    # The inactive -> active transition happens exactly once per signup, so it
+    # gates the welcome email and the ntfy ping against webhook replays.
+    newly_activated = not user.is_active
     if not user.is_active:
         user.is_active = True
         user.save(update_fields=["is_active"])
@@ -286,17 +291,21 @@ def _handle_checkout_completed(session):
         Customer.objects.update_or_create(
             user=user, defaults={"stripe_customer_id": customer_id}
         )
+    subscription = None
     subscription_id = sget(session, "subscription")
-    if not subscription_id:
-        return
-    if not isinstance(subscription_id, str):
-        subscription_id = sget(subscription_id, "id")
-    stripe_subscription = get_stripe().Subscription.retrieve(
-        subscription_id, expand=["default_payment_method"]
-    )
-    Subscription.objects.update_or_create(
-        user=user, defaults=_subscription_defaults(stripe_subscription)
-    )
+    if subscription_id:
+        if not isinstance(subscription_id, str):
+            subscription_id = sget(subscription_id, "id")
+        stripe_subscription = get_stripe().Subscription.retrieve(
+            subscription_id, expand=["default_payment_method"]
+        )
+        subscription, _ = Subscription.objects.update_or_create(
+            user=user, defaults=_subscription_defaults(stripe_subscription)
+        )
+    if newly_activated:
+        plan_name = subscription.get_plan_display() if subscription and subscription.plan else ""
+        send_welcome_email(user, plan_name)
+        notify_new_paid_signup(user.email, plan_name or "unknown plan")
 
 
 def _handle_subscription_change(stripe_subscription, deleted=False):

@@ -1,7 +1,9 @@
 from unittest import mock
 
 from django.contrib.auth.models import Group, User
+from django.core import mail
 from django.core.cache import cache
+from django.test import override_settings
 from django.urls import reverse
 from rest_framework import status
 from rest_framework.test import APITestCase
@@ -161,6 +163,7 @@ class CheckoutTests(APITestCase):
         mock_stripe.checkout.Session.create.assert_not_called()
 
 
+@override_settings(NTFY_TOPIC_URL="")  # never hit the network from tests
 @mock.patch("billing.views.stripe")
 class WebhookTests(APITestCase):
     @classmethod
@@ -321,6 +324,86 @@ class WebhookTests(APITestCase):
         self.assertEqual(
             Subscription.objects.get(user=self.user).status, Subscription.STATUS_PAST_DUE
         )
+
+
+@mock.patch("billing.views.stripe")
+class WebhookNotificationTests(APITestCase):
+    """Welcome email + ntfy ping fire exactly once, on the activation transition."""
+
+    def setUp(self):
+        self.user = User.objects.create_user(
+            username="pending2@example.com",
+            email="pending2@example.com",
+            password="Pass12345!",
+            first_name="Pending",
+            is_active=False,
+        )
+        self.user.groups.add(Group.objects.get(name=ROLE_CLIENT))
+
+    def configure(self, mock_stripe):
+        mock_stripe.Webhook.construct_event.return_value = webhook_event(
+            "checkout.session.completed",
+            {
+                "client_reference_id": str(self.user.id),
+                "customer": "cus_123",
+                "subscription": "sub_123",
+            },
+        )
+        mock_stripe.Subscription.retrieve.return_value = stripe_subscription_payload()
+
+    def post_webhook(self):
+        return self.client.post(
+            reverse("billing-webhook"),
+            data=b"{}",
+            content_type="application/json",
+            HTTP_STRIPE_SIGNATURE="t=1,v1=ok",
+        )
+
+    @mock.patch("notifications.ntfy.requests")
+    def test_activation_sends_welcome_email_and_ntfy_once(self, mock_requests, mock_stripe):
+        self.configure(mock_stripe)
+        response = self.post_webhook()
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+
+        self.assertEqual(len(mail.outbox), 1)
+        message = mail.outbox[0]
+        self.assertEqual(message.to, ["pending2@example.com"])
+        self.assertIn("Welcome", message.subject)
+        self.assertIn("within 48 hours", message.body)
+        self.assertIn("usually within 12", message.body)
+        self.assertIn("/app/onboarding", message.body)
+        self.assertIn("hello@getupandflow.co", message.body)
+        self.assertIn("Full Support", message.body)
+
+        mock_requests.post.assert_called_once()
+        args, kwargs = mock_requests.post.call_args
+        self.assertEqual(args[0], "https://ntfy.sh/aegis-brian-fischman")
+        self.assertEqual(
+            kwargs["data"].decode("utf-8"),
+            "GUAF: new paid signup pending2@example.com Full Support",
+        )
+
+        # Replay: user already active, so no second email / ping.
+        second = self.post_webhook()
+        self.assertEqual(second.status_code, status.HTTP_200_OK)
+        self.assertEqual(len(mail.outbox), 1)
+        mock_requests.post.assert_called_once()
+
+    @mock.patch("notifications.ntfy.requests")
+    @mock.patch("notifications.emails.EmailMultiAlternatives")
+    def test_email_and_ntfy_failures_never_break_the_webhook(
+        self, mock_email, mock_requests, mock_stripe
+    ):
+        self.configure(mock_stripe)
+        mock_email.side_effect = RuntimeError("smtp exploded")
+        mock_requests.post.side_effect = RuntimeError("ntfy down")
+
+        response = self.post_webhook()
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.user.refresh_from_db()
+        self.assertTrue(self.user.is_active)
+        self.assertEqual(Subscription.objects.filter(user=self.user).count(), 1)
 
 
 class PortalAndSubscriptionTests(APITestCase):

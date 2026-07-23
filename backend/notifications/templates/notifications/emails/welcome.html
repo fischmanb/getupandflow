@@ -1,0 +1,23 @@
+{% extends "notifications/emails/base.html" %}
+{% block content %}
+<h1 style="margin:0 0 16px 0;font-size:22px;line-height:1.3;color:#0f172a;">Welcome — you're in.</h1>
+<p style="margin:0 0 16px 0;font-size:15px;line-height:1.6;">Hi {{ first_name }},</p>
+<p style="margin:0 0 16px 0;font-size:15px;line-height:1.6;">
+  Your payment is confirmed{% if plan_name %} and you're set up on <strong>{{ plan_name }}</strong>{% endif %}. Welcome to Get Up and Flow.
+</p>
+<p style="margin:0 0 8px 0;font-size:15px;line-height:1.6;">Here's what happens next:</p>
+<ol style="margin:0 0 16px 0;padding-left:20px;font-size:15px;line-height:1.7;">
+  <li>We match you with your coach. <strong>Your coach will be assigned within 48 hours — usually within 12–24.</strong></li>
+  <li>Your coach reaches out to introduce themselves and set up your first check-in.</li>
+  <li>You start your mornings with someone in your corner.</li>
+</ol>
+<p style="margin:0 0 20px 0;font-size:15px;line-height:1.6;">
+  While you wait, tell us a little about yourself so your coach can hit the ground running:
+</p>
+<p style="margin:0 0 20px 0;">
+  <a href="{{ onboarding_url }}" style="display:inline-block;background-color:#2563eb;color:#ffffff;text-decoration:none;font-size:15px;font-weight:600;padding:10px 20px;border-radius:8px;">Complete your onboarding</a>
+</p>
+<p style="margin:0;font-size:15px;line-height:1.6;">
+  You can log in any time at <a href="{{ login_url }}" style="color:#2563eb;">{{ login_url }}</a>.
+</p>
+{% endblock %}

@@ -1,0 +1,14 @@
+{% autoescape off %}
+Hi {{ first_name }},
+
+Good news — your coach is {{ coach_first_name }}, and they're looking forward to working with you.
+
+{{ coach_first_name }} will reach out soon to say hello and set up your first check-in. It's a short, relaxed conversation: you'll talk through what you want help with, agree on your check-in rhythm, and plan your first morning together. No preparation needed — just come as you are.
+
+You can log in any time at {{ login_url }}.
+
+Questions before then? Write to {{ support_email }} — a real person reads every message.
+
+Warmly,
+The Get Up and Flow team
+{% endautoescape %}

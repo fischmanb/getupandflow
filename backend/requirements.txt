@@ -12,3 +12,4 @@ Pillow>=10.4,<12.0
 django-storages[s3]>=1.14,<2.0
 boto3>=1.34,<2.0
 stripe>=15.0,<16.0
+django-anymail>=13.0,<14.0

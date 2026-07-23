@@ -1,9 +1,11 @@
 from django.contrib.auth.models import User
+from django.contrib.auth.password_validation import validate_password
+from django.core.exceptions import ValidationError as DjangoValidationError
 from rest_framework import serializers
 from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
 
 from . import storage
-from .models import UserProfile, get_user_role
+from .models import ClientOnboarding, UserProfile, get_user_role
 
 
 def validate_photo_upload(value):
@@ -68,13 +70,28 @@ class CurrentUserSerializer(serializers.ModelSerializer):
     role = serializers.SerializerMethodField()
     profile = UserProfileSerializer(read_only=True)
     my_coach = serializers.SerializerMethodField()
+    onboarding_complete = serializers.SerializerMethodField()
 
     class Meta:
         model = User
-        fields = ["id", "username", "first_name", "last_name", "email", "role", "profile", "my_coach"]
+        fields = [
+            "id",
+            "username",
+            "first_name",
+            "last_name",
+            "email",
+            "role",
+            "profile",
+            "my_coach",
+            "onboarding_complete",
+        ]
 
     def get_role(self, obj) -> str | None:
         return get_user_role(obj)
+
+    def get_onboarding_complete(self, obj) -> bool:
+        onboarding = getattr(obj, "client_onboarding", None)
+        return bool(onboarding and onboarding.completed_at)
 
     def get_my_coach(self, obj) -> dict | None:
         profile = getattr(obj, "profile", None)
@@ -82,6 +99,43 @@ class CurrentUserSerializer(serializers.ModelSerializer):
         if not coach:
             return None
         return CoachCardSerializer(coach, context=self.context).data
+
+
+class PasswordResetRequestSerializer(serializers.Serializer):
+    email = serializers.EmailField()
+
+
+class PasswordResetConfirmSerializer(serializers.Serializer):
+    uid = serializers.CharField()
+    token = serializers.CharField()
+    new_password = serializers.CharField(min_length=8, max_length=128)
+
+    def validate_new_password_for_user(self, user):
+        """Run Django's password validators with the resolved user as context."""
+        try:
+            validate_password(self.validated_data["new_password"], user=user)
+        except DjangoValidationError as exc:
+            raise serializers.ValidationError({"new_password": exc.messages})
+
+
+class OnboardingSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = ClientOnboarding
+        fields = [
+            "timezone",
+            "morning_window",
+            "evening_window",
+            "contact_method",
+            "contact_number",
+            "help_topics",
+            "completed_at",
+        ]
+        read_only_fields = ["completed_at"]
+
+    def validate_timezone(self, value):
+        if value not in ClientOnboarding.available_timezones():
+            raise serializers.ValidationError("Choose a valid timezone.")
+        return value
 
 
 class LoginSerializer(TokenObtainPairSerializer):

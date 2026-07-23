@@ -1,0 +1,21 @@
+{% autoescape off %}
+Hi {{ first_name }},
+
+Your payment is confirmed{% if plan_name %} and you're set up on {{ plan_name }}{% endif %}. Welcome to Get Up and Flow.
+
+Here's what happens next:
+
+1. We match you with your coach. Your coach will be assigned within 48 hours — usually within 12–24.
+2. Your coach reaches out to introduce themselves and set up your first check-in.
+3. You start your mornings with someone in your corner.
+
+While you wait, tell us a little about yourself so your coach can hit the ground running:
+{{ onboarding_url }}
+
+You can log in any time at {{ login_url }}.
+
+Questions? Just reply, or write to {{ support_email }} — a real person reads every message.
+
+Warmly,
+The Get Up and Flow team
+{% endautoescape %}

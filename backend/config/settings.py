@@ -5,6 +5,8 @@ from pathlib import Path
 import dj_database_url
 from django.core.exceptions import ImproperlyConfigured
 
+from notifications.provider import select_email_backend
+
 BASE_DIR = Path(__file__).resolve().parent.parent
 
 
@@ -34,10 +36,12 @@ INSTALLED_APPS = [
     "rest_framework",
     "drf_spectacular",
     "rest_framework_simplejwt.token_blacklist",
+    "anymail",
     "accounts",
     "planner",
     "leads",
     "billing",
+    "notifications",
 ]
 
 MIDDLEWARE = [
@@ -151,6 +155,7 @@ REST_FRAMEWORK = {
     "DEFAULT_THROTTLE_RATES": {
         "leads": os.getenv("LEADS_THROTTLE_RATE", "10/hour"),
         "billing_checkout": os.getenv("BILLING_CHECKOUT_THROTTLE_RATE", "20/hour"),
+        "password_reset": os.getenv("PASSWORD_RESET_THROTTLE_RATE", "10/hour"),
     },
 }
 
@@ -170,6 +175,22 @@ STRIPE_PUBLISHABLE_KEY = os.getenv("STRIPE_PUBLISHABLE_KEY", "")
 STRIPE_WEBHOOK_SECRET = os.getenv("STRIPE_WEBHOOK_SECRET", "")
 # Base URL of the client app, used for Checkout/Portal redirect URLs.
 APP_BASE_URL = os.getenv("APP_BASE_URL", "http://localhost:5173").rstrip("/")
+
+# Transactional email. The provider is selected purely by env
+# (EMAIL_PROVIDER=postmark|resend|console); unset or missing credentials fall
+# back to the console backend so mail can never take a request down.
+EMAIL_PROVIDER = os.getenv("EMAIL_PROVIDER", "console")
+EMAIL_BACKEND, ANYMAIL = select_email_backend(
+    EMAIL_PROVIDER,
+    postmark_server_token=os.getenv("POSTMARK_SERVER_TOKEN", ""),
+    resend_api_key=os.getenv("RESEND_API_KEY", ""),
+)
+DEFAULT_FROM_EMAIL = os.getenv(
+    "DEFAULT_FROM_EMAIL", "Get Up and Flow <hello@getupandflow.co>"
+)
+
+# Push notifications for new paid signups (fail-soft; empty disables).
+NTFY_TOPIC_URL = os.getenv("NTFY_TOPIC_URL", "https://ntfy.sh/aegis-brian-fischman")
 
 SPECTACULAR_SETTINGS = {
     "TITLE": "Get Up and Flow API",
