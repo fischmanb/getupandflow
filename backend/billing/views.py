@@ -12,6 +12,7 @@ import stripe
 from django.conf import settings
 from django.contrib.auth.models import Group, User
 from django.db import IntegrityError, transaction
+from django.utils import timezone
 from drf_spectacular.utils import extend_schema
 from rest_framework import status
 from rest_framework.permissions import AllowAny, IsAuthenticated
@@ -20,7 +21,8 @@ from rest_framework.throttling import ScopedRateThrottle
 from rest_framework.views import APIView
 from stripe import SignatureVerificationError, StripeError
 
-from accounts.constants import ROLE_CLIENT
+from accounts.constants import ROLE_CLIENT, TERMS_VERSION
+from accounts.models import UserProfile
 from notifications.emails import send_welcome_email
 from notifications.ntfy import notify_new_paid_signup
 
@@ -117,6 +119,11 @@ class CheckoutView(APIView):
                         is_active=False,
                     )
                 user.groups.set([Group.objects.get(name=ROLE_CLIENT)])
+                # queryset update() on purpose: profile.save() runs full_clean,
+                # which rejects clients without an assigned coach.
+                UserProfile.objects.filter(user=user).update(
+                    terms_accepted_at=timezone.now(), terms_version=TERMS_VERSION
+                )
         except IntegrityError:
             # Two concurrent signups with the same email: the loser hits the
             # unique username constraint.

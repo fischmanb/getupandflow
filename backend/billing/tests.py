@@ -9,7 +9,7 @@ from rest_framework import status
 from rest_framework.test import APITestCase
 from stripe import SignatureVerificationError
 
-from accounts.constants import ROLE_CLIENT, ROLE_COACH
+from accounts.constants import ROLE_CLIENT, ROLE_COACH, TERMS_VERSION
 
 from .models import Customer, PortalConfiguration, Subscription
 
@@ -79,6 +79,7 @@ class CheckoutTests(APITestCase):
             "password": "Pass12345!",
             "plan": "full_support",
             "interval": "monthly",
+            "terms_accepted": True,
         }
         payload.update(overrides)
         return payload
@@ -144,6 +145,31 @@ class CheckoutTests(APITestCase):
             reverse("billing-checkout"), self.checkout_payload(full_name="x" * 151)
         )
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+
+    def test_checkout_requires_terms_acceptance(self, mock_stripe):
+        self.configure(mock_stripe)
+        payload = self.checkout_payload()
+        del payload["terms_accepted"]
+        missing = self.client.post(reverse("billing-checkout"), payload)
+        self.assertEqual(missing.status_code, status.HTTP_400_BAD_REQUEST)
+
+        declined = self.client.post(
+            reverse("billing-checkout"), self.checkout_payload(terms_accepted=False)
+        )
+        self.assertEqual(declined.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertIn("terms_accepted", declined.data)
+
+        self.assertFalse(User.objects.filter(email="newclient@example.com").exists())
+        mock_stripe.checkout.Session.create.assert_not_called()
+
+    def test_checkout_persists_terms_acceptance(self, mock_stripe):
+        self.configure(mock_stripe)
+        response = self.client.post(reverse("billing-checkout"), self.checkout_payload())
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+
+        profile = User.objects.get(email="newclient@example.com").profile
+        self.assertIsNotNone(profile.terms_accepted_at)
+        self.assertEqual(profile.terms_version, TERMS_VERSION)
 
     def test_checkout_never_reuses_deactivated_privileged_accounts(self, mock_stripe):
         self.configure(mock_stripe)

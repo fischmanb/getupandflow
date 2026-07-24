@@ -21,9 +21,17 @@ class CheckoutSerializer(serializers.Serializer):
     password = serializers.CharField(write_only=True)
     plan = serializers.ChoiceField(choices=PLAN_CHOICES)
     interval = serializers.ChoiceField(choices=INTERVAL_CHOICES)
+    terms_accepted = serializers.BooleanField()
 
     def validate_password(self, value):
         validate_password(value)
+        return value
+
+    def validate_terms_accepted(self, value):
+        if not value:
+            raise serializers.ValidationError(
+                "You must agree to the Terms of Service and Privacy Policy to create an account."
+            )
         return value
 
 

@@ -25,6 +25,10 @@ class UserProfile(models.Model):
     contact_email = models.EmailField(blank=True)
     contact_phone = models.CharField(max_length=30, blank=True)
     photo = models.ImageField(upload_to="coach-photos/", null=True, blank=True, storage=select_photo_storage)
+    # Recorded at signup; written via queryset update() because profile
+    # save() enforces the client-must-have-a-coach rule (see ClientOnboarding).
+    terms_accepted_at = models.DateTimeField(null=True, blank=True)
+    terms_version = models.CharField(max_length=20, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 

@@ -73,6 +73,11 @@ export function LoginPage() {
             Forgot your password?
           </Link>
         </p>
+        <p className="subtle-copy legal-links">
+          <Link className="back-link" to="/terms">Terms of Service</Link>
+          {" · "}
+          <Link className="back-link" to="/privacy">Privacy Policy</Link>
+        </p>
       </section>
     </main>
   );

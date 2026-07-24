@@ -22,6 +22,7 @@ export function SignupPage() {
     normalizeChoice(searchParams.get("interval"), INTERVALS, "monthly"),
   );
   const [formData, setFormData] = useState({ full_name: "", email: "", password: "" });
+  const [termsAccepted, setTermsAccepted] = useState(false);
   const [errorMessage, setErrorMessage] = useState("");
   const [showLoginLink, setShowLoginLink] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -56,6 +57,7 @@ export function SignupPage() {
         ...formData,
         plan,
         interval,
+        terms_accepted: termsAccepted,
       });
       window.location.href = response.data.url;
     } catch (error) {
@@ -153,6 +155,27 @@ export function SignupPage() {
               onChange={handleChange}
               required
             />
+          </label>
+          <label className="checkbox-row terms-consent">
+            <input
+              checked={termsAccepted}
+              onChange={(event) => setTermsAccepted(event.target.checked)}
+              required
+              type="checkbox"
+            />
+            <span>
+              I agree to the{" "}
+              <Link className="back-link" rel="noopener noreferrer" target="_blank" to="/terms">
+                Terms of Service
+              </Link>{" "}
+              and{" "}
+              <Link className="back-link" rel="noopener noreferrer" target="_blank" to="/privacy">
+                Privacy Policy
+              </Link>
+              , including recording and transcription of my coaching sessions to ensure the
+              highest quality of service. What you share in session stays confidential within Get
+              Up and Flow.
+            </span>
           </label>
           {errorMessage ? <p className="form-error">{errorMessage}</p> : null}
           {showLoginLink ? (

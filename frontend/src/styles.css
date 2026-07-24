@@ -3179,3 +3179,62 @@ textarea.gcal-modal-input {
 .login-forgot-link {
   margin-top: 14px;
 }
+
+.legal-card {
+  width: min(100%, 720px);
+}
+
+.legal-card h2 {
+  margin: 28px 0 8px;
+  font-size: 1.15rem;
+}
+
+.legal-effective {
+  margin: 0 0 16px;
+  font-size: 0.9rem;
+  color: #6b7f94;
+}
+
+.legal-card .subtle-copy {
+  margin: 0 0 12px;
+}
+
+.legal-list {
+  margin: 0 0 12px;
+  padding-left: 22px;
+  display: grid;
+  gap: 8px;
+}
+
+.legal-card a {
+  color: #2563eb;
+}
+
+.legal-links {
+  margin-top: 10px;
+  font-size: 0.9rem;
+}
+
+.legal-links .back-link {
+  margin: 0;
+}
+
+.terms-consent {
+  align-items: start;
+  font-weight: 400;
+  font-size: 0.9rem;
+  line-height: 1.5;
+  color: #46607d;
+}
+
+.terms-consent input[type="checkbox"] {
+  width: 18px;
+  height: 18px;
+  margin: 2px 0 0;
+  accent-color: #2563eb;
+}
+
+.terms-consent .back-link {
+  display: inline;
+  margin: 0;
+}
