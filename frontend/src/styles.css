@@ -3107,6 +3107,56 @@ textarea.gcal-modal-input {
   line-height: 1.5;
 }
 
+/* "What I want help with" — editable while the match is being made. */
+.matching-goals {
+  margin-top: 18px;
+  padding-top: 16px;
+  border-top: 1px solid rgba(16, 32, 51, 0.08);
+  display: grid;
+  gap: 8px;
+}
+
+.matching-goals-label {
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: #33475e;
+}
+
+.matching-goals-hint {
+  margin: 0;
+  font-size: 0.88rem;
+  line-height: 1.5;
+  color: #46607d;
+}
+
+.matching-goals-input {
+  border: 1px solid #c9d5e4;
+  border-radius: 12px;
+  padding: 12px 14px;
+  background: #fff;
+  min-width: 0;
+  max-width: 100%;
+  box-sizing: border-box;
+  font: inherit;
+  font-size: 0.95rem;
+  line-height: 1.5;
+  color: #102033;
+  resize: vertical;
+}
+
+.matching-goals-actions {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+.matching-goals-status {
+  font-size: 0.85rem;
+  line-height: 1.4;
+  color: #46607d;
+}
+
 .onboarding-prompt {
   display: flex;
   align-items: center;

@@ -30,7 +30,57 @@ function getFirstName(user) {
   return user.first_name || user.username;
 }
 
-function MatchingCard() {
+// Editable while the match is being made: what the client wants help with feeds
+// the matching decision directly, so this is the one place it stays open.
+function MatchingGoals({ prefs, onSaved }) {
+  const [draft, setDraft] = useState(prefs?.help_topics || "");
+  const [saveState, setSaveState] = useState("idle");
+
+  const handleSubmit = async (event) => {
+    event.preventDefault();
+    setSaveState("saving");
+    try {
+      const response = await apiClient.patch("/onboarding/", { help_topics: draft });
+      onSaved(response.data || null);
+      setSaveState("saved");
+    } catch {
+      setSaveState("error");
+    }
+  };
+
+  return (
+    <form className="matching-goals" onSubmit={handleSubmit}>
+      <label className="matching-goals-label" htmlFor="matching-goals-input">
+        What I want help with
+      </label>
+      <p className="matching-goals-hint">The more you share, the better we match you.</p>
+      <textarea
+        className="matching-goals-input"
+        id="matching-goals-input"
+        placeholder="A few lines about what feels hard right now, or what you would like to be different — whatever comes to mind is a good place to start."
+        rows={4}
+        value={draft}
+        onChange={(event) => {
+          setDraft(event.target.value);
+          if (saveState !== "idle") setSaveState("idle");
+        }}
+      />
+      <div className="matching-goals-actions">
+        <button className="task-create-button" disabled={saveState === "saving"} type="submit">
+          {saveState === "saving" ? "Saving…" : "Save"}
+        </button>
+        <span aria-live="polite" className="matching-goals-status" role="status">
+          {saveState === "saved" ? "Saved — this goes straight to your match." : null}
+          {saveState === "error"
+            ? "We could not save that just now. Your words are still here — try again in a moment."
+            : null}
+        </span>
+      </div>
+    </form>
+  );
+}
+
+function MatchingCard({ prefs, onPrefsSaved }) {
   return (
     <div className="coach-card matching-card">
       <div aria-hidden="true" className="coach-card-avatar matching-card-avatar">
@@ -41,6 +91,9 @@ function MatchingCard() {
         <p className="matching-card-copy">
           We are matching you with your coach — guaranteed within 48 hours, usually within 12-24.
         </p>
+        {/* Goals only render once the onboarding record exists — before that,
+            PATCH has nothing to update and the onboarding nudge takes the lead. */}
+        {prefs ? <MatchingGoals prefs={prefs} onSaved={onPrefsSaved} /> : null}
       </div>
     </div>
   );
@@ -246,7 +299,11 @@ export function HomePage() {
               </h2>
               <div className="home-coach-section">
                 <p className="panel-label">Your coach</p>
-                {isClientSelf && !coach ? <MatchingCard /> : <CoachCard coach={coach} />}
+                {isClientSelf && !coach ? (
+                  <MatchingCard prefs={prefs} onPrefsSaved={setPrefs} />
+                ) : (
+                  <CoachCard coach={coach} />
+                )}
               </div>
               <div className="home-rhythm-section">
                 <p className="panel-label">Your rhythm</p>

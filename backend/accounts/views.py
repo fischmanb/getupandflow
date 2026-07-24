@@ -92,7 +92,9 @@ class PasswordResetConfirmView(APIView):
 
 
 class OnboardingView(APIView):
-    """The client's own onboarding answers: GET returns them (or null), PUT upserts."""
+    """The client's own onboarding answers: GET returns them (or null), PUT upserts,
+    PATCH partially updates an existing record (used by the Home matching card to
+    edit help_topics in place)."""
 
     permission_classes = [IsAuthenticated, ClientOnlyPermission]
     serializer_class = OnboardingSerializer
@@ -108,6 +110,21 @@ class OnboardingView(APIView):
     def put(self, request):
         onboarding = ClientOnboarding.objects.filter(user=request.user).first()
         serializer = OnboardingSerializer(onboarding, data=request.data)
+        serializer.is_valid(raise_exception=True)
+        serializer.save(user=request.user)
+        return Response(serializer.data)
+
+    @extend_schema(request=OnboardingSerializer, responses=OnboardingSerializer)
+    def patch(self, request):
+        # Update-only: creating here would auto-stamp completed_at and mark
+        # onboarding complete with the required answers still blank.
+        onboarding = ClientOnboarding.objects.filter(user=request.user).first()
+        if onboarding is None:
+            return Response(
+                {"detail": "Complete onboarding before updating individual answers."},
+                status=status.HTTP_404_NOT_FOUND,
+            )
+        serializer = OnboardingSerializer(onboarding, data=request.data, partial=True)
         serializer.is_valid(raise_exception=True)
         serializer.save(user=request.user)
         return Response(serializer.data)

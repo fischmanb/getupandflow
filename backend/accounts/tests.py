@@ -419,6 +419,44 @@ class OnboardingTests(APITestCase):
         self.assertEqual(onboarding.completed_at, first_completed_at)
         self.assertEqual(ClientOnboarding.objects.filter(user=self.client_user).count(), 1)
 
+    def test_patch_updates_help_topics_without_touching_other_answers(self):
+        self.authenticate(self.client_user)
+        self.client.put(reverse("onboarding"), self.onboarding_payload(), format="json")
+        onboarding = ClientOnboarding.objects.get(user=self.client_user)
+        first_completed_at = onboarding.completed_at
+
+        response = self.client.patch(
+            reverse("onboarding"),
+            {"help_topics": "Mornings, and staying with one task at a time."},
+            format="json",
+        )
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(
+            response.data["help_topics"], "Mornings, and staying with one task at a time."
+        )
+
+        onboarding.refresh_from_db()
+        self.assertEqual(onboarding.help_topics, "Mornings, and staying with one task at a time.")
+        self.assertEqual(onboarding.timezone, "America/New_York")
+        self.assertEqual(onboarding.contact_method, "whatsapp")
+        self.assertEqual(onboarding.completed_at, first_completed_at)
+
+    def test_patch_before_onboarding_exists_is_a_404_and_creates_nothing(self):
+        self.authenticate(self.client_user)
+        response = self.client.patch(
+            reverse("onboarding"), {"help_topics": "Anything."}, format="json"
+        )
+        self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
+        self.assertFalse(ClientOnboarding.objects.filter(user=self.client_user).exists())
+        self.assertFalse(self.client.get(reverse("me")).data["onboarding_complete"])
+
+    def test_coach_cannot_patch_onboarding(self):
+        self.authenticate(self.coach)
+        response = self.client.patch(
+            reverse("onboarding"), {"help_topics": "Anything."}, format="json"
+        )
+        self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
+
     def test_rejects_invalid_timezone_window_and_contact_method(self):
         self.authenticate(self.client_user)
         for overrides in (
