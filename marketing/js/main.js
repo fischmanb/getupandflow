@@ -112,6 +112,31 @@
       submitButton.disabled = true;
       showStatus("Sending…", true);
 
+      // Signup goes straight to payment. The lead still lands in the CRM
+      // (fire-and-forget beacon) so matching can seed goals from the note,
+      // but nothing blocks the redirect.
+      try {
+        var blob = new Blob([JSON.stringify(payload)], { type: "application/json" });
+        if (!(navigator.sendBeacon && navigator.sendBeacon(API_URL, blob))) {
+          fetch(API_URL, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(payload),
+            keepalive: true,
+          }).catch(function () {});
+        }
+      } catch (e) {}
+
+      var planSlug = payload.plan === "Focus Lite" ? "focus_lite" : "full_support";
+      var interval = String(payload.billing_period || "").toLowerCase() === "weekly" ? "weekly" : "monthly";
+      showStatus("Taking you to secure checkout\u2026", true);
+      window.location.href =
+        "https://app.getupandflow.co/signup?plan=" + planSlug +
+        "&interval=" + interval +
+        "&full_name=" + encodeURIComponent(fullName) +
+        "&email=" + encodeURIComponent(email);
+      return;
+
       fetch(API_URL, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
