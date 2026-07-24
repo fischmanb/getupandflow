@@ -51,8 +51,21 @@
         plan: planRaw === "Focus Lite" ? "focus_lite" : "full_support",
         billing_period: window.__billing || "monthly"
       };
-      status.textContent = "Sending\u2026";
+      status.textContent = "Taking you to secure checkout\u2026";
       status.style.color = "#475569";
+      // Lead lands in the CRM as a fire-and-forget beacon (matching seeds
+      // goals from the note); the client goes straight to payment.
+      try {
+        var blob = new Blob([JSON.stringify(payload)], { type: "application/json" });
+        if (!(navigator.sendBeacon && navigator.sendBeacon("https://api.getupandflow.co/api/leads/", blob))) {
+          fetch("https://api.getupandflow.co/api/leads/", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(payload), keepalive: true }).catch(function () {});
+        }
+      } catch (err) {}
+      window.location.href = "https://app.getupandflow.co/signup?plan=" + payload.plan +
+        "&interval=" + (payload.billing_period === "weekly" ? "weekly" : "monthly") +
+        "&full_name=" + encodeURIComponent(payload.full_name) +
+        "&email=" + encodeURIComponent(payload.email);
+      return;
       fetch("https://api.getupandflow.co/api/leads/", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
