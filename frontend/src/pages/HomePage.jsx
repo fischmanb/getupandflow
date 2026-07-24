@@ -1,12 +1,33 @@
+import { useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
+import { format } from "date-fns";
 
+import { apiClient } from "../api/client";
 import { useAuth } from "../auth/AuthContext";
-import { BillingCard, PastDueBanner, useBillingSubscription } from "../components/BillingCard";
+import { apiEventToRBC } from "../calendar/eventAdapter";
+import { useBillingSubscription } from "../components/BillingCard";
 import { useClientFilter } from "../filters/ClientFilterContext";
 
-function getDisplayName(user) {
+// Mirrors the value → label mapping used by the onboarding form selects.
+const WINDOW_LABELS = {
+  "6-8am": "6:00–8:00 am",
+  "8-10am": "8:00–10:00 am",
+  "10am-12pm": "10:00 am–12:00 pm",
+  "4-6pm": "4:00–6:00 pm",
+  "6-8pm": "6:00–8:00 pm",
+  "8-10pm": "8:00–10:00 pm",
+};
+
+function getTimeGreeting(date = new Date()) {
+  const hour = date.getHours();
+  if (hour >= 5 && hour < 12) return "Good morning";
+  if (hour >= 12 && hour < 18) return "Good afternoon";
+  return "Good evening";
+}
+
+function getFirstName(user) {
   if (!user) return "";
-  return [user.first_name, user.last_name].filter(Boolean).join(" ") || user.username;
+  return user.first_name || user.username;
 }
 
 function MatchingCard() {
@@ -27,7 +48,7 @@ function MatchingCard() {
 
 function OnboardingPrompt() {
   return (
-    <div className="onboarding-prompt">
+    <div className="onboarding-prompt home-onboarding-nudge">
       <p>
         Tell us a little about you — your check-in preferences help your coach hit the ground
         running.
@@ -72,26 +93,138 @@ function CoachCard({ coach }) {
   );
 }
 
+// Home keeps a quiet, single-line past-due notice (a failed payment interrupts
+// service, so it stays visible here) but carries no billing controls — those
+// live in Account Settings.
+function PastDueNotice({ subscription }) {
+  if (!subscription || subscription.status !== "past_due") return null;
+
+  return (
+    <p className="home-pastdue-notice" role="alert">
+      There was a problem with your last payment —{" "}
+      <Link to="/app/settings">review billing in account settings</Link>.
+    </p>
+  );
+}
+
+function RhythmSection({ prefs }) {
+  const morning = prefs?.morning_window ? WINDOW_LABELS[prefs.morning_window] : null;
+  const evening = prefs?.evening_window ? WINDOW_LABELS[prefs.evening_window] : null;
+
+  const touchpoints = [
+    {
+      key: "jump-start",
+      name: "Jump Start",
+      when: morning ? `Mornings, ${morning}` : "Mornings",
+      copy: "A short check-in to set up your day.",
+    },
+    {
+      key: "reminders",
+      name: "Reminders",
+      when: "Through the day",
+      copy: "Gentle nudges to keep things moving.",
+    },
+    {
+      key: "panic-button",
+      name: "Panic Button",
+      when: "Whenever you need it",
+      copy: (
+        <>
+          Up to 45 minutes with your coach when you feel stuck —{" "}
+          <Link to="/app/calendar">open your calendar</Link>.
+        </>
+      ),
+    },
+    {
+      key: "retro",
+      name: "Retro",
+      when: evening ? `Evenings, ${evening}` : "Evenings",
+      copy: "10–20 minutes to look back and lock in what worked.",
+    },
+  ];
+
+  return (
+    <ul className="home-rhythm">
+      {touchpoints.map((touchpoint) => (
+        <li key={touchpoint.key}>
+          <div className="home-rhythm-topline">
+            <span className="home-rhythm-name">{touchpoint.name}</span>
+            <span className="home-rhythm-when">{touchpoint.when}</span>
+          </div>
+          <p className="home-rhythm-copy">{touchpoint.copy}</p>
+        </li>
+      ))}
+    </ul>
+  );
+}
+
+function NextSessionLine({ events }) {
+  const nextStart = useMemo(() => {
+    const now = new Date();
+    let earliest = null;
+    for (const event of events || []) {
+      try {
+        const { start } = apiEventToRBC(event);
+        if (start > now && (!earliest || start < earliest)) {
+          earliest = start;
+        }
+      } catch {
+        // Skip events the adapter can't parse.
+      }
+    }
+    return earliest;
+  }, [events]);
+
+  // No upcoming session: omit the block entirely rather than show absence.
+  if (!nextStart) return null;
+
+  return (
+    <p className="home-next-session">
+      Next session: {format(nextStart, "EEEE, MMMM d")} at {format(nextStart, "h:mm aaa")} ·{" "}
+      <Link to="/app/calendar">view calendar</Link>
+    </p>
+  );
+}
+
 export function HomePage() {
   const { user } = useAuth();
-  const { isLoadingClients, selectedClients, supportsClientFiltering } = useClientFilter();
+  const { events, isLoadingClients, selectedClients, supportsClientFiltering } = useClientFilter();
 
-  // Billing renders ONLY for the client viewing their own home -- never in
-  // coach/admin mirror view (deliberate exception to mirroring).
+  // Billing state renders ONLY for the client viewing their own home -- never
+  // in coach/admin mirror view (deliberate exception to mirroring).
   const isClientSelf = !supportsClientFiltering && user?.role === "Client";
   const subscription = useBillingSubscription(isClientSelf);
 
+  // Check-in preferences come from the client's own onboarding answers, so
+  // they are only available (and only fetched) on the client's own home.
+  const [prefs, setPrefs] = useState(null);
+  useEffect(() => {
+    if (!isClientSelf) return undefined;
+    let isMounted = true;
+    apiClient
+      .get("/onboarding/")
+      .then((response) => {
+        if (isMounted) setPrefs(response.data || null);
+      })
+      .catch(() => {
+        if (isMounted) setPrefs(null);
+      });
+    return () => {
+      isMounted = false;
+    };
+  }, [isClientSelf]);
+
   // Mirror-view: a coach/admin with one client selected sees exactly what that
-  // client sees on their own home page.
+  // client sees on their own home page (minus billing and onboarding state).
   let greetingName = null;
   let coach = null;
   let promptMessage = "";
 
   if (!supportsClientFiltering) {
-    greetingName = getDisplayName(user);
+    greetingName = getFirstName(user);
     coach = user?.my_coach || null;
   } else if (selectedClients.length === 1) {
-    greetingName = selectedClients[0].label;
+    greetingName = (selectedClients[0].label || "").split(" ")[0];
     coach = selectedClients[0].coach || null;
   } else if (isLoadingClients) {
     promptMessage = "Loading your clients...";
@@ -107,17 +240,30 @@ export function HomePage() {
         <section className="workspace-panel home-panel">
           {greetingName ? (
             <>
-              {isClientSelf ? <PastDueBanner subscription={subscription} /> : null}
-              <h2 className="home-greeting">Welcome, {greetingName}</h2>
-              {isClientSelf && user?.onboarding_complete === false ? <OnboardingPrompt /> : null}
+              {isClientSelf ? <PastDueNotice subscription={subscription} /> : null}
+              <h2 className="home-greeting">
+                {getTimeGreeting()}, {greetingName}
+              </h2>
               <div className="home-coach-section">
                 <p className="panel-label">Your coach</p>
                 {isClientSelf && !coach ? <MatchingCard /> : <CoachCard coach={coach} />}
               </div>
-              {isClientSelf ? <BillingCard subscription={subscription} /> : null}
+              <div className="home-rhythm-section">
+                <p className="panel-label">Your rhythm</p>
+                <RhythmSection prefs={isClientSelf ? prefs : null} />
+                {isClientSelf && user?.onboarding_complete === false ? <OnboardingPrompt /> : null}
+              </div>
+              <NextSessionLine events={events} />
               <Link className="task-create-button home-calendar-launcher" to="/app/calendar">
                 Open calendar
               </Link>
+              {isClientSelf ? (
+                <footer className="home-panel-footer">
+                  <Link className="home-footer-link" to="/app/settings">
+                    Account &amp; billing
+                  </Link>
+                </footer>
+              ) : null}
             </>
           ) : (
             <div className="selection-prompt">

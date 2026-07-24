@@ -11,7 +11,8 @@
 /* ============================================================
    TYPE SCALE (relational hierarchy — keep new text on these tiers)
    ------------------------------------------------------------
-   Greeting   1.10rem / 600   "Welcome, <name>"
+   Display    1.45rem / 600   home greeting ("Good morning, <name>")
+   Greeting   1.10rem / 600   shell greeting
    Heading    1.05rem / 700   panel + period titles ("Tasks", "May 2026")
    Body       0.95rem / 400   task titles, descriptions, prompts
    Control    0.92rem / 600   ALL buttons (Today, views, +Task, Hide) —
@@ -548,15 +549,16 @@ button {
   width: min(720px, 100%);
   min-height: 0;
   display: grid;
-  gap: 20px;
+  gap: 28px;
   align-content: start;
-  padding: 24px 26px;
+  padding: 32px 36px 24px;
 }
 
 .home-greeting {
   margin: 0;
-  font-size: 1.1rem;
+  font-size: 1.45rem;
   font-weight: 600;
+  letter-spacing: -0.01em;
   color: #102033;
 }
 
@@ -3237,4 +3239,172 @@ textarea.gcal-modal-input {
 .terms-consent .back-link {
   display: inline;
   margin: 0;
+}
+
+
+/* ============================================================
+   Home: the members' room
+   Warmth and restraint — the coach relationship is the hero,
+   billing lives in Account Settings, type does the hierarchy.
+   ============================================================ */
+
+/* Coach card gets real presence on Home only (the same classes render at
+   72px inside the settings profile form — leave those untouched). */
+.home-coach-section .coach-card {
+  gap: 22px;
+  padding: 26px 28px;
+  border-radius: 24px;
+}
+
+.home-coach-section .coach-card-photo,
+.home-coach-section .coach-card-avatar {
+  width: 108px;
+  height: 108px;
+  font-size: 2.2rem;
+}
+
+.home-coach-section .coach-card-name {
+  font-size: 1.15rem;
+}
+
+.home-rhythm-section {
+  display: grid;
+  gap: 4px;
+}
+
+.home-rhythm {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+}
+
+.home-rhythm li {
+  display: grid;
+  gap: 3px;
+  padding: 14px 2px;
+  border-top: 1px solid rgba(16, 32, 51, 0.07);
+}
+
+.home-rhythm li:first-child {
+  border-top: 0;
+  padding-top: 4px;
+}
+
+.home-rhythm-topline {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 12px;
+}
+
+.home-rhythm-name {
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: #102033;
+}
+
+.home-rhythm-when {
+  font-size: 0.82rem;
+  font-weight: 500;
+  color: #46607d;
+  white-space: nowrap;
+}
+
+.home-rhythm-copy {
+  margin: 0;
+  font-size: 0.9rem;
+  line-height: 1.5;
+  color: #46607d;
+}
+
+.home-rhythm-copy a {
+  color: #2563eb;
+  text-decoration: none;
+}
+
+.home-rhythm-copy a:hover {
+  text-decoration: underline;
+}
+
+.home-onboarding-nudge {
+  margin-top: 12px;
+}
+
+.home-next-session {
+  margin: 0;
+  font-size: 0.92rem;
+  color: #46607d;
+}
+
+.home-next-session a {
+  color: #2563eb;
+  text-decoration: none;
+  font-weight: 500;
+}
+
+.home-next-session a:hover {
+  text-decoration: underline;
+}
+
+/* Past-due on Home: one quiet line, no billing controls (those live in
+   Account Settings — the full banner renders there). */
+.home-pastdue-notice {
+  margin: 0;
+  padding: 10px 14px;
+  border: 1px solid rgba(180, 83, 9, 0.3);
+  border-radius: 12px;
+  background: rgba(245, 158, 11, 0.1);
+  color: #7a3f06;
+  font-size: 0.92rem;
+  line-height: 1.4;
+}
+
+.home-pastdue-notice a {
+  color: #7a3f06;
+  font-weight: 600;
+}
+
+.home-panel-footer {
+  margin-top: 2px;
+  padding-top: 14px;
+  border-top: 1px solid rgba(16, 32, 51, 0.07);
+}
+
+.home-footer-link {
+  font-size: 0.85rem;
+  font-weight: 500;
+  color: #46607d;
+  text-decoration: none;
+}
+
+.home-footer-link:hover {
+  color: #2563eb;
+  text-decoration: underline;
+}
+
+/* Account Settings: billing section (client-self only) */
+.settings-billing-section {
+  display: grid;
+  gap: 14px;
+  margin: 24px 0;
+}
+
+@media (max-width: 768px) {
+  .home-panel {
+    gap: 22px;
+    padding: 22px 20px 18px;
+  }
+
+  .home-coach-section .coach-card {
+    gap: 16px;
+    padding: 18px;
+  }
+
+  .home-coach-section .coach-card-photo,
+  .home-coach-section .coach-card-avatar {
+    width: 84px;
+    height: 84px;
+    font-size: 1.8rem;
+  }
 }

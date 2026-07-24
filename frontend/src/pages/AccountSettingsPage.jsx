@@ -4,6 +4,8 @@ import { Link } from "react-router-dom";
 import { apiClient } from "../api/client";
 import { getErrorMessage } from "../api/utils";
 import { useAuth } from "../auth/AuthContext";
+import { BillingCard, PastDueBanner, useBillingSubscription } from "../components/BillingCard";
+import { useClientFilter } from "../filters/ClientFilterContext";
 
 function getDisplayName(user) {
   return [user.first_name, user.last_name].filter(Boolean).join(" ") || user.username;
@@ -117,7 +119,13 @@ function CoachProfileForm() {
 
 export function AccountSettingsPage() {
   const { user } = useAuth();
+  const { supportsClientFiltering } = useClientFilter();
   const canEditCoachProfile = user.role === "Coach" || user.role === "Admin";
+
+  // Same guard Home used: billing is visible ONLY to the client managing
+  // their own account — never in coach/admin mirror view.
+  const isClientSelf = !supportsClientFiltering && user?.role === "Client";
+  const subscription = useBillingSubscription(isClientSelf);
 
   return (
     <main className="content-page">
@@ -139,6 +147,12 @@ export function AccountSettingsPage() {
             <dd>{user.role}</dd>
           </div>
         </dl>
+        {isClientSelf ? (
+          <section className="settings-billing-section">
+            <PastDueBanner subscription={subscription} />
+            <BillingCard subscription={subscription} />
+          </section>
+        ) : null}
         {canEditCoachProfile ? <CoachProfileForm /> : null}
         <Link className="task-create-button category-manage-link" to="/app/categories">
           Manage event categories
