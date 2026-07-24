@@ -6,7 +6,7 @@ from django.core.exceptions import ValidationError
 from django.db import models
 from django.utils import timezone
 
-from .constants import ROLE_ADMIN, ROLE_CLIENT, ROLE_COACH
+from .constants import DEFAULT_WORKING_TIMEZONE, ROLE_ADMIN, ROLE_CLIENT, ROLE_COACH
 from .storage import select_photo_storage
 
 
@@ -21,6 +21,12 @@ class UserProfile(models.Model):
     )
     phone_number = models.CharField(max_length=30, blank=True)
     zoom_user_email = models.EmailField(null=True, blank=True)
+    # The IANA timezone a coach WORKS AND IS AVAILABLE IN — assigned by an
+    # admin (like zoom_user_email), never coach self-editable, and independent
+    # of where the coach physically is (coaches may be overseas working US
+    # hours). Panic-session bookable hours are evaluated in this timezone
+    # (see planner.panic). Brian, 2026-07-24.
+    working_timezone = models.CharField(max_length=64, default=DEFAULT_WORKING_TIMEZONE)
     bio = models.TextField(blank=True)
     contact_email = models.EmailField(blank=True)
     contact_phone = models.CharField(max_length=30, blank=True)

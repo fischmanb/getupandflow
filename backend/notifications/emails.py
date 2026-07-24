@@ -63,6 +63,57 @@ def send_coach_assigned_email(client, coach):
     )
 
 
+def send_panic_booked_client_email(client, coach, when_text, duration_minutes, meeting_link=""):
+    """Quiet confirmation to the client. Times arrive pre-rendered in the
+    CLIENT's timezone (planner.panic.format_when)."""
+    return send_templated_email(
+        client.email,
+        "Your panic session is booked",
+        "panic_booked",
+        {
+            "first_name": client.first_name or "there",
+            "coach_first_name": coach.first_name or coach.get_full_name() or coach.username,
+            "when_text": when_text,
+            "duration_minutes": duration_minutes,
+            "meeting_link": meeting_link,
+            "calendar_url": f"{settings.APP_BASE_URL}/app/calendar",
+        },
+    )
+
+
+def send_panic_booked_coach_email(coach, client, when_text, duration_minutes, note=""):
+    """Heads-up to the coach. Times arrive pre-rendered in the coach's
+    working timezone."""
+    client_name = client.get_full_name() or client.username
+    return send_templated_email(
+        coach.email,
+        f"Panic session booked — {client_name}",
+        "panic_coach_booked",
+        {
+            "coach_first_name": coach.first_name or "there",
+            "client_name": client_name,
+            "when_text": when_text,
+            "duration_minutes": duration_minutes,
+            "note": note,
+            "calendar_url": f"{settings.APP_BASE_URL}/app/calendar",
+        },
+    )
+
+
+def send_panic_cancelled_coach_email(coach, client, when_text):
+    client_name = client.get_full_name() or client.username
+    return send_templated_email(
+        coach.email,
+        f"Panic session cancelled — {client_name}",
+        "panic_coach_cancelled",
+        {
+            "coach_first_name": coach.first_name or "there",
+            "client_name": client_name,
+            "when_text": when_text,
+        },
+    )
+
+
 def send_password_reset_email(user, reset_url):
     return send_templated_email(
         user.email,

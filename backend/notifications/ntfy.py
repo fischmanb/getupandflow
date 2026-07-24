@@ -24,3 +24,7 @@ def send_ntfy(message):
 
 def notify_new_paid_signup(email, plan_name):
     return send_ntfy(f"GUAF: new paid signup {email} {plan_name}")
+
+
+def notify_panic_booked(client_name, when_text):
+    return send_ntfy(f"panic booked: {client_name} {when_text}")

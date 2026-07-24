@@ -1,0 +1,16 @@
+{% autoescape off %}
+Hi {{ first_name }},
+
+You're booked. {{ coach_first_name }} will be with you for {{ duration_minutes }} minutes on {{ when_text }}.
+
+Stuck is normal — reaching for your coach is exactly what this time is for. Nothing to prepare; just show up as you are.
+{% if meeting_link %}
+Join here when it's time: {{ meeting_link }}
+{% endif %}
+You can see this session on your calendar any time: {{ calendar_url }}
+
+Questions before then? Write to {{ support_email }} — a real person reads every message.
+
+Warmly,
+The Get Up and Flow team
+{% endautoescape %}

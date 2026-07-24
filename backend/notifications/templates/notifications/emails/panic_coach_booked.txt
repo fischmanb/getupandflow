@@ -1,0 +1,11 @@
+{% autoescape off %}
+Hi {{ coach_first_name }},
+
+{{ client_name }} just booked a panic session: {{ duration_minutes }} minutes on {{ when_text }}.
+{% if note %}
+Their note: "{{ note }}"
+{% endif %}
+It's on your calendar: {{ calendar_url }}
+
+— Get Up and Flow
+{% endautoescape %}

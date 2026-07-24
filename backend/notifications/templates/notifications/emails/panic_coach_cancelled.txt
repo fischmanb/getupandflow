@@ -1,0 +1,7 @@
+{% autoescape off %}
+Hi {{ coach_first_name }},
+
+{{ client_name }} cancelled their panic session on {{ when_text }}. That time is yours again.
+
+— Get Up and Flow
+{% endautoescape %}

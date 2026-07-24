@@ -7,6 +7,9 @@ from .views import (
     ClientAssignmentViewSet,
     EventCategoryViewSet,
     EventViewSet,
+    PanicAvailabilityView,
+    PanicSessionDetailView,
+    PanicSessionView,
     TaskViewSet,
     UserViewSet,
 )
@@ -21,5 +24,8 @@ router.register("tasks", TaskViewSet, basename="task")
 
 urlpatterns = [
     path("admin/analytics/", AdminAnalyticsView.as_view(), name="admin-analytics"),
+    path("panic-sessions/", PanicSessionView.as_view(), name="panic-session-list"),
+    path("panic-sessions/<int:pk>/", PanicSessionDetailView.as_view(), name="panic-session-detail"),
+    path("panic-availability/", PanicAvailabilityView.as_view(), name="panic-availability"),
     *router.urls,
 ]

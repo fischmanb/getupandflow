@@ -1,12 +1,13 @@
 import csv
 import io
 import logging
+from datetime import datetime, timedelta
 
 from django.contrib.auth.models import User
 from django.db import transaction
 from django.db.models import Count, F, Q
 from django.utils import timezone
-from django.utils.dateparse import parse_date
+from django.utils.dateparse import parse_date, parse_datetime
 from rest_framework import permissions, viewsets
 from rest_framework.decorators import action
 from rest_framework.exceptions import ValidationError
@@ -17,8 +18,15 @@ from drf_spectacular.utils import extend_schema
 
 from accounts.constants import ROLE_ADMIN, ROLE_CLIENT, ROLE_COACH
 from accounts.models import UserProfile
+from billing.permissions import ClientOnlyPermission
+from notifications.emails import (
+    send_panic_booked_client_email,
+    send_panic_booked_coach_email,
+    send_panic_cancelled_coach_email,
+)
+from notifications.ntfy import notify_panic_booked
 
-from . import zoom
+from . import panic, zoom
 from .models import Event, EventCategory, Task
 from .pagination import StandardResultsSetPagination
 from .recurrence import expand_event_dates
@@ -357,6 +365,286 @@ class TaskViewSet(RoleScopedQuerysetMixin, viewsets.ModelViewSet):
                 )
 
         return Response({"updated": len(to_update)})
+
+
+PANIC_UNASSIGNED_MESSAGE = (
+    "We're still matching you with your coach — the Panic Button unlocks the moment they're in place."
+)
+
+
+def _serialize_panic_session(event, working_tz, display_tz, now):
+    start = datetime.combine(event.event_date, event.start_time, tzinfo=working_tz)
+    end = datetime.combine(event.event_date, event.end_time, tzinfo=working_tz)
+    return {
+        "id": event.id,
+        "start_at": start.astimezone(display_tz).isoformat(),
+        "end_at": end.astimezone(display_tz).isoformat(),
+        "duration_minutes": int((end - start).total_seconds() // 60),
+        "note": event.description,
+        "meeting_link": event.meeting_link,
+        "can_cancel": start > now,
+    }
+
+
+class PanicAvailabilityView(APIView):
+    """Free panic-session start slots on the coach's calendar (client-self only).
+
+    Slots are the complement of the coach's existing events over the booking
+    window, intersected with the bookable-hours policy (panic.py), contiguity
+    for the requested duration, and the client's remaining daily cap.
+    """
+
+    permission_classes = [permissions.IsAuthenticated, ClientOnlyPermission]
+
+    @extend_schema(responses=None)
+    def get(self, request):
+        coach = request.user.profile.assigned_coach
+        if coach is None:
+            return Response({"detail": PANIC_UNASSIGNED_MESSAGE}, status=409)
+
+        raw_duration = request.query_params.get("duration", str(min(panic.PANIC_DURATIONS)))
+        try:
+            duration = int(raw_duration)
+        except (TypeError, ValueError):
+            duration = 0
+        if duration not in panic.PANIC_DURATIONS:
+            return Response({"duration": "Panic sessions are 15 or 30 minutes."}, status=400)
+
+        now = timezone.now()
+        working_tz = panic.working_timezone_for(coach)
+        display_tz = panic.display_timezone_for(request.user, working_tz)
+        minutes_by_day = panic.panic_minutes_by_client_day(request.user, working_tz, display_tz)
+        starts = panic.available_starts(coach, request.user, duration, now, minutes_by_day=minutes_by_day)
+
+        # Group by the CLIENT's calendar day — day tabs render in their timezone.
+        days = []
+        for start in starts:
+            local = start.astimezone(display_tz)
+            day_key = local.date().isoformat()
+            if not days or days[-1]["date"] != day_key:
+                days.append({"date": day_key, "slots": []})
+            days[-1]["slots"].append({"start_at": local.isoformat()})
+
+        # When the window ∩ bookable-hours intersection is empty (e.g. Friday
+        # evening), name the next moment booking opens (e.g. Monday morning).
+        next_bookable_at = None
+        if not starts:
+            candidate = panic.next_policy_open_at(now, duration, working_tz)
+            _, window_end = panic.booking_window(now)
+            if candidate is not None and candidate > window_end:
+                next_bookable_at = candidate.astimezone(display_tz).isoformat()
+
+        today = now.astimezone(display_tz).date()
+        return Response(
+            {
+                "duration": duration,
+                "timezone": str(display_tz),
+                "cap_minutes": panic.PANIC_DAILY_CAP_MINUTES,
+                "remaining_minutes_today": panic.remaining_minutes_for_day(minutes_by_day, today),
+                "days": days,
+                "next_bookable_at": next_bookable_at,
+            }
+        )
+
+
+class PanicSessionView(APIView):
+    """Book (POST) and review (GET) the client's own panic sessions."""
+
+    permission_classes = [permissions.IsAuthenticated, ClientOnlyPermission]
+
+    @extend_schema(responses=None)
+    def get(self, request):
+        coach = request.user.profile.assigned_coach
+        now = timezone.now()
+        working_tz = panic.working_timezone_for(coach)
+        display_tz = panic.display_timezone_for(request.user, working_tz)
+        minutes_by_day = panic.panic_minutes_by_client_day(request.user, working_tz, display_tz)
+        today = now.astimezone(display_tz).date()
+
+        rows = [
+            _serialize_panic_session(event, working_tz, display_tz, now)
+            for event in Event.objects.filter(client=request.user, is_panic=True)
+            if datetime.combine(event.event_date, event.start_time, tzinfo=working_tz)
+            .astimezone(display_tz)
+            .date()
+            >= today
+        ]
+        rows.sort(key=lambda row: row["start_at"])
+        return Response(
+            {
+                "timezone": str(display_tz),
+                "cap_minutes": panic.PANIC_DAILY_CAP_MINUTES,
+                "remaining_minutes_today": panic.remaining_minutes_for_day(minutes_by_day, today),
+                "sessions": rows,
+            }
+        )
+
+    @extend_schema(request=None, responses=None)
+    def post(self, request):
+        coach = request.user.profile.assigned_coach
+        if coach is None:
+            return Response({"detail": PANIC_UNASSIGNED_MESSAGE}, status=409)
+
+        try:
+            duration = int(request.data.get("duration"))
+        except (TypeError, ValueError):
+            duration = 0
+        if duration not in panic.PANIC_DURATIONS:
+            return Response({"duration": "Panic sessions are 15 or 30 minutes."}, status=400)
+
+        note = request.data.get("note") or ""
+        if not isinstance(note, str):
+            return Response({"note": "The note should be a short line of text."}, status=400)
+        note = note.strip()
+        if len(note) > 200:
+            return Response({"note": "Keep the note short — 200 characters is plenty."}, status=400)
+
+        raw_start = request.data.get("start_time")
+        start = parse_datetime(raw_start) if isinstance(raw_start, str) else None
+        if start is None or timezone.is_naive(start):
+            return Response(
+                {"start_time": "Send the start time as an ISO datetime with a timezone offset."},
+                status=400,
+            )
+
+        now = timezone.now()
+        window_start, window_end = panic.booking_window(now)
+        if not panic.is_aligned(start):
+            return Response({"start_time": "Panic sessions start on 15-minute marks."}, status=400)
+        if start < now + panic.PANIC_MIN_LEAD:
+            return Response({"start_time": "Pick a time at least 30 minutes from now."}, status=400)
+        if start > window_end:
+            return Response({"start_time": "Pick a time within the next 48 hours."}, status=400)
+
+        working_tz = panic.working_timezone_for(coach)
+        display_tz = panic.display_timezone_for(request.user, working_tz)
+        if not panic.is_within_bookable_hours(start, duration, working_tz):
+            return Response(
+                {
+                    "start_time": (
+                        f"Panic sessions are bookable {panic.PANIC_HOURS_TEXT} "
+                        "in your coach's working hours."
+                    )
+                },
+                status=400,
+            )
+
+        minutes_by_day = panic.panic_minutes_by_client_day(request.user, working_tz, display_tz)
+        day = start.astimezone(display_tz).date()
+        remaining = panic.remaining_minutes_for_day(minutes_by_day, day)
+        if duration > remaining:
+            day_word = "today" if day == now.astimezone(display_tz).date() else "that day"
+            return Response(
+                {
+                    "detail": (
+                        f"You've used your {panic.PANIC_DAILY_CAP_MINUTES} panic minutes for {day_word} "
+                        f"— that's exactly what they're there for. {panic.cap_reset_text(display_tz, now)}"
+                    )
+                },
+                status=409,
+            )
+
+        end = start + timedelta(minutes=duration)
+        busy = panic.coach_busy_intervals(coach, window_start, window_end, working_tz)
+        if panic.overlaps_any(start, end, busy):
+            open_starts = panic.available_starts(
+                coach, request.user, duration, now, busy=busy, minutes_by_day=minutes_by_day
+            )
+            suggestions = [
+                alternative.astimezone(display_tz).isoformat()
+                for alternative in panic.nearest_alternatives(start, open_starts)
+            ]
+            return Response(
+                {
+                    "detail": "Your coach is already booked then — here are the closest open times.",
+                    "suggestions": suggestions,
+                },
+                status=409,
+            )
+
+        category, _ = EventCategory.objects.get_or_create(
+            client=request.user,
+            name=panic.PANIC_CATEGORY_NAME,
+            defaults={"color": panic.PANIC_CATEGORY_COLOR},
+        )
+        local_start = start.astimezone(working_tz)
+        local_end = end.astimezone(working_tz)
+        event = Event(
+            client=request.user,
+            title=panic.PANIC_EVENT_TITLE,
+            event_date=local_start.date(),
+            start_time=local_start.time(),
+            end_time=local_end.time(),
+            description=note,
+            category=category,
+            is_panic=True,
+        )
+        event.save()
+
+        # FAILURE RULE (same as EventViewSet): a Zoom problem never fails the booking.
+        try:
+            coach_profile = getattr(coach, "profile", None)
+            host_email = coach_profile.zoom_user_email if coach_profile else None
+            if not host_email:
+                raise zoom.ZoomNotConfigured("No Zoom host email configured for this client's coach.")
+            meeting = zoom.create_meeting(host_email, event)
+            event.zoom_meeting_id = meeting["id"]
+            event.meeting_link = meeting["join_url"]
+            event.save()
+            zoom_status = "ok"
+        except Exception:
+            logger.exception("Failed to create Zoom meeting for panic session %s", event.pk)
+            zoom_status = "failed"
+
+        # Emails and the ntfy ping are fail-soft in the notifications layer.
+        send_panic_booked_client_email(
+            request.user, coach, panic.format_when(start, display_tz), duration, event.meeting_link
+        )
+        send_panic_booked_coach_email(
+            coach, request.user, panic.format_when(start, working_tz), duration, note
+        )
+        notify_panic_booked(event.client_name, panic.format_when(start, working_tz))
+
+        row = _serialize_panic_session(event, working_tz, display_tz, now)
+        row["zoom_status"] = zoom_status
+        row["timezone"] = str(display_tz)
+        return Response(row, status=201)
+
+
+class PanicSessionDetailView(APIView):
+    """Cancel (DELETE) one of the client's own upcoming panic sessions."""
+
+    permission_classes = [permissions.IsAuthenticated, ClientOnlyPermission]
+
+    @extend_schema(responses=None)
+    def delete(self, request, pk):
+        event = Event.objects.filter(pk=pk, client=request.user, is_panic=True).first()
+        if event is None:
+            return Response({"detail": "We couldn't find that panic session."}, status=404)
+
+        coach = request.user.profile.assigned_coach
+        working_tz = panic.working_timezone_for(coach)
+        start = datetime.combine(event.event_date, event.start_time, tzinfo=working_tz)
+        if start <= timezone.now():
+            return Response(
+                {"detail": "This session has already started — only upcoming panic sessions can be cancelled."},
+                status=400,
+            )
+
+        meeting_id = event.zoom_meeting_id
+        when_text = panic.format_when(start, working_tz)
+        event.delete()
+        if meeting_id is not None:
+            try:
+                zoom.delete_meeting(meeting_id)
+            except zoom.ZoomError as exc:
+                if exc.status_code != 404:  # a meeting already gone in Zoom is fine
+                    logger.exception("Failed to delete Zoom meeting %s", meeting_id)
+            except Exception:
+                logger.exception("Failed to delete Zoom meeting %s", meeting_id)
+        if coach is not None:
+            send_panic_cancelled_coach_email(coach, request.user, when_text)
+        return Response(status=204)
 
 
 class AdminManagedUserViewSet(viewsets.ModelViewSet):

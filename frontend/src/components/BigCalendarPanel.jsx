@@ -168,6 +168,20 @@ export function BigCalendarPanel({ className }) {
   const eventPropGetter = useCallback(
     (event) => {
       const api = event.resource;
+      // Panic sessions render distinctly wherever they appear: deep rose with
+      // a pale left stripe, so a coach can spot them at a glance.
+      if (api?.is_panic) {
+        return {
+          className: "rbc-panic-event",
+          style: {
+            backgroundColor: "#be123c",
+            borderRadius: "6px",
+            color: "#fff",
+            border: "none",
+            boxShadow: "inset 4px 0 0 #fecdd3",
+          },
+        };
+      }
       const categoryColor = api?.category_detail?.color;
       const clientColor = api?.client?.id ? colorMap[api.client.id] : undefined;
       const color = categoryColor ? getCategoryColorHex(categoryColor) : clientColor || "#2563eb";

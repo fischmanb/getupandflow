@@ -1,0 +1,19 @@
+{% extends "notifications/emails/base.html" %}
+{% block content %}
+<h1 style="margin:0 0 16px 0;font-size:22px;line-height:1.3;color:#0f172a;">You're booked</h1>
+<p style="margin:0 0 16px 0;font-size:15px;line-height:1.6;">Hi {{ first_name }},</p>
+<p style="margin:0 0 16px 0;font-size:15px;line-height:1.6;">
+  <strong>{{ coach_first_name }}</strong> will be with you for <strong>{{ duration_minutes }} minutes</strong> on <strong>{{ when_text }}</strong>.
+</p>
+<p style="margin:0 0 20px 0;font-size:15px;line-height:1.6;">
+  Stuck is normal — reaching for your coach is exactly what this time is for. Nothing to prepare; just show up as you are.
+</p>
+{% if meeting_link %}
+<p style="margin:0 0 20px 0;">
+  <a href="{{ meeting_link }}" style="display:inline-block;background-color:#2563eb;color:#ffffff;text-decoration:none;font-size:15px;font-weight:600;padding:10px 20px;border-radius:8px;">Join when it's time</a>
+</p>
+{% endif %}
+<p style="margin:0 0 16px 0;font-size:15px;line-height:1.6;">
+  You can see this session on <a href="{{ calendar_url }}" style="color:#2563eb;">your calendar</a> any time.
+</p>
+{% endblock %}

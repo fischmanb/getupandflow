@@ -1340,3 +1340,620 @@ class CoachRoleChangeGuardTests(APITestCase):
             format="json",
         )
         self.assertEqual(resp.status_code, 200, resp.data)
+
+
+# ---------------------------------------------------------------------------
+# Panic Button booking (see .tasks/panic-booking.md and planner.panic)
+# ---------------------------------------------------------------------------
+
+import zoneinfo
+from datetime import timezone as dt_timezone
+
+from django.core import mail
+from django.core.mail import EmailMultiAlternatives
+from django.test import override_settings
+
+from accounts.models import ClientOnboarding
+
+from . import panic
+
+EASTERN = zoneinfo.ZoneInfo("America/New_York")
+# Wednesday 2026-07-29, 10:00 EDT. Window: Wed 10:30 -> Fri 10:00 EDT.
+PANIC_NOW = datetime(2026, 7, 29, 14, 0, tzinfo=dt_timezone.utc)
+# Friday 2026-07-31, 18:00 EDT. Window ends Sunday -> the weekend-gap case.
+PANIC_FRIDAY_EVENING = datetime(2026, 7, 31, 22, 0, tzinfo=dt_timezone.utc)
+
+
+def edt(year, month, day, hour, minute=0):
+    return datetime(year, month, day, hour, minute, tzinfo=EASTERN)
+
+
+def make_onboarding(user, tz="America/New_York"):
+    return ClientOnboarding.objects.create(
+        user=user,
+        timezone=tz,
+        morning_window="8-9am",
+        evening_window="6-7pm",
+        contact_method="whatsapp",
+        contact_number="+15551234567",
+    )
+
+
+@override_settings(NTFY_TOPIC_URL="")
+class PanicAPITestCase(APITestCase):
+    """Shared fixture: one coach (default working tz America/New_York), two of
+    their clients, and an unassigned (still-matching) client."""
+
+    @classmethod
+    def setUpTestData(cls):
+        cls.coach_group = Group.objects.get(name=ROLE_COACH)
+        cls.client_group = Group.objects.get(name=ROLE_CLIENT)
+
+        cls.coach = User.objects.create_user(
+            username="paniccoach", password="Pass12345!", first_name="Casey", email="casey@example.com"
+        )
+        cls.coach.groups.add(cls.coach_group)
+
+        cls.client_user = User.objects.create_user(
+            username="panicclient", password="Pass12345!", first_name="Jordan", email="jordan@example.com"
+        )
+        cls.client_user.groups.add(cls.client_group)
+        cls.client_user.profile.assigned_coach = cls.coach
+        cls.client_user.profile.save()
+        make_onboarding(cls.client_user)
+
+        cls.sibling_client = User.objects.create_user(
+            username="panicsibling", password="Pass12345!", first_name="Robin", email="robin@example.com"
+        )
+        cls.sibling_client.groups.add(cls.client_group)
+        cls.sibling_client.profile.assigned_coach = cls.coach
+        cls.sibling_client.profile.save()
+
+        # Group added after user creation, so the profile (created by signal
+        # pre-role) legitimately has no coach: the "matching" state.
+        cls.matching_client = User.objects.create_user(
+            username="panicmatching", password="Pass12345!", email="waiting@example.com"
+        )
+        cls.matching_client.groups.add(cls.client_group)
+
+        cls.category = EventCategory.objects.create(name="Coaching", color="sky", client=cls.client_user)
+        cls.sibling_category = EventCategory.objects.create(
+            name="Coaching", color="sky", client=cls.sibling_client
+        )
+
+    def authenticate(self, user):
+        response = self.client.post(
+            reverse("login"),
+            {"username": user.username, "password": "Pass12345!"},
+            format="json",
+        )
+        self.client.credentials(HTTP_AUTHORIZATION=f"Bearer {response.data['access']}")
+
+    def freeze(self, now=PANIC_NOW):
+        return mock.patch("django.utils.timezone.now", return_value=now)
+
+    def book(self, start, duration=15, note=None):
+        payload = {"duration": duration, "start_time": start.isoformat()}
+        if note is not None:
+            payload["note"] = note
+        return self.client.post(reverse("panic-session-list"), payload, format="json")
+
+
+class PanicBookingValidationTests(PanicAPITestCase):
+    def test_duration_must_be_15_or_30(self):
+        self.authenticate(self.client_user)
+        with self.freeze():
+            response = self.book(edt(2026, 7, 29, 11, 0), duration=20)
+        self.assertEqual(response.status_code, 400)
+        self.assertIn("duration", response.data)
+
+    def test_start_must_be_aligned_to_15_minutes(self):
+        self.authenticate(self.client_user)
+        with self.freeze():
+            response = self.book(edt(2026, 7, 29, 11, 5))
+        self.assertEqual(response.status_code, 400)
+        self.assertIn("start_time", response.data)
+
+    def test_start_needs_30_minutes_lead(self):
+        self.authenticate(self.client_user)
+        with self.freeze():
+            response = self.book(edt(2026, 7, 29, 10, 15))
+        self.assertEqual(response.status_code, 400)
+        self.assertIn("start_time", response.data)
+
+    def test_start_within_48_hours(self):
+        self.authenticate(self.client_user)
+        with self.freeze():
+            response = self.book(edt(2026, 7, 31, 11, 0))  # Friday 11:00, 49h out
+        self.assertEqual(response.status_code, 400)
+        self.assertIn("start_time", response.data)
+
+    def test_naive_start_time_rejected(self):
+        self.authenticate(self.client_user)
+        with self.freeze():
+            response = self.client.post(
+                reverse("panic-session-list"),
+                {"duration": 15, "start_time": "2026-07-29T11:00:00"},
+                format="json",
+            )
+        self.assertEqual(response.status_code, 400)
+        self.assertIn("start_time", response.data)
+
+    def test_outside_bookable_hours_rejected(self):
+        self.authenticate(self.client_user)
+        with self.freeze():
+            before_hours = self.book(edt(2026, 7, 30, 7, 30))
+            overruns_close = self.book(edt(2026, 7, 30, 16, 45), duration=30)  # would end 17:15
+            ends_at_close = self.book(edt(2026, 7, 30, 16, 30), duration=30)  # ends 17:00 exactly
+        self.assertEqual(before_hours.status_code, 400)
+        self.assertIn("start_time", before_hours.data)
+        self.assertEqual(overruns_close.status_code, 400)
+        self.assertEqual(ends_at_close.status_code, 201, ends_at_close.data)
+
+    def test_weekend_rejected(self):
+        self.authenticate(self.client_user)
+        with self.freeze(PANIC_FRIDAY_EVENING):
+            response = self.book(edt(2026, 8, 1, 10, 0))  # Saturday morning
+        self.assertEqual(response.status_code, 400)
+        self.assertIn("start_time", response.data)
+
+    def test_unassigned_client_gets_calm_409(self):
+        self.authenticate(self.matching_client)
+        with self.freeze():
+            response = self.book(edt(2026, 7, 29, 11, 0))
+        self.assertEqual(response.status_code, 409)
+        self.assertIn("matching", response.data["detail"])
+
+    def test_note_length_capped(self):
+        self.authenticate(self.client_user)
+        with self.freeze():
+            response = self.book(edt(2026, 7, 29, 11, 0), note="x" * 201)
+        self.assertEqual(response.status_code, 400)
+        self.assertIn("note", response.data)
+
+    def test_coach_cannot_book_panic(self):
+        self.authenticate(self.coach)
+        with self.freeze():
+            response = self.book(edt(2026, 7, 29, 11, 0))
+        self.assertEqual(response.status_code, 403)
+
+
+class PanicCapTests(PanicAPITestCase):
+    def test_daily_cap_blocks_booking_past_45_minutes(self):
+        self.authenticate(self.client_user)
+        with self.freeze():
+            self.assertEqual(self.book(edt(2026, 7, 30, 9, 0), duration=30).status_code, 201)
+            self.assertEqual(self.book(edt(2026, 7, 30, 10, 0), duration=15).status_code, 201)
+            declined = self.book(edt(2026, 7, 30, 11, 0), duration=15)
+        self.assertEqual(declined.status_code, 409)
+        self.assertIn("reset at midnight", declined.data["detail"])
+        self.assertEqual(Event.objects.filter(client=self.client_user, is_panic=True).count(), 2)
+
+    def test_cap_day_boundary_uses_client_timezone(self):
+        # A Tokyo client: Wed 10:30 EDT is still Wednesday in Tokyo (23:30),
+        # but Wed 11:00 EDT is already Thursday there (00:00). The cap must
+        # bucket by the CLIENT's day, so 30+30 minutes across that boundary is
+        # fine while 30+30 on the same Tokyo day is not.
+        tokyo_client = User.objects.create_user(
+            username="panictokyo", password="Pass12345!", first_name="Yuki", email="yuki@example.com"
+        )
+        tokyo_client.groups.add(self.client_group)
+        tokyo_client.profile.assigned_coach = self.coach
+        tokyo_client.profile.save()
+        make_onboarding(tokyo_client, tz="Asia/Tokyo")
+
+        self.authenticate(tokyo_client)
+        with self.freeze():
+            self.assertEqual(self.book(edt(2026, 7, 29, 10, 30), duration=30).status_code, 201)
+            # Same EDT day (total 60 min if bucketed by coach day) but a new Tokyo day.
+            self.assertEqual(self.book(edt(2026, 7, 29, 11, 0), duration=30).status_code, 201)
+            # Tokyo Thursday now holds 30 min; +15 fits the cap exactly...
+            self.assertEqual(self.book(edt(2026, 7, 29, 12, 0), duration=15).status_code, 201)
+            # ...and one more 15 tips the same Tokyo day past 45.
+            declined = self.book(edt(2026, 7, 29, 13, 0), duration=15)
+        self.assertEqual(declined.status_code, 409)
+        self.assertIn("panic minutes", declined.data["detail"])
+
+    def test_cancel_frees_the_cap(self):
+        self.authenticate(self.client_user)
+        with self.freeze():
+            first = self.book(edt(2026, 7, 30, 9, 0), duration=30)
+            self.assertEqual(self.book(edt(2026, 7, 30, 10, 0), duration=15).status_code, 201)
+            self.assertEqual(self.book(edt(2026, 7, 30, 11, 0), duration=30).status_code, 409)
+
+            cancel = self.client.delete(reverse("panic-session-detail", args=[first.data["id"]]))
+            self.assertEqual(cancel.status_code, 204)
+            rebooked = self.book(edt(2026, 7, 30, 11, 0), duration=30)
+        self.assertEqual(rebooked.status_code, 201, rebooked.data)
+
+
+class PanicConflictTests(PanicAPITestCase):
+    def test_conflict_returns_nearest_aligned_suggestions(self):
+        Event.objects.create(
+            title="Existing session",
+            event_date=date(2026, 7, 30),
+            start_time=time(11, 0),
+            end_time=time(12, 0),
+            category=self.category,
+            client=self.client_user,
+        )
+        self.authenticate(self.client_user)
+        with self.freeze():
+            response = self.book(edt(2026, 7, 30, 11, 15))
+        self.assertEqual(response.status_code, 409)
+        self.assertEqual(
+            response.data["suggestions"],
+            [
+                edt(2026, 7, 30, 10, 45).isoformat(),
+                edt(2026, 7, 30, 10, 30).isoformat(),
+                edt(2026, 7, 30, 12, 0).isoformat(),
+            ],
+        )
+
+    def test_another_clients_event_on_the_coachs_calendar_blocks(self):
+        Event.objects.create(
+            title="Sibling session",
+            event_date=date(2026, 7, 30),
+            start_time=time(14, 0),
+            end_time=time(15, 0),
+            category=self.sibling_category,
+            client=self.sibling_client,
+        )
+        self.authenticate(self.client_user)
+        with self.freeze():
+            response = self.book(edt(2026, 7, 30, 14, 0))
+        self.assertEqual(response.status_code, 409)
+        self.assertIn("suggestions", response.data)
+
+    def test_recurring_event_occurrence_blocks(self):
+        Event.objects.create(
+            title="Daily standup",
+            event_date=date(2026, 7, 27),
+            start_time=time(9, 0),
+            end_time=time(9, 30),
+            recurrence_type=Event.RecurrenceChoices.DAILY,
+            recurrence_until=date(2026, 8, 27),
+            category=self.category,
+            client=self.client_user,
+        )
+        self.authenticate(self.client_user)
+        with self.freeze():
+            response = self.book(edt(2026, 7, 30, 9, 0))
+        self.assertEqual(response.status_code, 409)
+
+
+class PanicAvailabilityTests(PanicAPITestCase):
+    def get_availability(self, duration=15):
+        return self.client.get(reverse("panic-availability"), {"duration": duration})
+
+    def all_starts(self, response):
+        return [slot["start_at"] for day in response.data["days"] for slot in day["slots"]]
+
+    def test_slots_cover_window_inside_bookable_hours_only(self):
+        self.authenticate(self.client_user)
+        with self.freeze():
+            response = self.get_availability()
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual([day["date"] for day in response.data["days"]], ["2026-07-29", "2026-07-30", "2026-07-31"])
+        starts = self.all_starts(response)
+        self.assertEqual(starts[0], edt(2026, 7, 29, 10, 30).isoformat())
+        self.assertEqual(starts[-1], edt(2026, 7, 31, 10, 0).isoformat())
+        wednesday = response.data["days"][0]["slots"]
+        thursday = response.data["days"][1]["slots"]
+        self.assertEqual(wednesday[-1]["start_at"], edt(2026, 7, 29, 16, 45).isoformat())
+        self.assertEqual(thursday[0]["start_at"], edt(2026, 7, 30, 8, 0).isoformat())
+        self.assertEqual(thursday[-1]["start_at"], edt(2026, 7, 30, 16, 45).isoformat())
+
+    def test_thirty_minute_slots_need_two_contiguous_free_cells(self):
+        Event.objects.create(
+            title="Quarter hour hold",
+            event_date=date(2026, 7, 30),
+            start_time=time(11, 15),
+            end_time=time(11, 30),
+            category=self.category,
+            client=self.client_user,
+        )
+        self.authenticate(self.client_user)
+        with self.freeze():
+            fifteen = self.all_starts(self.get_availability(15))
+            thirty = self.all_starts(self.get_availability(30))
+        self.assertIn(edt(2026, 7, 30, 11, 0).isoformat(), fifteen)
+        self.assertNotIn(edt(2026, 7, 30, 11, 15).isoformat(), fifteen)
+        self.assertNotIn(edt(2026, 7, 30, 11, 0).isoformat(), thirty)
+        self.assertIn(edt(2026, 7, 30, 10, 45).isoformat(), thirty)
+        # 30-minute sessions must end by 17:00: 16:45 works for 15 but not 30.
+        self.assertIn(edt(2026, 7, 30, 16, 45).isoformat(), fifteen)
+        self.assertNotIn(edt(2026, 7, 30, 16, 45).isoformat(), thirty)
+        self.assertIn(edt(2026, 7, 30, 16, 30).isoformat(), thirty)
+
+    def test_availability_respects_remaining_daily_cap(self):
+        self.authenticate(self.client_user)
+        with self.freeze():
+            self.assertEqual(self.book(edt(2026, 7, 29, 15, 0), duration=30).status_code, 201)
+            fifteen = self.get_availability(15)
+            thirty = self.get_availability(30)
+        self.assertEqual(fifteen.data["remaining_minutes_today"], 15)
+        # 15-minute slots remain today; 30-minute slots skip to tomorrow.
+        self.assertEqual([day["date"] for day in fifteen.data["days"]][0], "2026-07-29")
+        self.assertEqual([day["date"] for day in thirty.data["days"]][0], "2026-07-30")
+
+    def test_weekend_gap_names_next_bookable_day(self):
+        self.authenticate(self.client_user)
+        with self.freeze(PANIC_FRIDAY_EVENING):
+            response = self.get_availability()
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.data["days"], [])
+        # Friday evening -> booking opens Monday 8:00 in the coach's working tz.
+        self.assertEqual(response.data["next_bookable_at"], edt(2026, 8, 3, 8, 0).isoformat())
+
+    def test_unassigned_client_gets_calm_409(self):
+        self.authenticate(self.matching_client)
+        with self.freeze():
+            response = self.get_availability()
+        self.assertEqual(response.status_code, 409)
+        self.assertIn("matching", response.data["detail"])
+
+    def test_window_evaluated_in_coach_working_timezone(self):
+        # Coach may physically be anywhere (their "local" tz never enters the
+        # system); assign Manila working hours and the window follows them.
+        self.coach.profile.working_timezone = "Asia/Manila"
+        self.coach.profile.save()
+        manila_morning = datetime(2026, 7, 29, 1, 0, tzinfo=dt_timezone.utc)  # Wed 09:00 Manila, Tue 21:00 EDT
+        self.authenticate(self.client_user)
+        with self.freeze(manila_morning):
+            response = self.get_availability()
+            first = self.all_starts(response)[0]
+            # 09:30 Manila, rendered in the client's timezone (America/New_York).
+            self.assertEqual(first, "2026-07-28T21:30:00-04:00")
+            booked = self.book(datetime(2026, 7, 29, 1, 30, tzinfo=dt_timezone.utc))
+        self.assertEqual(booked.status_code, 201, booked.data)
+
+    def test_availability_slots_render_in_client_timezone(self):
+        make_onboarding(self.sibling_client, tz="America/Chicago")
+        self.authenticate(self.sibling_client)
+        with self.freeze():
+            response = self.get_availability()
+        self.assertEqual(response.data["timezone"], "America/Chicago")
+        # Wed 10:30 EDT == Wed 09:30 CDT.
+        self.assertEqual(self.all_starts(response)[0], "2026-07-29T09:30:00-05:00")
+
+
+class PanicBookingSideEffectsTests(PanicAPITestCase):
+    def setUp(self):
+        zoom._token_cache["access_token"] = None
+        zoom._token_cache["expires_at"] = 0.0
+
+    def test_booking_creates_flagged_event_and_notifies(self):
+        self.authenticate(self.client_user)
+        with self.freeze(), mock.patch("planner.views.notify_panic_booked") as ntfy:
+            response = self.book(edt(2026, 7, 30, 11, 0), duration=30, note="Stalled on the report")
+        self.assertEqual(response.status_code, 201, response.data)
+
+        event = Event.objects.get(pk=response.data["id"])
+        self.assertTrue(event.is_panic)
+        self.assertEqual(event.title, panic.PANIC_EVENT_TITLE)
+        self.assertEqual(event.category.name, panic.PANIC_CATEGORY_NAME)
+        self.assertEqual(event.description, "Stalled on the report")
+        self.assertEqual(event.event_date, date(2026, 7, 30))
+        self.assertEqual(event.start_time, time(11, 0))
+        self.assertEqual(event.end_time, time(11, 30))
+
+        self.assertEqual(response.data["start_at"], edt(2026, 7, 30, 11, 0).isoformat())
+        self.assertEqual(response.data["duration_minutes"], 30)
+
+        self.assertEqual(len(mail.outbox), 2)
+        recipients = {message.to[0] for message in mail.outbox}
+        self.assertEqual(recipients, {"jordan@example.com", "casey@example.com"})
+        ntfy.assert_called_once_with("Jordan", "Thursday, July 30 at 11:00 am EDT")
+
+    @mock.patch.dict(os.environ, ZOOM_ENV)
+    @mock.patch("planner.zoom.requests")
+    def test_booking_creates_coach_hosted_zoom_meeting(self, zoom_requests):
+        self.coach.profile.zoom_user_email = "casey@zoom.example.com"
+        self.coach.profile.save()
+        zoom_requests.post.return_value = make_zoom_response(200, {"access_token": "tok", "expires_in": 3600})
+        zoom_requests.request.return_value = make_zoom_response(201, {"id": 4242, "join_url": "https://zoom.us/j/4242"})
+
+        self.authenticate(self.client_user)
+        with self.freeze():
+            response = self.book(edt(2026, 7, 30, 11, 0))
+        self.assertEqual(response.status_code, 201)
+        self.assertEqual(response.data["zoom_status"], "ok")
+        self.assertEqual(response.data["meeting_link"], "https://zoom.us/j/4242")
+        _, url = zoom_requests.request.call_args[0]
+        self.assertEqual(url, f"{zoom.ZOOM_API_BASE}/users/casey@zoom.example.com/meetings")
+
+    @mock.patch.dict(os.environ, ZOOM_ENV)
+    @mock.patch("planner.zoom.requests")
+    def test_zoom_failure_does_not_block_booking(self, zoom_requests):
+        self.coach.profile.zoom_user_email = "casey@zoom.example.com"
+        self.coach.profile.save()
+        zoom_requests.post.side_effect = requests.ConnectionError("zoom is down")
+
+        self.authenticate(self.client_user)
+        with self.freeze():
+            response = self.book(edt(2026, 7, 30, 11, 0))
+        self.assertEqual(response.status_code, 201)
+        self.assertEqual(response.data["zoom_status"], "failed")
+        self.assertTrue(Event.objects.filter(pk=response.data["id"], is_panic=True).exists())
+        self.assertEqual(len(mail.outbox), 2)  # emails still go out
+
+    def test_email_failure_does_not_block_booking(self):
+        self.authenticate(self.client_user)
+        with self.freeze(), mock.patch.object(EmailMultiAlternatives, "send", side_effect=Exception("smtp down")):
+            response = self.book(edt(2026, 7, 30, 11, 0))
+        self.assertEqual(response.status_code, 201)
+        self.assertTrue(Event.objects.filter(pk=response.data["id"], is_panic=True).exists())
+
+    def test_times_render_in_client_timezone_even_when_it_differs(self):
+        make_onboarding(self.sibling_client, tz="America/Chicago")
+        self.authenticate(self.sibling_client)
+        with self.freeze():
+            response = self.book(edt(2026, 7, 30, 11, 0))
+        self.assertEqual(response.status_code, 201, response.data)
+        self.assertEqual(response.data["timezone"], "America/Chicago")
+        self.assertEqual(response.data["start_at"], "2026-07-30T10:00:00-05:00")
+
+        client_email = next(m for m in mail.outbox if m.to == ["robin@example.com"])
+        coach_email = next(m for m in mail.outbox if m.to == ["casey@example.com"])
+        self.assertIn("10:00 am CDT", client_email.body)  # client's clock
+        self.assertIn("11:00 am EDT", coach_email.body)  # coach's working clock
+
+
+class PanicCancelTests(PanicAPITestCase):
+    def setUp(self):
+        zoom._token_cache["access_token"] = None
+        zoom._token_cache["expires_at"] = 0.0
+
+    @mock.patch.dict(os.environ, ZOOM_ENV)
+    @mock.patch("planner.zoom.requests")
+    def test_cancel_removes_event_and_zoom_and_notifies_coach(self, zoom_requests):
+        self.coach.profile.zoom_user_email = "casey@zoom.example.com"
+        self.coach.profile.save()
+        zoom_requests.post.return_value = make_zoom_response(200, {"access_token": "tok", "expires_in": 3600})
+        zoom_requests.request.return_value = make_zoom_response(201, {"id": 4242, "join_url": "https://zoom.us/j/4242"})
+
+        self.authenticate(self.client_user)
+        with self.freeze():
+            booked = self.book(edt(2026, 7, 30, 11, 0))
+            self.assertEqual(booked.status_code, 201)
+            mail.outbox.clear()
+            zoom_requests.request.return_value = make_zoom_response(204, {})
+            response = self.client.delete(reverse("panic-session-detail", args=[booked.data["id"]]))
+
+        self.assertEqual(response.status_code, 204)
+        self.assertFalse(Event.objects.filter(pk=booked.data["id"]).exists())
+        method, url = zoom_requests.request.call_args[0]
+        self.assertEqual(method, "DELETE")
+        self.assertEqual(url, f"{zoom.ZOOM_API_BASE}/meetings/4242")
+        self.assertEqual(len(mail.outbox), 1)
+        self.assertEqual(mail.outbox[0].to, ["casey@example.com"])
+        self.assertIn("cancelled", mail.outbox[0].subject)
+
+    def test_client_cannot_cancel_someone_elses_session(self):
+        sibling_panic = Event.objects.create(
+            title=panic.PANIC_EVENT_TITLE,
+            event_date=date(2026, 7, 30),
+            start_time=time(11, 0),
+            end_time=time(11, 15),
+            category=self.sibling_category,
+            client=self.sibling_client,
+            is_panic=True,
+        )
+        self.authenticate(self.client_user)
+        with self.freeze():
+            response = self.client.delete(reverse("panic-session-detail", args=[sibling_panic.id]))
+        self.assertEqual(response.status_code, 404)
+        self.assertTrue(Event.objects.filter(pk=sibling_panic.id).exists())
+
+    def test_cannot_cancel_a_past_session(self):
+        past_panic = Event.objects.create(
+            title=panic.PANIC_EVENT_TITLE,
+            event_date=date(2026, 7, 28),  # Tuesday, before the frozen Wednesday
+            start_time=time(11, 0),
+            end_time=time(11, 15),
+            category=self.category,
+            client=self.client_user,
+            is_panic=True,
+        )
+        self.authenticate(self.client_user)
+        with self.freeze():
+            response = self.client.delete(reverse("panic-session-detail", args=[past_panic.id]))
+        self.assertEqual(response.status_code, 400)
+        self.assertTrue(Event.objects.filter(pk=past_panic.id).exists())
+
+    def test_ordinary_events_are_not_cancellable_here(self):
+        ordinary = Event.objects.create(
+            title="Weekly session",
+            event_date=date(2026, 7, 30),
+            start_time=time(11, 0),
+            end_time=time(12, 0),
+            category=self.category,
+            client=self.client_user,
+        )
+        self.authenticate(self.client_user)
+        with self.freeze():
+            response = self.client.delete(reverse("panic-session-detail", args=[ordinary.id]))
+        self.assertEqual(response.status_code, 404)
+
+
+class PanicSessionListTests(PanicAPITestCase):
+    def test_list_shows_todays_sessions_and_remaining_minutes(self):
+        # One panic session earlier today (already started) and one upcoming.
+        Event.objects.create(
+            title=panic.PANIC_EVENT_TITLE,
+            event_date=date(2026, 7, 29),
+            start_time=time(9, 0),
+            end_time=time(9, 30),
+            category=self.category,
+            client=self.client_user,
+            is_panic=True,
+        )
+        self.authenticate(self.client_user)
+        with self.freeze():
+            self.assertEqual(self.book(edt(2026, 7, 29, 11, 0), duration=15).status_code, 201)
+            response = self.client.get(reverse("panic-session-list"))
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.data["cap_minutes"], panic.PANIC_DAILY_CAP_MINUTES)
+        self.assertEqual(response.data["remaining_minutes_today"], 0)
+        sessions = response.data["sessions"]
+        self.assertEqual(len(sessions), 2)
+        self.assertFalse(sessions[0]["can_cancel"])  # 9:00 already started
+        self.assertTrue(sessions[1]["can_cancel"])  # 11:00 upcoming
+
+    def test_panic_events_are_flagged_in_the_events_api(self):
+        self.authenticate(self.client_user)
+        with self.freeze():
+            booked = self.book(edt(2026, 7, 30, 11, 0))
+            events = self.client.get(reverse("event-list"))
+        rows = {row["id"]: row for row in get_list_results(events)}
+        self.assertTrue(rows[booked.data["id"]]["is_panic"])
+
+
+class CoachWorkingTimezoneTests(APITestCase):
+    @classmethod
+    def setUpTestData(cls):
+        cls.admin = User.objects.create_user(username="tzadmin", password="Pass12345!", is_superuser=True)
+        cls.coach = User.objects.create_user(username="tzcoach", password="Pass12345!")
+        cls.coach.groups.add(Group.objects.get(name=ROLE_COACH))
+
+    def authenticate(self, user):
+        response = self.client.post(
+            reverse("login"),
+            {"username": user.username, "password": "Pass12345!"},
+            format="json",
+        )
+        self.client.credentials(HTTP_AUTHORIZATION=f"Bearer {response.data['access']}")
+
+    def test_defaults_to_company_eastern_policy(self):
+        self.assertEqual(self.coach.profile.working_timezone, "America/New_York")
+
+    def test_admin_can_assign_working_timezone(self):
+        self.authenticate(self.admin)
+        response = self.client.patch(
+            f"/api/admin/users/{self.coach.id}/",
+            {"working_timezone": "Asia/Manila"},
+            format="json",
+        )
+        self.assertEqual(response.status_code, 200, response.data)
+        self.assertEqual(response.data["working_timezone"], "Asia/Manila")
+        self.coach.profile.refresh_from_db()
+        self.assertEqual(self.coach.profile.working_timezone, "Asia/Manila")
+
+    def test_invalid_timezone_rejected(self):
+        self.authenticate(self.admin)
+        response = self.client.patch(
+            f"/api/admin/users/{self.coach.id}/",
+            {"working_timezone": "Mars/OlympusMons"},
+            format="json",
+        )
+        self.assertEqual(response.status_code, 400)
+        self.assertIn("working_timezone", response.data)
+
+    def test_coach_cannot_self_edit_working_timezone(self):
+        self.authenticate(self.coach)
+        response = self.client.patch(reverse("me"), {"working_timezone": "Asia/Manila"}, format="json")
+        self.assertEqual(response.status_code, 200)
+        self.coach.profile.refresh_from_db()
+        self.assertEqual(self.coach.profile.working_timezone, "America/New_York")

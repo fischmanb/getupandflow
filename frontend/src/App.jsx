@@ -14,6 +14,7 @@ import { ForgotPasswordPage } from "./pages/ForgotPasswordPage";
 import { HomePage } from "./pages/HomePage";
 import { LoginPage } from "./pages/LoginPage";
 import { OnboardingPage } from "./pages/OnboardingPage";
+import { PanicPage } from "./pages/PanicPage";
 import { PrivacyPage } from "./pages/PrivacyPage";
 import { ResetPasswordPage } from "./pages/ResetPasswordPage";
 import { SignupPage } from "./pages/SignupPage";
@@ -45,6 +46,14 @@ export default function App() {
             element={
               <RoleRoute allowedRoles={["Client"]}>
                 <OnboardingPage />
+              </RoleRoute>
+            }
+          />
+          <Route
+            path="panic"
+            element={
+              <RoleRoute allowedRoles={["Client"]}>
+                <PanicPage />
               </RoleRoute>
             }
           />

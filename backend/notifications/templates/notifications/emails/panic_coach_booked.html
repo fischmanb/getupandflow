@@ -1,0 +1,14 @@
+{% extends "notifications/emails/base.html" %}
+{% block content %}
+<h1 style="margin:0 0 16px 0;font-size:22px;line-height:1.3;color:#0f172a;">Panic session booked</h1>
+<p style="margin:0 0 16px 0;font-size:15px;line-height:1.6;">Hi {{ coach_first_name }},</p>
+<p style="margin:0 0 16px 0;font-size:15px;line-height:1.6;">
+  <strong>{{ client_name }}</strong> just booked a panic session: <strong>{{ duration_minutes }} minutes</strong> on <strong>{{ when_text }}</strong>.
+</p>
+{% if note %}
+<p style="margin:0 0 16px 0;font-size:15px;line-height:1.6;">Their note: &ldquo;{{ note }}&rdquo;</p>
+{% endif %}
+<p style="margin:0 0 20px 0;">
+  <a href="{{ calendar_url }}" style="display:inline-block;background-color:#2563eb;color:#ffffff;text-decoration:none;font-size:15px;font-weight:600;padding:10px 20px;border-radius:8px;">Open your calendar</a>
+</p>
+{% endblock %}

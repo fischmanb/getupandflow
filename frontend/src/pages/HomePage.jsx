@@ -193,7 +193,7 @@ function RhythmWindowSelect({ prefs, field, options, label, onSaved }) {
   );
 }
 
-function RhythmSection({ prefs, onPrefsSaved }) {
+function RhythmSection({ prefs, onPrefsSaved, panicRoomEnabled }) {
   const canEdit = Boolean(prefs && onPrefsSaved);
   const morning = prefs?.morning_window ? windowLabel(prefs.morning_window) : null;
   const evening = prefs?.evening_window ? windowLabel(prefs.evening_window) : null;
@@ -236,10 +236,16 @@ function RhythmSection({ prefs, onPrefsSaved }) {
       key: "panic-button",
       name: "Panic Button",
       when: "Whenever you need it",
+      // The panic room is client-self only; mirror view keeps the calendar link.
       copy: (
         <>
           Up to 45 minutes with your coach when you feel stuck —{" "}
-          <Link to="/app/calendar">open your calendar</Link>.
+          {panicRoomEnabled ? (
+            <Link to="/app/panic">grab a panic session</Link>
+          ) : (
+            <Link to="/app/calendar">open your calendar</Link>
+          )}
+          .
         </>
       ),
     },
@@ -391,6 +397,7 @@ export function HomePage() {
           <div className="home-rhythm-section">
             <p className="panel-label">Your rhythm</p>
             <RhythmSection
+              panicRoomEnabled={isClientSelf}
               prefs={isClientSelf ? prefs : null}
               onPrefsSaved={isClientSelf ? setPrefs : null}
             />

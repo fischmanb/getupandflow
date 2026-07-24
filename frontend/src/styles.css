@@ -3535,3 +3535,187 @@ textarea.gcal-modal-input {
     font-size: 1.8rem;
   }
 }
+
+/* Panic Button room (/app/panic): calm, tool-like, zero drama. */
+.panic-room {
+  max-width: 640px;
+}
+
+.panic-lede {
+  margin: 0;
+  font-size: 1.05rem;
+  line-height: 1.55;
+  color: #33475f;
+}
+
+.panic-remaining {
+  margin: 0;
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: #0f766e;
+}
+
+.panic-booked-section,
+.panic-booking-section {
+  display: grid;
+  gap: 14px;
+}
+
+.panic-booked-list {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: grid;
+  gap: 8px;
+}
+
+.panic-booked-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 10px 14px;
+  border: 1px solid rgba(16, 32, 51, 0.1);
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.75);
+  font-size: 0.95rem;
+}
+
+.panic-cancel-button {
+  border: none;
+  background: none;
+  padding: 4px 8px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: #9f3a4e;
+  cursor: pointer;
+}
+
+.panic-cancel-button:hover {
+  text-decoration: underline;
+}
+
+.panic-duration-toggle {
+  display: flex;
+  gap: 10px;
+}
+
+.panic-duration-button {
+  flex: 1;
+  padding: 16px 12px;
+  border: 1.5px solid rgba(16, 32, 51, 0.15);
+  border-radius: 14px;
+  background: rgba(255, 255, 255, 0.8);
+  font-size: 1.05rem;
+  font-weight: 600;
+  color: #33475f;
+  cursor: pointer;
+  transition: border-color 0.15s ease, background 0.15s ease;
+}
+
+.panic-duration-button.is-selected {
+  border-color: #2563eb;
+  background: rgba(37, 99, 235, 0.08);
+  color: #1d4ed8;
+}
+
+.panic-day-tabs {
+  display: flex;
+  gap: 8px;
+}
+
+.panic-day-tab {
+  padding: 8px 16px;
+  border: 1px solid rgba(16, 32, 51, 0.15);
+  border-radius: 999px;
+  background: none;
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: #46607d;
+  cursor: pointer;
+}
+
+.panic-day-tab.is-selected {
+  border-color: #2563eb;
+  background: rgba(37, 99, 235, 0.08);
+  color: #1d4ed8;
+}
+
+.panic-slot-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.panic-slot-chip {
+  padding: 8px 14px;
+  border: 1px solid rgba(16, 32, 51, 0.15);
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.85);
+  font-size: 0.9rem;
+  font-variant-numeric: tabular-nums;
+  color: #33475f;
+  cursor: pointer;
+}
+
+.panic-slot-chip.is-selected {
+  border-color: #2563eb;
+  background: #2563eb;
+  color: #fff;
+}
+
+.panic-empty-window {
+  margin: 0;
+  font-size: 0.95rem;
+  color: #46607d;
+}
+
+.panic-note-label {
+  display: grid;
+  gap: 6px;
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: #33475f;
+}
+
+.panic-note-input {
+  padding: 10px 12px;
+  border: 1px solid rgba(16, 32, 51, 0.15);
+  border-radius: 10px;
+  font: inherit;
+  font-weight: 400;
+}
+
+.panic-book-button {
+  justify-self: start;
+}
+
+.panic-confirmation {
+  display: grid;
+  gap: 4px;
+  padding: 14px 16px;
+  border: 1px solid rgba(15, 118, 110, 0.3);
+  border-radius: 12px;
+  background: rgba(20, 184, 166, 0.08);
+  color: #115e59;
+  font-size: 0.95rem;
+}
+
+.panic-confirmation p {
+  margin: 0;
+}
+
+.panic-conflict {
+  display: grid;
+  gap: 10px;
+  padding: 14px 16px;
+  border: 1px solid rgba(180, 83, 9, 0.3);
+  border-radius: 12px;
+  background: rgba(245, 158, 11, 0.08);
+  color: #7a3f06;
+  font-size: 0.95rem;
+}
+
+.panic-conflict p {
+  margin: 0;
+}

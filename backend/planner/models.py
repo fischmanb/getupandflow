@@ -85,6 +85,10 @@ class Event(ClientOwnedModel):
         default=RecurrenceChoices.NONE,
     )
     recurrence_until = models.DateField(null=True, blank=True)
+    # Panic Button sessions (ad-hoc restart-momentum calls) are ordinary
+    # calendar events flagged so they render distinctly and count toward the
+    # client's daily panic-minute cap (see planner.panic).
+    is_panic = models.BooleanField(default=False)
     client_name = models.CharField(max_length=255, editable=False)
 
     class Meta:

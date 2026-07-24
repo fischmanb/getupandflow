@@ -12,7 +12,7 @@ PAID_STATUSES = (Subscription.STATUS_ACTIVE, Subscription.STATUS_PAST_DUE)
 
 @admin.register(UserProfile)
 class UserProfileAdmin(admin.ModelAdmin):
-    list_display = ("user", "assigned_coach", "phone_number", "zoom_user_email", "created_at")
+    list_display = ("user", "assigned_coach", "phone_number", "zoom_user_email", "working_timezone", "created_at")
     search_fields = ("user__username", "user__email", "assigned_coach__username")
 
 

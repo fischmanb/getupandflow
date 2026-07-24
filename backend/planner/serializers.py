@@ -3,7 +3,7 @@ from django.utils import timezone
 from rest_framework import serializers
 
 from accounts.constants import ROLE_CLIENT, ROLE_COACH
-from accounts.models import UserProfile, get_user_role
+from accounts.models import ClientOnboarding, UserProfile, get_user_role
 from accounts.serializers import CoachCardSerializer, validate_photo_upload
 
 from .models import Event, EventCategory, Task
@@ -101,6 +101,7 @@ class EventSerializer(ClientScopedValidationMixin, serializers.ModelSerializer):
             "category_detail",
             "recurrence_type",
             "recurrence_until",
+            "is_panic",
             "client",
             "client_id",
             "client_name",
@@ -110,7 +111,9 @@ class EventSerializer(ClientScopedValidationMixin, serializers.ModelSerializer):
             "created_at",
             "updated_at",
         ]
-        read_only_fields = ["client_name", "zoom_meeting_id", "created_at", "updated_at"]
+        # is_panic is set only by the panic-session endpoints; the generic
+        # event API can't mint or unflag panic sessions.
+        read_only_fields = ["is_panic", "client_name", "zoom_meeting_id", "created_at", "updated_at"]
 
     def get_zoom_status(self, obj) -> str | None:
         # Set by EventViewSet after a write that touched Zoom: "ok" | "failed" | None.
@@ -193,6 +196,10 @@ class AdminManagedUserSerializer(serializers.ModelSerializer):
     )
     phone_number = serializers.CharField(source="profile.phone_number", allow_blank=True, required=False)
     zoom_user_email = serializers.EmailField(source="profile.zoom_user_email", allow_null=True, required=False)
+    # Admin-set, like zoom_user_email: the timezone a coach works and is
+    # available in (panic-session hours are evaluated in it). Not exposed in
+    # any self-service serializer on purpose.
+    working_timezone = serializers.CharField(source="profile.working_timezone", required=False)
     bio = serializers.CharField(source="profile.bio", allow_blank=True, required=False)
     contact_email = serializers.EmailField(source="profile.contact_email", allow_blank=True, required=False)
     contact_phone = serializers.CharField(source="profile.contact_phone", allow_blank=True, required=False)
@@ -212,6 +219,7 @@ class AdminManagedUserSerializer(serializers.ModelSerializer):
             "role",
             "phone_number",
             "zoom_user_email",
+            "working_timezone",
             "bio",
             "contact_email",
             "contact_phone",
@@ -225,6 +233,11 @@ class AdminManagedUserSerializer(serializers.ModelSerializer):
         data = super().to_representation(instance)
         data["role"] = get_user_role(instance)
         return data
+
+    def validate_working_timezone(self, value):
+        if value not in ClientOnboarding.available_timezones():
+            raise serializers.ValidationError("Choose a valid IANA timezone (e.g. America/New_York).")
+        return value
 
     def validate(self, attrs):
         attrs = super().validate(attrs)
@@ -273,6 +286,8 @@ class AdminManagedUserSerializer(serializers.ModelSerializer):
         profile = user.profile
         profile.phone_number = profile_data.get("phone_number", "")
         profile.zoom_user_email = profile_data.get("zoom_user_email")
+        if profile_data.get("working_timezone"):
+            profile.working_timezone = profile_data["working_timezone"]
         profile.assigned_coach = profile_data.get("assigned_coach")
         profile.bio = profile_data.get("bio", "")
         profile.contact_email = profile_data.get("contact_email", "")
@@ -302,6 +317,8 @@ class AdminManagedUserSerializer(serializers.ModelSerializer):
             profile.phone_number = profile_data["phone_number"]
         if "zoom_user_email" in profile_data:
             profile.zoom_user_email = profile_data["zoom_user_email"]
+        if "working_timezone" in profile_data:
+            profile.working_timezone = profile_data["working_timezone"]
         for field in ("bio", "contact_email", "contact_phone", "photo"):
             if field in profile_data:
                 setattr(profile, field, profile_data[field])

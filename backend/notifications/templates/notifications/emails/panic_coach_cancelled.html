@@ -1,0 +1,8 @@
+{% extends "notifications/emails/base.html" %}
+{% block content %}
+<h1 style="margin:0 0 16px 0;font-size:22px;line-height:1.3;color:#0f172a;">Panic session cancelled</h1>
+<p style="margin:0 0 16px 0;font-size:15px;line-height:1.6;">Hi {{ coach_first_name }},</p>
+<p style="margin:0 0 16px 0;font-size:15px;line-height:1.6;">
+  <strong>{{ client_name }}</strong> cancelled their panic session on <strong>{{ when_text }}</strong>. That time is yours again.
+</p>
+{% endblock %}
