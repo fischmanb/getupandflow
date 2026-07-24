@@ -6,10 +6,26 @@ import { apiClient } from "../api/client";
 import { useAuth } from "../auth/AuthContext";
 import { apiEventToRBC } from "../calendar/eventAdapter";
 import { useBillingSubscription } from "../components/BillingCard";
+import { MatchingGoalsEditor } from "../components/MatchingGoalsEditor";
 import { useClientFilter } from "../filters/ClientFilterContext";
 
 // Mirrors the value → label mapping used by the onboarding form selects.
+// Hourly is what the form offers now; the legacy 2-hour blocks stay mapped so
+// rows saved before the change render as stored (no forced data migration).
 const WINDOW_LABELS = {
+  "6-7am": "6:00–7:00 am",
+  "7-8am": "7:00–8:00 am",
+  "8-9am": "8:00–9:00 am",
+  "9-10am": "9:00–10:00 am",
+  "10-11am": "10:00–11:00 am",
+  "11am-12pm": "11:00 am–12:00 pm",
+  "4-5pm": "4:00–5:00 pm",
+  "5-6pm": "5:00–6:00 pm",
+  "6-7pm": "6:00–7:00 pm",
+  "7-8pm": "7:00–8:00 pm",
+  "8-9pm": "8:00–9:00 pm",
+  "9-10pm": "9:00–10:00 pm",
+  // Legacy blocks
   "6-8am": "6:00–8:00 am",
   "8-10am": "8:00–10:00 am",
   "10am-12pm": "10:00 am–12:00 pm",
@@ -17,6 +33,10 @@ const WINDOW_LABELS = {
   "6-8pm": "6:00–8:00 pm",
   "8-10pm": "8:00–10:00 pm",
 };
+
+function windowLabel(value) {
+  return WINDOW_LABELS[value] || value;
+}
 
 function getTimeGreeting(date = new Date()) {
   const hour = date.getHours();
@@ -30,57 +50,7 @@ function getFirstName(user) {
   return user.first_name || user.username;
 }
 
-// Editable while the match is being made: what the client wants help with feeds
-// the matching decision directly, so this is the one place it stays open.
-function MatchingGoals({ prefs, onSaved }) {
-  const [draft, setDraft] = useState(prefs?.help_topics || "");
-  const [saveState, setSaveState] = useState("idle");
-
-  const handleSubmit = async (event) => {
-    event.preventDefault();
-    setSaveState("saving");
-    try {
-      const response = await apiClient.patch("/onboarding/", { help_topics: draft });
-      onSaved(response.data || null);
-      setSaveState("saved");
-    } catch {
-      setSaveState("error");
-    }
-  };
-
-  return (
-    <form className="matching-goals" onSubmit={handleSubmit}>
-      <label className="matching-goals-label" htmlFor="matching-goals-input">
-        What I want help with
-      </label>
-      <p className="matching-goals-hint">The more you share, the better we match you.</p>
-      <textarea
-        className="matching-goals-input"
-        id="matching-goals-input"
-        placeholder="A few lines about what feels hard right now, or what you would like to be different — whatever comes to mind is a good place to start."
-        rows={4}
-        value={draft}
-        onChange={(event) => {
-          setDraft(event.target.value);
-          if (saveState !== "idle") setSaveState("idle");
-        }}
-      />
-      <div className="matching-goals-actions">
-        <button className="task-create-button" disabled={saveState === "saving"} type="submit">
-          {saveState === "saving" ? "Saving…" : "Save"}
-        </button>
-        <span aria-live="polite" className="matching-goals-status" role="status">
-          {saveState === "saved" ? "Saved — this goes straight to your match." : null}
-          {saveState === "error"
-            ? "We could not save that just now. Your words are still here — try again in a moment."
-            : null}
-        </span>
-      </div>
-    </form>
-  );
-}
-
-function MatchingCard({ prefs, onPrefsSaved }) {
+function MatchingCard() {
   return (
     <div className="coach-card matching-card">
       <div aria-hidden="true" className="coach-card-avatar matching-card-avatar">
@@ -91,9 +61,6 @@ function MatchingCard({ prefs, onPrefsSaved }) {
         <p className="matching-card-copy">
           We are matching you with your coach — guaranteed within 48 hours, usually within 12-24.
         </p>
-        {/* Goals only render once the onboarding record exists — before that,
-            PATCH has nothing to update and the onboarding nudge takes the lead. */}
-        {prefs ? <MatchingGoals prefs={prefs} onSaved={onPrefsSaved} /> : null}
       </div>
     </div>
   );
@@ -160,9 +127,55 @@ function PastDueNotice({ subscription }) {
   );
 }
 
-function RhythmSection({ prefs }) {
-  const morning = prefs?.morning_window ? WINDOW_LABELS[prefs.morning_window] : null;
-  const evening = prefs?.evening_window ? WINDOW_LABELS[prefs.evening_window] : null;
+// WhatsApp / Text switch for the Reminders touchpoint, bound to the onboarding
+// contact_method answer. Client-self only — it needs an onboarding record to
+// PATCH, and mirror view never passes onPrefsSaved.
+function ReminderChannelToggle({ prefs, onSaved }) {
+  const [saveState, setSaveState] = useState("idle");
+
+  const choose = async (method) => {
+    if (method === prefs.contact_method || saveState === "saving") return;
+    setSaveState("saving");
+    try {
+      const response = await apiClient.patch("/onboarding/", { contact_method: method });
+      onSaved(response.data || null);
+      setSaveState("saved");
+    } catch {
+      setSaveState("error");
+    }
+  };
+
+  const options = [
+    ["whatsapp", "WhatsApp"],
+    ["sms", "Text"],
+  ];
+
+  return (
+    <div className="rhythm-channel-row">
+      <div aria-label="How reminders reach you" className="rhythm-channel-toggle" role="group">
+        {options.map(([value, label]) => (
+          <button
+            key={value}
+            aria-pressed={prefs.contact_method === value}
+            className={prefs.contact_method === value ? "is-selected" : ""}
+            type="button"
+            onClick={() => choose(value)}
+          >
+            {label}
+          </button>
+        ))}
+      </div>
+      <span aria-live="polite" className="rhythm-channel-status" role="status">
+        {saveState === "saved" ? "Saved" : null}
+        {saveState === "error" ? "We could not save that — try again in a moment." : null}
+      </span>
+    </div>
+  );
+}
+
+function RhythmSection({ prefs, onPrefsSaved }) {
+  const morning = prefs?.morning_window ? windowLabel(prefs.morning_window) : null;
+  const evening = prefs?.evening_window ? windowLabel(prefs.evening_window) : null;
 
   const touchpoints = [
     {
@@ -176,6 +189,10 @@ function RhythmSection({ prefs }) {
       name: "Reminders",
       when: "Through the day",
       copy: "Gentle nudges to keep things moving.",
+      extra:
+        prefs && onPrefsSaved ? (
+          <ReminderChannelToggle prefs={prefs} onSaved={onPrefsSaved} />
+        ) : null,
     },
     {
       key: "panic-button",
@@ -205,6 +222,7 @@ function RhythmSection({ prefs }) {
             <span className="home-rhythm-when">{touchpoint.when}</span>
           </div>
           <p className="home-rhythm-copy">{touchpoint.copy}</p>
+          {touchpoint.extra || null}
         </li>
       ))}
     </ul>
@@ -287,49 +305,52 @@ export function HomePage() {
     promptMessage = "Select a single client from the menu to see their home page.";
   }
 
+  // The room, not a card: sections sit directly on the full-bleed background
+  // (.home-room paints it); only the coach keeps a subtle surface of its own.
   return (
-    <main className="workspace-shell">
-      <section className="home-grid">
-        <section className="workspace-panel home-panel">
-          {greetingName ? (
-            <>
-              {isClientSelf ? <PastDueNotice subscription={subscription} /> : null}
-              <h2 className="home-greeting">
-                {getTimeGreeting()}, {greetingName}
-              </h2>
-              <div className="home-coach-section">
-                <p className="panel-label">Your coach</p>
-                {isClientSelf && !coach ? (
-                  <MatchingCard prefs={prefs} onPrefsSaved={setPrefs} />
-                ) : (
-                  <CoachCard coach={coach} />
-                )}
-              </div>
-              <div className="home-rhythm-section">
-                <p className="panel-label">Your rhythm</p>
-                <RhythmSection prefs={isClientSelf ? prefs : null} />
-                {isClientSelf && user?.onboarding_complete === false ? <OnboardingPrompt /> : null}
-              </div>
-              <NextSessionLine events={events} />
-              <Link className="task-create-button home-calendar-launcher" to="/app/calendar">
-                Open calendar
+    <main className="home-room">
+      {greetingName ? (
+        <>
+          {isClientSelf ? <PastDueNotice subscription={subscription} /> : null}
+          <h2 className="home-greeting">
+            {getTimeGreeting()}, {greetingName}
+          </h2>
+          <div className="home-coach-section">
+            <p className="panel-label">Your coach</p>
+            {isClientSelf && !coach ? <MatchingCard /> : <CoachCard coach={coach} />}
+          </div>
+          {/* Goals stay editable while the match is made; they render only once
+              the onboarding record exists — before that, PATCH has nothing to
+              update and the onboarding nudge takes the lead. */}
+          {isClientSelf && !coach && prefs ? (
+            <MatchingGoalsEditor prefs={prefs} onSaved={setPrefs} />
+          ) : null}
+          <div className="home-rhythm-section">
+            <p className="panel-label">Your rhythm</p>
+            <RhythmSection
+              prefs={isClientSelf ? prefs : null}
+              onPrefsSaved={isClientSelf ? setPrefs : null}
+            />
+            {isClientSelf && user?.onboarding_complete === false ? <OnboardingPrompt /> : null}
+          </div>
+          <NextSessionLine events={events} />
+          <Link className="task-create-button home-calendar-launcher" to="/app/calendar">
+            Open calendar
+          </Link>
+          {isClientSelf ? (
+            <footer className="home-panel-footer">
+              <Link className="home-footer-link" to="/app/settings">
+                Account &amp; billing
               </Link>
-              {isClientSelf ? (
-                <footer className="home-panel-footer">
-                  <Link className="home-footer-link" to="/app/settings">
-                    Account &amp; billing
-                  </Link>
-                </footer>
-              ) : null}
-            </>
-          ) : (
-            <div className="selection-prompt">
-              <h4>Select a client</h4>
-              <p className="subtle-copy">{promptMessage}</p>
-            </div>
-          )}
-        </section>
-      </section>
+            </footer>
+          ) : null}
+        </>
+      ) : (
+        <div className="selection-prompt">
+          <h4>Select a client</h4>
+          <p className="subtle-copy">{promptMessage}</p>
+        </div>
+      )}
     </main>
   );
 }

@@ -4,6 +4,8 @@ from django.core.exceptions import ValidationError as DjangoValidationError
 from rest_framework import serializers
 from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
 
+from leads.models import Lead
+
 from . import storage
 from .models import ClientOnboarding, UserProfile, get_user_role
 
@@ -119,6 +121,8 @@ class PasswordResetConfirmSerializer(serializers.Serializer):
 
 
 class OnboardingSerializer(serializers.ModelSerializer):
+    help_topics_seed = serializers.SerializerMethodField()
+
     class Meta:
         model = ClientOnboarding
         fields = [
@@ -128,9 +132,23 @@ class OnboardingSerializer(serializers.ModelSerializer):
             "contact_method",
             "contact_number",
             "help_topics",
+            "help_topics_seed",
             "completed_at",
         ]
         read_only_fields = ["completed_at"]
+
+    def get_help_topics_seed(self, obj) -> str:
+        """Starter text for an empty goals editor: what this person wrote on the
+        marketing signup form (Lead.notes), matched by email. Read-only — it
+        only becomes help_topics if the client saves it."""
+        if obj.help_topics or not obj.user.email:
+            return ""
+        lead = (
+            Lead.objects.filter(email__iexact=obj.user.email)
+            .exclude(notes="")
+            .first()  # Lead.Meta orders newest-first
+        )
+        return lead.notes if lead else ""
 
     def validate_timezone(self, value):
         if value not in ClientOnboarding.available_timezones():

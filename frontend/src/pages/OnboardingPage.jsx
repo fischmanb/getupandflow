@@ -6,15 +6,39 @@ import { getErrorMessage } from "../api/utils";
 import { useAuth } from "../auth/AuthContext";
 
 const MORNING_WINDOWS = [
-  ["6-8am", "6:00–8:00 am"],
-  ["8-10am", "8:00–10:00 am"],
-  ["10am-12pm", "10:00 am–12:00 pm"],
+  ["6-7am", "6:00–7:00 am"],
+  ["7-8am", "7:00–8:00 am"],
+  ["8-9am", "8:00–9:00 am"],
+  ["9-10am", "9:00–10:00 am"],
+  ["10-11am", "10:00–11:00 am"],
+  ["11am-12pm", "11:00 am–12:00 pm"],
 ];
 const EVENING_WINDOWS = [
-  ["4-6pm", "4:00–6:00 pm"],
-  ["6-8pm", "6:00–8:00 pm"],
-  ["8-10pm", "8:00–10:00 pm"],
+  ["4-5pm", "4:00–5:00 pm"],
+  ["5-6pm", "5:00–6:00 pm"],
+  ["6-7pm", "6:00–7:00 pm"],
+  ["7-8pm", "7:00–8:00 pm"],
+  ["8-9pm", "8:00–9:00 pm"],
+  ["9-10pm", "9:00–10:00 pm"],
 ];
+// Legacy 2-hour blocks: still stored on accounts onboarded before the hourly
+// change and still accepted by the backend. Never offered to new signups —
+// but a saved legacy answer must keep rendering as stored (see savedFirst).
+const LEGACY_WINDOW_LABELS = {
+  "6-8am": "6:00–8:00 am",
+  "8-10am": "8:00–10:00 am",
+  "10am-12pm": "10:00 am–12:00 pm",
+  "4-6pm": "4:00–6:00 pm",
+  "6-8pm": "6:00–8:00 pm",
+  "8-10pm": "8:00–10:00 pm",
+};
+
+// Prepend the saved value as an extra option when it isn't in the hourly list,
+// so a legacy answer stays visible and resubmittable instead of blanking out.
+function savedFirst(options, saved) {
+  if (!saved || options.some(([value]) => value === saved)) return options;
+  return [[saved, LEGACY_WINDOW_LABELS[saved] || saved], ...options];
+}
 const CONTACT_METHODS = [
   ["whatsapp", "WhatsApp"],
   ["sms", "SMS (text message)"],
@@ -137,7 +161,7 @@ export function OnboardingPage() {
               <option value="" disabled>
                 Choose a window
               </option>
-              {MORNING_WINDOWS.map(([value, label]) => (
+              {savedFirst(MORNING_WINDOWS, formData.morning_window).map(([value, label]) => (
                 <option key={value} value={value}>
                   {label}
                 </option>
@@ -154,7 +178,7 @@ export function OnboardingPage() {
               <option value="" disabled>
                 Choose a window
               </option>
-              {EVENING_WINDOWS.map(([value, label]) => (
+              {savedFirst(EVENING_WINDOWS, formData.evening_window).map(([value, label]) => (
                 <option key={value} value={value}>
                   {label}
                 </option>

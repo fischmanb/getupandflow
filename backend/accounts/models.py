@@ -57,16 +57,37 @@ class ClientOnboarding(models.Model):
     onboarding happens precisely in that pre-assignment window.
     """
 
-    MORNING_WINDOW_CHOICES = [
+    # Legacy 2-hour blocks: rows saved before the hourly change keep these
+    # values; they stay valid choices so display and PATCH tolerate them
+    # without a data migration. The onboarding form only offers hourly.
+    LEGACY_MORNING_WINDOW_CHOICES = [
         ("6-8am", "6:00–8:00 am"),
         ("8-10am", "8:00–10:00 am"),
         ("10am-12pm", "10:00 am–12:00 pm"),
     ]
-    EVENING_WINDOW_CHOICES = [
+    LEGACY_EVENING_WINDOW_CHOICES = [
         ("4-6pm", "4:00–6:00 pm"),
         ("6-8pm", "6:00–8:00 pm"),
         ("8-10pm", "8:00–10:00 pm"),
     ]
+    HOURLY_MORNING_WINDOW_CHOICES = [
+        ("6-7am", "6:00–7:00 am"),
+        ("7-8am", "7:00–8:00 am"),
+        ("8-9am", "8:00–9:00 am"),
+        ("9-10am", "9:00–10:00 am"),
+        ("10-11am", "10:00–11:00 am"),
+        ("11am-12pm", "11:00 am–12:00 pm"),
+    ]
+    HOURLY_EVENING_WINDOW_CHOICES = [
+        ("4-5pm", "4:00–5:00 pm"),
+        ("5-6pm", "5:00–6:00 pm"),
+        ("6-7pm", "6:00–7:00 pm"),
+        ("7-8pm", "7:00–8:00 pm"),
+        ("8-9pm", "8:00–9:00 pm"),
+        ("9-10pm", "9:00–10:00 pm"),
+    ]
+    MORNING_WINDOW_CHOICES = HOURLY_MORNING_WINDOW_CHOICES + LEGACY_MORNING_WINDOW_CHOICES
+    EVENING_WINDOW_CHOICES = HOURLY_EVENING_WINDOW_CHOICES + LEGACY_EVENING_WINDOW_CHOICES
     CONTACT_WHATSAPP = "whatsapp"
     CONTACT_SMS = "sms"
     CONTACT_METHOD_CHOICES = [

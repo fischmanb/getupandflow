@@ -134,7 +134,9 @@ describe("HomePage (client-self)", () => {
     expect(await screen.findByText(/Good (morning|afternoon|evening), Ava/)).toBeInTheDocument();
     expect(screen.getByText("Sam Reyes")).toBeInTheDocument();
 
-    // Rhythm windows come from the client's own onboarding prefs.
+    // Rhythm windows come from the client's own onboarding prefs. These are
+    // legacy 2-hour block values — they must keep rendering as stored now
+    // that the choices are hourly.
     expect(await screen.findByText("Mornings, 6:00–8:00 am")).toBeInTheDocument();
     expect(screen.getByText("Evenings, 6:00–8:00 pm")).toBeInTheDocument();
 
@@ -163,6 +165,19 @@ describe("HomePage (client-self)", () => {
     // The portal-redirect button from the full banner must NOT be on Home.
     expect(screen.queryByRole("button", { name: /update your payment method/ })).not.toBeInTheDocument();
     expectNoBillingControls();
+  });
+
+  it("renders hourly check-in windows in the rhythm block", async () => {
+    useClientSelf();
+    state.responses["/onboarding/"] = {
+      timezone: "America/New_York",
+      morning_window: "7-8am",
+      evening_window: "8-9pm",
+    };
+    renderWithRouter(<HomePage />);
+
+    expect(await screen.findByText("Mornings, 7:00–8:00 am")).toBeInTheDocument();
+    expect(screen.getByText("Evenings, 8:00–9:00 pm")).toBeInTheDocument();
   });
 
   it("shows the next session as one quiet line when an upcoming event exists", async () => {

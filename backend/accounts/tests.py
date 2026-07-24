@@ -13,6 +13,8 @@ from PIL import Image
 from rest_framework import status
 from rest_framework.test import APITestCase
 
+from leads.models import Lead
+
 from .constants import ROLE_CLIENT, ROLE_COACH
 from .models import ClientOnboarding, UserProfile
 from .storage import R2MediaStorage, is_configured
@@ -476,6 +478,103 @@ class OnboardingTests(APITestCase):
         self.assertFalse(self.client.get(reverse("me")).data["onboarding_complete"])
         self.client.put(reverse("onboarding"), self.onboarding_payload(), format="json")
         self.assertTrue(self.client.get(reverse("me")).data["onboarding_complete"])
+
+    def test_hourly_window_values_are_accepted(self):
+        self.authenticate(self.client_user)
+        response = self.client.put(
+            reverse("onboarding"),
+            self.onboarding_payload(morning_window="7-8am", evening_window="8-9pm"),
+            format="json",
+        )
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        onboarding = ClientOnboarding.objects.get(user=self.client_user)
+        self.assertEqual(onboarding.morning_window, "7-8am")
+        self.assertEqual(onboarding.evening_window, "8-9pm")
+
+    def test_legacy_block_windows_stay_valid_on_patch(self):
+        """Rows saved before the hourly change keep 2-hour block values; both
+        reads and writes must tolerate them — no forced data migration."""
+        self.authenticate(self.client_user)
+        # onboarding_payload uses legacy blocks (8-10am / 6-8pm) on purpose.
+        self.client.put(reverse("onboarding"), self.onboarding_payload(), format="json")
+
+        # Patching an unrelated field must not invalidate the stored legacy values.
+        response = self.client.patch(
+            reverse("onboarding"), {"help_topics": "Evenings."}, format="json"
+        )
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(response.data["morning_window"], "8-10am")
+        self.assertEqual(response.data["evening_window"], "6-8pm")
+
+        # A legacy value is still accepted as an explicit write.
+        response = self.client.patch(
+            reverse("onboarding"), {"morning_window": "10am-12pm"}, format="json"
+        )
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(
+            ClientOnboarding.objects.get(user=self.client_user).morning_window, "10am-12pm"
+        )
+
+    def test_patch_contact_method_toggles_reminder_channel(self):
+        self.authenticate(self.client_user)
+        self.client.put(reverse("onboarding"), self.onboarding_payload(), format="json")
+
+        response = self.client.patch(reverse("onboarding"), {"contact_method": "sms"}, format="json")
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        onboarding = ClientOnboarding.objects.get(user=self.client_user)
+        self.assertEqual(onboarding.contact_method, "sms")
+        self.assertEqual(onboarding.contact_number, "+1 555 0199")
+
+        response = self.client.patch(
+            reverse("onboarding"), {"contact_method": "carrier_pigeon"}, format="json"
+        )
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+
+    def test_help_topics_seed_comes_from_matching_lead_when_goals_empty(self):
+        Lead.objects.create(
+            full_name="Ava Stone", email="CLIENT@example.com", notes="Older note."
+        )
+        newest = Lead.objects.create(
+            full_name="Ava Stone", email="client@example.com", notes="Mornings are the hard part."
+        )
+        self.authenticate(self.client_user)
+        self.client.put(reverse("onboarding"), self.onboarding_payload(help_topics=""), format="json")
+
+        response = self.client.get(reverse("onboarding"))
+        self.assertEqual(response.data["help_topics"], "")
+        self.assertEqual(response.data["help_topics_seed"], newest.notes)
+        # Seed is read-only: nothing was persisted by reading it.
+        self.assertEqual(ClientOnboarding.objects.get(user=self.client_user).help_topics, "")
+
+    def test_help_topics_seed_is_empty_when_goals_exist_or_no_lead_matches(self):
+        self.authenticate(self.client_user)
+        self.client.put(reverse("onboarding"), self.onboarding_payload(help_topics=""), format="json")
+
+        # No lead at all -> empty seed.
+        self.assertEqual(self.client.get(reverse("onboarding")).data["help_topics_seed"], "")
+
+        # A lead with a blank message is not a seed.
+        Lead.objects.create(full_name="Ava Stone", email="client@example.com", notes="")
+        self.assertEqual(self.client.get(reverse("onboarding")).data["help_topics_seed"], "")
+
+        # Saved goals win over any lead message.
+        Lead.objects.create(
+            full_name="Ava Stone", email="client@example.com", notes="From the lead form."
+        )
+        self.client.patch(reverse("onboarding"), {"help_topics": "My own words."}, format="json")
+        response = self.client.get(reverse("onboarding"))
+        self.assertEqual(response.data["help_topics"], "My own words.")
+        self.assertEqual(response.data["help_topics_seed"], "")
+
+    def test_help_topics_seed_is_read_only_on_write(self):
+        self.authenticate(self.client_user)
+        response = self.client.put(
+            reverse("onboarding"),
+            self.onboarding_payload(help_topics_seed="Trying to write the seed."),
+            format="json",
+        )
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(response.data["help_topics_seed"], "")
 
 
 class CoachAssignmentQueueTests(APITestCase):

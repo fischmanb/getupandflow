@@ -11,7 +11,7 @@
 /* ============================================================
    TYPE SCALE (relational hierarchy — keep new text on these tiers)
    ------------------------------------------------------------
-   Display    1.45rem / 600   home greeting ("Good morning, <name>")
+   Display    1.6rem / 600    home greeting ("Good morning, <name>")
    Greeting   1.10rem / 600   shell greeting
    Heading    1.05rem / 700   panel + period titles ("Tasks", "May 2026")
    Body       0.95rem / 400   task titles, descriptions, prompts
@@ -540,23 +540,34 @@ button {
     linear-gradient(180deg, rgba(255, 255, 255, 0.92), rgba(236, 243, 255, 0.96));
 }
 
-.home-grid {
+/* Home is a room, not a card: one centered column sitting directly on the
+   full-bleed backdrop painted by ::before. No panel chrome — the page itself
+   is the container; only the coach keeps a subtle surface. */
+.home-room {
+  width: min(680px, 100%);
+  margin: 0 auto;
+  padding: 36px 24px 56px;
   display: grid;
-  margin-top: 12px;
+  gap: 40px;
+  align-content: start;
 }
 
-.home-panel {
-  width: min(720px, 100%);
-  min-height: 0;
-  display: grid;
-  gap: 28px;
-  align-content: start;
-  padding: 32px 36px 24px;
+/* Full-bleed backdrop: same family as the root gradient, warmed with the
+   palette's amber so the members' room reads calmer than the work surfaces. */
+.home-room::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  background:
+    radial-gradient(circle at 16% -8%, rgba(96, 165, 250, 0.2), transparent 42%),
+    radial-gradient(circle at 88% 106%, rgba(245, 158, 11, 0.12), transparent 46%),
+    linear-gradient(180deg, #f8f6f1 0%, #edeff3 100%);
 }
 
 .home-greeting {
   margin: 0;
-  font-size: 1.45rem;
+  font-size: 1.6rem;
   font-weight: 600;
   letter-spacing: -0.01em;
   color: #102033;
@@ -3107,33 +3118,36 @@ textarea.gcal-modal-input {
   line-height: 1.5;
 }
 
-/* "What I want help with" — editable while the match is being made. */
-.matching-goals {
-  margin-top: 18px;
-  padding-top: 16px;
-  border-top: 1px solid rgba(16, 32, 51, 0.08);
+/* "What I want help with" — its own section while the match is being made.
+   Resumes what the client already shared; sits directly on the room. */
+.home-goals-section {
+  display: grid;
+  gap: 4px;
+}
+
+.home-goals {
   display: grid;
   gap: 8px;
 }
 
-.matching-goals-label {
-  font-size: 0.82rem;
-  font-weight: 600;
-  color: #33475e;
+.home-goals-title {
+  font-size: 1.05rem;
+  font-weight: 700;
+  color: #102033;
 }
 
-.matching-goals-hint {
-  margin: 0;
-  font-size: 0.88rem;
+.home-goals-explainer {
+  margin: 0 0 4px;
+  font-size: 0.9rem;
   line-height: 1.5;
   color: #46607d;
 }
 
-.matching-goals-input {
+.home-goals-input {
   border: 1px solid #c9d5e4;
   border-radius: 12px;
   padding: 12px 14px;
-  background: #fff;
+  background: rgba(255, 255, 255, 0.92);
   min-width: 0;
   max-width: 100%;
   box-sizing: border-box;
@@ -3144,14 +3158,14 @@ textarea.gcal-modal-input {
   resize: vertical;
 }
 
-.matching-goals-actions {
+.home-goals-actions {
   display: flex;
   align-items: center;
   flex-wrap: wrap;
   gap: 12px;
 }
 
-.matching-goals-status {
+.home-goals-status {
   font-size: 0.85rem;
   line-height: 1.4;
   color: #46607d;
@@ -3377,6 +3391,45 @@ textarea.gcal-modal-input {
   text-decoration: underline;
 }
 
+/* Reminders channel: quiet inline WhatsApp/Text switch inside the rhythm row. */
+.rhythm-channel-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+  margin-top: 8px;
+}
+
+.rhythm-channel-toggle {
+  display: inline-flex;
+  gap: 2px;
+  padding: 3px;
+  border: 1px solid rgba(16, 32, 51, 0.1);
+  border-radius: calc(var(--btn-radius) + 3px);
+  background: rgba(255, 255, 255, 0.7);
+}
+
+.rhythm-channel-toggle button {
+  border: 0;
+  border-radius: var(--btn-radius);
+  padding: 5px 12px;
+  background: transparent;
+  color: #46607d;
+  font-size: 0.85rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.rhythm-channel-toggle button.is-selected {
+  background: #2563eb;
+  color: #fff;
+}
+
+.rhythm-channel-status {
+  font-size: 0.82rem;
+  color: #46607d;
+}
+
 .home-onboarding-nudge {
   margin-top: 12px;
 }
@@ -3441,9 +3494,9 @@ textarea.gcal-modal-input {
 }
 
 @media (max-width: 768px) {
-  .home-panel {
-    gap: 22px;
-    padding: 22px 20px 18px;
+  .home-room {
+    gap: 30px;
+    padding: 20px 12px 40px;
   }
 
   .home-coach-section .coach-card {
