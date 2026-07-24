@@ -148,6 +148,7 @@ class CheckoutView(APIView):
                 mode="subscription",
                 customer=customer.stripe_customer_id,
                 line_items=[{"price": price_list[0]["id"], "quantity": 1}],
+                allow_promotion_codes=True,
                 client_reference_id=str(user.id),
                 success_url=(
                     f"{settings.APP_BASE_URL}/billing/success"
