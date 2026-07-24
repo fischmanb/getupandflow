@@ -115,6 +115,15 @@ export function BigCalendarPanel({ className }) {
   const [editor, setEditor] = useState(null); // { mode, initialStart, initialEnd, event }
   const [createPrompt, setCreatePrompt] = useState("");
 
+  // Events live in app-level context, so navigating here after creating one
+  // elsewhere (e.g. booking a panic session) would render a stale list.
+  // Refreshing on mount makes arrival at the calendar always show the truth;
+  // errors surface through the context's own eventError state.
+  useEffect(() => {
+    refreshEvents().catch(() => {});
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
   // Touch-swipe navigation: swipe left = next period, right = previous,
   // by the current view's unit (month / week / day). Agenda has no swipe.
   const touchRef = useRef(null);
