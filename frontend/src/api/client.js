@@ -13,6 +13,7 @@ let refreshPromise = null;
 
 export const apiClient = axios.create({
   baseURL: API_BASE_URL,
+  timeout: 20000,
 });
 
 apiClient.interceptors.request.use((config) => {
@@ -29,7 +30,10 @@ apiClient.interceptors.response.use(
     const originalRequest = error.config;
     const status = error.response?.status;
 
-    if (status !== 401 || originalRequest?._retry) {
+    // Auth endpoints answer 401 as a verdict, not an expiry -- never refresh-loop them.
+    const isAuthEndpoint = originalRequest?.url?.includes("/auth/login/") || originalRequest?.url?.includes("/auth/refresh/");
+
+    if (status !== 401 || originalRequest?._retry || isAuthEndpoint) {
       return Promise.reject(error);
     }
 
@@ -44,7 +48,7 @@ apiClient.interceptors.response.use(
 
     if (!refreshPromise) {
       refreshPromise = axios
-        .post(`${API_BASE_URL}/auth/refresh/`, { refresh: refreshToken })
+        .post(`${API_BASE_URL}/auth/refresh/`, { refresh: refreshToken }, { timeout: 20000 })
         .then((response) => {
           const nextAccess = response.data.access;
           const nextRefresh = response.data.refresh || refreshToken;
