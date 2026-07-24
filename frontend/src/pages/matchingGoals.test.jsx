@@ -9,6 +9,10 @@
  *   - the section is absent in coach/admin mirror view (onboarding never fetched)
  *   - the Reminders rhythm row carries a WhatsApp/Text toggle bound to
  *     contact_method (client-self only), PATCHing quietly on change
+ *   - the Jump Start / Retro rhythm rows show the check-in window as an
+ *     in-place hourly select (client-self only, legacy saved values rendered
+ *     as stored), PATCHing quietly on change; without an onboarding record
+ *     the block carries no editors, only the onboarding prompt
  */
 import { fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import { MemoryRouter } from "react-router-dom";
@@ -263,6 +267,71 @@ describe("Reminders channel toggle", () => {
 
     expect(await screen.findByText(/Good (morning|afternoon|evening), Ava/)).toBeInTheDocument();
     expect(screen.getByText("Reminders")).toBeInTheDocument();
+    expect(screen.queryByRole("group", { name: CHANNEL_GROUP })).not.toBeInTheDocument();
+  });
+});
+
+const MORNING_SELECT = "Jump Start morning window";
+const EVENING_SELECT = "Retro evening window";
+
+describe("Rhythm window editors", () => {
+  it("shows the saved morning window (legacy rendered as stored) and PATCHes an hourly change", async () => {
+    useClientSelf({ coach: COACH });
+    renderHome();
+
+    const select = await screen.findByLabelText(MORNING_SELECT);
+    expect(select).toHaveValue("6-8am");
+    expect(within(select).getByRole("option", { name: "6:00–8:00 am" })).toBeInTheDocument();
+    expect(within(select).getByRole("option", { name: "7:00–8:00 am" })).toBeInTheDocument();
+
+    fireEvent.change(select, { target: { value: "7-8am" } });
+    await waitFor(() =>
+      expect(state.patchCalls).toEqual([
+        { url: "/onboarding/", body: { morning_window: "7-8am" } },
+      ]),
+    );
+    await waitFor(() => expect(select).toHaveValue("7-8am"));
+    expect(within(select.parentElement).getByRole("status")).toHaveTextContent("Saved");
+  });
+
+  it("shows the saved evening window and PATCHes an hourly change", async () => {
+    useClientSelf({ coach: COACH });
+    renderHome();
+
+    const select = await screen.findByLabelText(EVENING_SELECT);
+    expect(select).toHaveValue("6-8pm");
+
+    fireEvent.change(select, { target: { value: "9-10pm" } });
+    await waitFor(() =>
+      expect(state.patchCalls).toEqual([
+        { url: "/onboarding/", body: { evening_window: "9-10pm" } },
+      ]),
+    );
+    await waitFor(() => expect(select).toHaveValue("9-10pm"));
+    expect(within(select.parentElement).getByRole("status")).toHaveTextContent("Saved");
+  });
+
+  it("renders read-only window text in coach/admin mirror view", async () => {
+    useCoachMirror({ clientCoach: COACH });
+    renderHome();
+
+    expect(await screen.findByText(/Good (morning|afternoon|evening), Ava/)).toBeInTheDocument();
+    expect(screen.getByText("Jump Start")).toBeInTheDocument();
+    expect(screen.getByText("Retro")).toBeInTheDocument();
+    expect(screen.queryByLabelText(MORNING_SELECT)).not.toBeInTheDocument();
+    expect(screen.queryByLabelText(EVENING_SELECT)).not.toBeInTheDocument();
+    expect(screen.queryByRole("combobox")).not.toBeInTheDocument();
+  });
+
+  it("shows the onboarding prompt instead of editors when there is no onboarding record", async () => {
+    useClientSelf({ coach: COACH });
+    delete state.responses["/onboarding/"]; // GET rejects, as a 404 would
+    state.user.onboarding_complete = false;
+    renderHome();
+
+    expect(await screen.findByText("Complete onboarding")).toBeInTheDocument();
+    expect(screen.queryByLabelText(MORNING_SELECT)).not.toBeInTheDocument();
+    expect(screen.queryByLabelText(EVENING_SELECT)).not.toBeInTheDocument();
     expect(screen.queryByRole("group", { name: CHANNEL_GROUP })).not.toBeInTheDocument();
   });
 });

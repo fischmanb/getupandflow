@@ -4,7 +4,7 @@
  *   - billing controls render in Account Settings for the client-self only
  *   - Home keeps a quiet past-due notice with no plan controls
  */
-import { render, screen, waitFor } from "@testing-library/react";
+import { render, screen, waitFor, within } from "@testing-library/react";
 import { MemoryRouter } from "react-router-dom";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import "@testing-library/jest-dom/vitest";
@@ -134,11 +134,16 @@ describe("HomePage (client-self)", () => {
     expect(await screen.findByText(/Good (morning|afternoon|evening), Ava/)).toBeInTheDocument();
     expect(screen.getByText("Sam Reyes")).toBeInTheDocument();
 
-    // Rhythm windows come from the client's own onboarding prefs. These are
-    // legacy 2-hour block values — they must keep rendering as stored now
-    // that the choices are hourly.
-    expect(await screen.findByText("Mornings, 6:00–8:00 am")).toBeInTheDocument();
-    expect(screen.getByText("Evenings, 6:00–8:00 pm")).toBeInTheDocument();
+    // Rhythm windows come from the client's own onboarding prefs and render
+    // as in-place selects on the client's own home. These are legacy 2-hour
+    // block values — they must keep rendering as stored now that the choices
+    // are hourly.
+    const morning = await screen.findByLabelText("Jump Start morning window");
+    expect(morning).toHaveValue("6-8am");
+    expect(within(morning).getByRole("option", { name: "6:00–8:00 am" })).toBeInTheDocument();
+    const evening = screen.getByLabelText("Retro evening window");
+    expect(evening).toHaveValue("6-8pm");
+    expect(within(evening).getByRole("option", { name: "6:00–8:00 pm" })).toBeInTheDocument();
 
     // Subscription was fetched (past-due detection) but no controls render.
     await waitFor(() => expect(state.apiCalls).toContain("/billing/subscription/"));
@@ -176,8 +181,8 @@ describe("HomePage (client-self)", () => {
     };
     renderWithRouter(<HomePage />);
 
-    expect(await screen.findByText("Mornings, 7:00–8:00 am")).toBeInTheDocument();
-    expect(screen.getByText("Evenings, 8:00–9:00 pm")).toBeInTheDocument();
+    expect(await screen.findByLabelText("Jump Start morning window")).toHaveValue("7-8am");
+    expect(screen.getByLabelText("Retro evening window")).toHaveValue("8-9pm");
   });
 
   it("shows the next session as one quiet line when an upcoming event exists", async () => {

@@ -3375,6 +3375,29 @@ textarea.gcal-modal-input {
   white-space: nowrap;
 }
 
+/* Jump Start / Retro on the client's own home: the displayed window is the
+   editor itself, so the slot may wrap (select + saved/error status). */
+.home-rhythm-when-editable {
+  white-space: normal;
+  display: inline-flex;
+  align-items: center;
+  justify-content: flex-end;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.rhythm-window-select {
+  border: 1px solid rgba(16, 32, 51, 0.1);
+  border-radius: var(--btn-radius);
+  padding: 4px 8px;
+  background: rgba(255, 255, 255, 0.7);
+  color: #46607d;
+  font-family: inherit;
+  font-size: 0.82rem;
+  font-weight: 500;
+  cursor: pointer;
+}
+
 .home-rhythm-copy {
   margin: 0;
   font-size: 0.9rem;
@@ -3425,7 +3448,8 @@ textarea.gcal-modal-input {
   color: #fff;
 }
 
-.rhythm-channel-status {
+/* Shared quiet saved/error confirmation for the rhythm in-place editors. */
+.rhythm-save-status {
   font-size: 0.82rem;
   color: #46607d;
 }

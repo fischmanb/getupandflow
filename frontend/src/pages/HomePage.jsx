@@ -8,35 +8,7 @@ import { apiEventToRBC } from "../calendar/eventAdapter";
 import { useBillingSubscription } from "../components/BillingCard";
 import { MatchingGoalsEditor } from "../components/MatchingGoalsEditor";
 import { useClientFilter } from "../filters/ClientFilterContext";
-
-// Mirrors the value → label mapping used by the onboarding form selects.
-// Hourly is what the form offers now; the legacy 2-hour blocks stay mapped so
-// rows saved before the change render as stored (no forced data migration).
-const WINDOW_LABELS = {
-  "6-7am": "6:00–7:00 am",
-  "7-8am": "7:00–8:00 am",
-  "8-9am": "8:00–9:00 am",
-  "9-10am": "9:00–10:00 am",
-  "10-11am": "10:00–11:00 am",
-  "11am-12pm": "11:00 am–12:00 pm",
-  "4-5pm": "4:00–5:00 pm",
-  "5-6pm": "5:00–6:00 pm",
-  "6-7pm": "6:00–7:00 pm",
-  "7-8pm": "7:00–8:00 pm",
-  "8-9pm": "8:00–9:00 pm",
-  "9-10pm": "9:00–10:00 pm",
-  // Legacy blocks
-  "6-8am": "6:00–8:00 am",
-  "8-10am": "8:00–10:00 am",
-  "10am-12pm": "10:00 am–12:00 pm",
-  "4-6pm": "4:00–6:00 pm",
-  "6-8pm": "6:00–8:00 pm",
-  "8-10pm": "8:00–10:00 pm",
-};
-
-function windowLabel(value) {
-  return WINDOW_LABELS[value] || value;
-}
+import { EVENING_WINDOWS, MORNING_WINDOWS, savedFirst, windowLabel } from "../onboarding/windows";
 
 function getTimeGreeting(date = new Date()) {
   const hour = date.getHours();
@@ -165,7 +137,7 @@ function ReminderChannelToggle({ prefs, onSaved }) {
           </button>
         ))}
       </div>
-      <span aria-live="polite" className="rhythm-channel-status" role="status">
+      <span aria-live="polite" className="rhythm-save-status" role="status">
         {saveState === "saved" ? "Saved" : null}
         {saveState === "error" ? "We could not save that — try again in a moment." : null}
       </span>
@@ -173,7 +145,56 @@ function ReminderChannelToggle({ prefs, onSaved }) {
   );
 }
 
+// Hourly window select for the Jump Start / Retro touchpoints: the displayed
+// window IS the editor, bound to the onboarding morning/evening answer.
+// Client-self only — mirror view renders the read-only text instead.
+function RhythmWindowSelect({ prefs, field, options, label, onSaved }) {
+  const [saveState, setSaveState] = useState("idle");
+  // While a PATCH is in flight the select shows the chosen value; on error it
+  // falls back to the last saved answer.
+  const [pending, setPending] = useState(null);
+  const saved = prefs[field];
+
+  const choose = async (event) => {
+    const value = event.target.value;
+    if (value === saved || saveState === "saving") return;
+    setPending(value);
+    setSaveState("saving");
+    try {
+      const response = await apiClient.patch("/onboarding/", { [field]: value });
+      onSaved(response.data || null);
+      setSaveState("saved");
+    } catch {
+      setSaveState("error");
+    } finally {
+      setPending(null);
+    }
+  };
+
+  return (
+    <>
+      <select
+        aria-label={label}
+        className="rhythm-window-select"
+        value={pending ?? saved}
+        onChange={choose}
+      >
+        {savedFirst(options, saved).map(([value, optionLabel]) => (
+          <option key={value} value={value}>
+            {optionLabel}
+          </option>
+        ))}
+      </select>
+      <span aria-live="polite" className="rhythm-save-status" role="status">
+        {saveState === "saved" ? "Saved" : null}
+        {saveState === "error" ? "We could not save that — try again in a moment." : null}
+      </span>
+    </>
+  );
+}
+
 function RhythmSection({ prefs, onPrefsSaved }) {
+  const canEdit = Boolean(prefs && onPrefsSaved);
   const morning = prefs?.morning_window ? windowLabel(prefs.morning_window) : null;
   const evening = prefs?.evening_window ? windowLabel(prefs.evening_window) : null;
 
@@ -181,7 +202,24 @@ function RhythmSection({ prefs, onPrefsSaved }) {
     {
       key: "jump-start",
       name: "Jump Start",
-      when: morning ? `Mornings, ${morning}` : "Mornings",
+      editableWhen: canEdit && Boolean(prefs.morning_window),
+      when:
+        canEdit && prefs.morning_window ? (
+          <>
+            Mornings,{" "}
+            <RhythmWindowSelect
+              field="morning_window"
+              label="Jump Start morning window"
+              options={MORNING_WINDOWS}
+              prefs={prefs}
+              onSaved={onPrefsSaved}
+            />
+          </>
+        ) : morning ? (
+          `Mornings, ${morning}`
+        ) : (
+          "Mornings"
+        ),
       copy: "A short check-in to set up your day.",
     },
     {
@@ -208,7 +246,24 @@ function RhythmSection({ prefs, onPrefsSaved }) {
     {
       key: "retro",
       name: "Retro",
-      when: evening ? `Evenings, ${evening}` : "Evenings",
+      editableWhen: canEdit && Boolean(prefs.evening_window),
+      when:
+        canEdit && prefs.evening_window ? (
+          <>
+            Evenings,{" "}
+            <RhythmWindowSelect
+              field="evening_window"
+              label="Retro evening window"
+              options={EVENING_WINDOWS}
+              prefs={prefs}
+              onSaved={onPrefsSaved}
+            />
+          </>
+        ) : evening ? (
+          `Evenings, ${evening}`
+        ) : (
+          "Evenings"
+        ),
       copy: "10–20 minutes to look back and lock in what worked.",
     },
   ];
@@ -219,7 +274,15 @@ function RhythmSection({ prefs, onPrefsSaved }) {
         <li key={touchpoint.key}>
           <div className="home-rhythm-topline">
             <span className="home-rhythm-name">{touchpoint.name}</span>
-            <span className="home-rhythm-when">{touchpoint.when}</span>
+            <span
+              className={
+                touchpoint.editableWhen
+                  ? "home-rhythm-when home-rhythm-when-editable"
+                  : "home-rhythm-when"
+              }
+            >
+              {touchpoint.when}
+            </span>
           </div>
           <p className="home-rhythm-copy">{touchpoint.copy}</p>
           {touchpoint.extra || null}
