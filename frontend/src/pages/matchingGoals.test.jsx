@@ -13,6 +13,10 @@
  *     in-place hourly select (client-self only, legacy saved values rendered
  *     as stored), PATCHing quietly on change; without an onboarding record
  *     the block carries no editors, only the onboarding prompt
+ *   - while the client-self is unassigned, the goals section and the rhythm
+ *     block each carry a quiet "keep this current" matching note above the
+ *     editable content; both notes are gone once a coach is assigned and
+ *     never appear in mirror view
  */
 import { fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import { MemoryRouter } from "react-router-dom";
@@ -333,5 +337,47 @@ describe("Rhythm window editors", () => {
     expect(screen.queryByLabelText(MORNING_SELECT)).not.toBeInTheDocument();
     expect(screen.queryByLabelText(EVENING_SELECT)).not.toBeInTheDocument();
     expect(screen.queryByRole("group", { name: CHANNEL_GROUP })).not.toBeInTheDocument();
+  });
+});
+
+const GOALS_NOTE = /While we're matching you, keep this current — your goals are a big part/;
+const RHYTHM_NOTE = /While we're matching you, keep these times current — your rhythm is a big part/;
+
+describe("Matching-phase notes on goals and rhythm", () => {
+  it("carries a quiet note on both sections while the client is unassigned", async () => {
+    useClientSelf();
+    renderHome();
+
+    const goalsNote = await screen.findByText(GOALS_NOTE);
+    const rhythmNote = screen.getByText(RHYTHM_NOTE);
+    // Positioned above the editable content of each section.
+    const goalsInput = screen.getByLabelText(GOALS_LABEL);
+    const morningSelect = screen.getByLabelText(MORNING_SELECT);
+    expect(goalsNote.compareDocumentPosition(goalsInput)).toBe(
+      Node.DOCUMENT_POSITION_FOLLOWING,
+    );
+    expect(rhythmNote.compareDocumentPosition(morningSelect)).toBe(
+      Node.DOCUMENT_POSITION_FOLLOWING,
+    );
+  });
+
+  it("drops both notes once a coach is assigned", async () => {
+    useClientSelf({ coach: COACH });
+    renderHome();
+
+    // Wait for the onboarding record so the rhythm editors are in place.
+    expect(await screen.findByLabelText(MORNING_SELECT)).toBeInTheDocument();
+    expect(screen.queryByText(GOALS_NOTE)).not.toBeInTheDocument();
+    expect(screen.queryByText(RHYTHM_NOTE)).not.toBeInTheDocument();
+  });
+
+  it("never shows the notes in coach/admin mirror view, even for an unassigned client", async () => {
+    useCoachMirror({ clientCoach: null });
+    renderHome();
+
+    expect(await screen.findByText(/Good (morning|afternoon|evening), Ava/)).toBeInTheDocument();
+    expect(screen.getByText("Your rhythm")).toBeInTheDocument();
+    expect(screen.queryByText(GOALS_NOTE)).not.toBeInTheDocument();
+    expect(screen.queryByText(RHYTHM_NOTE)).not.toBeInTheDocument();
   });
 });

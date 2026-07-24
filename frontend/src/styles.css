@@ -3136,7 +3136,10 @@ textarea.gcal-modal-input {
   color: #102033;
 }
 
-.home-goals-explainer {
+/* .home-matching-note is the matching-phase "keep this current" note above
+   the goals and rhythm editors — same quiet register as the explainer. */
+.home-goals-explainer,
+.home-matching-note {
   margin: 0 0 4px;
   font-size: 0.9rem;
   line-height: 1.5;

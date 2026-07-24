@@ -7,6 +7,7 @@ import { useAuth } from "../auth/AuthContext";
 import { apiEventToRBC } from "../calendar/eventAdapter";
 import { useBillingSubscription } from "../components/BillingCard";
 import { MatchingGoalsEditor } from "../components/MatchingGoalsEditor";
+import { MatchingNote } from "../components/MatchingNote";
 import { useClientFilter } from "../filters/ClientFilterContext";
 import { EVENING_WINDOWS, MORNING_WINDOWS, savedFirst, windowLabel } from "../onboarding/windows";
 
@@ -396,6 +397,15 @@ export function HomePage() {
           ) : null}
           <div className="home-rhythm-section">
             <p className="panel-label">Your rhythm</p>
+            {/* Same gate as the goals section: the note only makes sense while
+                the match is being made and there are saved answers to keep
+                current. */}
+            {isClientSelf && !coach && prefs ? (
+              <MatchingNote>
+                While we're matching you, keep these times current — your rhythm is a big part of
+                how we choose your coach, alongside personal fit.
+              </MatchingNote>
+            ) : null}
             <RhythmSection
               panicRoomEnabled={isClientSelf}
               prefs={isClientSelf ? prefs : null}

@@ -1,6 +1,7 @@
 import { useState } from "react";
 
 import { apiClient } from "../api/client";
+import { MatchingNote } from "./MatchingNote";
 
 /* Matching-phase goals: its own section on the members' room, editable while
    the match is being made. It resumes what the client already told us — their
@@ -25,6 +26,10 @@ export function MatchingGoalsEditor({ prefs, onSaved }) {
   return (
     <section className="home-goals-section">
       <p className="panel-label">Your goals</p>
+      <MatchingNote>
+        While we're matching you, keep this current — your goals are a big part of how we
+        choose your coach, alongside personal fit.
+      </MatchingNote>
       <form className="home-goals" onSubmit={handleSubmit}>
         <label className="home-goals-title" htmlFor="matching-goals-input">
           What I want help with
