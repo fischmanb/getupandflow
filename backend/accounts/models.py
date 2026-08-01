@@ -35,6 +35,13 @@ class UserProfile(models.Model):
     # save() enforces the client-must-have-a-coach rule (see ClientOnboarding).
     terms_accepted_at = models.DateTimeField(null=True, blank=True)
     terms_version = models.CharField(max_length=20, blank=True)
+    # Consent to record and store coaching-session transcripts. Clients accept
+    # ToS+Privacy (which covers recording) at signup, so this is modeled True by
+    # default and derived from terms acceptance for existing rows (migration
+    # 0008); the field exists so consent can be REVOKED — a revoked client's
+    # Zoom recording webhook is acknowledged and logged but never stored (see
+    # transcripts.consent / transcripts.ingest).
+    recording_consent = models.BooleanField(default=True)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 

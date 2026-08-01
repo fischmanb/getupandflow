@@ -94,6 +94,32 @@ def _meeting_payload(event):
     }
 
 
+def download_recording_file(download_url, download_token=None):
+    """Fetch a cloud-recording file (e.g. the transcript VTT) as bytes.
+
+    Zoom authorizes recording downloads with a bearer token: the short-lived
+    ``download_token`` Zoom includes on the recording webhook when configured,
+    or — as a fallback — this app's S2S access token (the ``recording:read``
+    scope covers it). A 404 means the file is not yet materialized (transcripts
+    lag the recording); callers use that to defer a poll-once retry.
+
+    Raises ZoomError (with .status_code) on any non-200 so the caller can branch
+    on 404 vs. other failures.
+    """
+    token = download_token or _get_access_token()
+    response = requests.get(
+        download_url,
+        headers={"Authorization": f"Bearer {token}"},
+        timeout=REQUEST_TIMEOUT,
+    )
+    if response.status_code != 200:
+        raise ZoomError(
+            f"Zoom recording download failed ({response.status_code}) for {download_url}",
+            status_code=response.status_code,
+        )
+    return response.content
+
+
 def create_meeting(host_email, event):
     response = _request("POST", f"/users/{host_email}/meetings", json=_meeting_payload(event))
     payload = response.json()
