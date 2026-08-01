@@ -72,11 +72,16 @@ def handle_recording_event(body, *, allow_retry=True):
         zoom_meeting_id=meeting_id
     ).first()
     if event is None:
-        logger.info("Zoom recording for meeting %s has no matching event; skipping.", meeting_id)
-        return {"status": "no_event", "meeting_id": meeting_id}
-
-    client = event.client
-    if not client_has_recording_consent(client):
+        # Ad-hoc meetings capture too (Brian ruling 2026-08-01): Zoom's native
+        # recording notice — every participant must acknowledge before joining
+        # a recorded call — is the consent mechanism for meetings with no GUAF
+        # event linkage. Stored unlinked (event/client/coach NULL); linkage can
+        # be attached later.
+        logger.info("Zoom recording for meeting %s has no matching event; storing unlinked (ad-hoc).", meeting_id)
+        client = None
+    else:
+        client = event.client
+    if client is not None and not client_has_recording_consent(client):
         logger.info(
             "Recording consent absent/revoked for client %s (meeting %s); acknowledged, not stored.",
             getattr(client, "id", None),
@@ -115,7 +120,10 @@ def handle_recording_event(body, *, allow_retry=True):
 
     plain_text, duration_s = vtt.parse(vtt_bytes)
     occurred_at = _meeting_start(obj, event)
-    coach = _coach_for(client)
+    if occurred_at is None:
+        logger.warning("Meeting %s: no start_time in payload and no linked event; not stored.", meeting_id)
+        return {"status": "no_start_time", "meeting_id": meeting_id}
+    coach = _coach_for(client) if client is not None else None
 
     try:
         with transaction.atomic():
@@ -155,6 +163,10 @@ def _meeting_start(obj, event):
             if timezone.is_naive(parsed):
                 parsed = timezone.make_aware(parsed, dt_timezone.utc)
             return parsed
+    if event is None:
+        # Unlinked ad-hoc meeting with no payload start_time: nothing honest to
+        # anchor occurred_at to (never now()); caller skips with a logged status.
+        return None
     naive = datetime.combine(event.event_date, event.start_time)
     return timezone.make_aware(naive, timezone.get_current_timezone())
 

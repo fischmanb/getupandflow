@@ -223,11 +223,18 @@ class WebhookIngestTests(TranscriptTestBase):
         self.assertEqual(Transcript.objects.count(), 1)
 
     @mock.patch("planner.zoom.download_recording_file", return_value=SAMPLE_VTT.encode())
-    def test_no_matching_event_skips(self, download):
+    def test_adhoc_no_matching_event_stored_unlinked(self, download):
+        """Brian ruling 2026-08-01: ad-hoc meetings capture too — Zoom's native
+        participant recording-acknowledgement is the consent mechanism when no
+        GUAF event linkage exists. Stored with event/client/coach NULL."""
         resp = self._post(_recording_body(meeting_id=999999))
         self.assertEqual(resp.status_code, 200)
-        self.assertEqual(resp.json()["status"], "no_event")
-        self.assertEqual(Transcript.objects.count(), 0)
+        self.assertEqual(resp.json()["status"], "stored")
+        t = Transcript.objects.get(zoom_meeting_id=999999)
+        self.assertIsNone(t.event)
+        self.assertIsNone(t.client)
+        self.assertIsNone(t.coach)
+        self.assertIsNotNone(t.occurred_at)
 
     @mock.patch("planner.zoom.download_recording_file", return_value=SAMPLE_VTT.encode())
     def test_consent_revoked_acknowledged_not_stored(self, download):
