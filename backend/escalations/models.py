@@ -4,6 +4,24 @@ from django.db import models
 from .constants import STATUS_CHOICES, STATUS_OPEN
 
 
+class ResolutionMethod(models.Model):
+    """Bruce's editable vocabulary for how an escalation was resolved. Seeded by
+    a data migration, then owned by leadership through Django admin — the queue
+    reads whichever rows are `active`, so the vocabulary changes without code.
+    """
+
+    name = models.CharField(max_length=120)
+    slug = models.SlugField(max_length=120, unique=True)
+    active = models.BooleanField(default=True)
+    sort_order = models.IntegerField(default=0)
+
+    class Meta:
+        ordering = ["sort_order", "name"]
+
+    def __str__(self):
+        return self.name
+
+
 class Escalation(models.Model):
     """A clinical-crisis flag raised by the grading engine, queued for the
     clinical lead. Ordering is severity-first: tier ASC (1 = most severe),
@@ -34,6 +52,30 @@ class Escalation(models.Model):
     sla_deadline_at = models.DateTimeField()
 
     status = models.CharField(max_length=32, choices=STATUS_CHOICES, default=STATUS_OPEN)
+
+    # Resolution — set when the escalation is closed (resolved / false_positive /
+    # escalated_to_clinical). The audit trail (EscalationTransition) also carries
+    # the method/note at the moment of each close; these mirror the CURRENT
+    # closing state and are cleared on reopen.
+    resolution_method = models.ForeignKey(
+        ResolutionMethod,
+        null=True,
+        blank=True,
+        on_delete=models.SET_NULL,
+        related_name="escalations",
+    )
+    resolution_note = models.TextField(blank=True)
+    resolved_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        null=True,
+        blank=True,
+        on_delete=models.SET_NULL,
+        related_name="escalations_resolved",
+    )
+    resolved_at = models.DateTimeField(null=True, blank=True)
+    # Set when a closing status is entered; cleared on reopen. The queue's
+    # default view excludes archived rows; the Archive view shows only them.
+    archived_at = models.DateTimeField(null=True, blank=True)
 
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
@@ -69,6 +111,18 @@ class EscalationTransition(models.Model):
     from_status = models.CharField(max_length=32, blank=True)
     to_status = models.CharField(max_length=32)
     note = models.TextField(blank=True)
+    # The resolution captured at a closing transition (null for lifecycle moves
+    # that don't close, and for the system-authored creation row). This is the
+    # durable audit — it survives a later reopen even after the Escalation's own
+    # resolution fields are cleared.
+    resolution_method = models.ForeignKey(
+        ResolutionMethod,
+        null=True,
+        blank=True,
+        on_delete=models.SET_NULL,
+        related_name="transitions",
+    )
+    resolution_note = models.TextField(blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
 
     class Meta:

@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 
-import { fetchEscalations } from "../api/escalations";
+import { fetchEscalations, fetchResolutionMethods } from "../api/escalations";
 import { EscalationCard } from "./EscalationCard";
 import { useReducedMotion } from "./escalationUtils";
 import "./escalations.css";
@@ -8,13 +8,13 @@ import "./escalations.css";
 const FILTERS = [
   { key: "open", label: "Open" },
   { key: "in_review", label: "In review" },
-  { key: "closed", label: "Closed" },
+  { key: "archive", label: "Archive" },
 ];
 
 const EMPTY_COPY = {
   open: "No open escalations.",
   in_review: "Nothing in review.",
-  closed: "No closed escalations yet.",
+  archive: "Nothing archived yet.",
 };
 
 const POLL_MS = 60000; // 60s refresh — a between-sessions cadence, not a firehose.
@@ -25,6 +25,7 @@ export function EscalationsPage() {
   const [status, setStatus] = useState("loading"); // loading | ready | error
   const [nowMs, setNowMs] = useState(() => Date.now());
   const [polledAtMs, setPolledAtMs] = useState(() => Date.now());
+  const [methods, setMethods] = useState([]);
   const reducedMotion = useReducedMotion();
   const filterRef = useRef(filter);
   filterRef.current = filter;
@@ -47,6 +48,12 @@ export function EscalationsPage() {
   useEffect(() => {
     load(filter);
   }, [filter, load]);
+
+  // The resolution vocabulary — loaded once for the close sheet. It's small and
+  // rarely changes (leadership edits it in admin).
+  useEffect(() => {
+    fetchResolutionMethods().then(setMethods).catch(() => setMethods([]));
+  }, []);
 
   // 60s background poll (silent — no loading flash).
   useEffect(() => {
@@ -108,6 +115,7 @@ export function EscalationsPage() {
                 <EscalationCard
                   key={esc.id}
                   escalation={esc}
+                  methods={methods}
                   nowMs={nowMs}
                   polledAtMs={polledAtMs}
                   reducedMotion={reducedMotion}

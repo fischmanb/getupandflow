@@ -92,3 +92,68 @@ instead — keep the two in sync.
 - **On create**: ntfy push (all tiers) fires on commit; Tier 1 additionally
   emails the clinical lead. Delivery failures are logged loudly and never roll
   back the persisted escalation.
+
+## Resolution & archive
+
+Closing an escalation is a clinical record, not just a status flip. Every close
+captures **how** it was handled, stamps who/when, archives the card, and keeps
+the whole trail auditable. Reopen is possible but leadership-gated and itself
+audited.
+
+### Resolution vocabulary (Bruce edits this — no code change)
+
+`ResolutionMethod` (name, slug, active, sort_order) is the editable list of ways
+an escalation can be resolved. It is seeded by a data migration with Bruce's
+starting vocabulary — *contacted client; session with client; referred to
+therapist/psychiatrist; crisis services engaged; coach guidance; increased
+monitoring; no action needed; other* — and then owned entirely through **Django
+admin**:
+
+- **Add / rename / reorder**: edit rows under *Escalations → Resolution methods*.
+  `sort_order` drives the order methods appear in the close sheet.
+- **Retire a method**: uncheck **active**. It vanishes from the close sheet but
+  stays intact on every historical audit row that used it (methods are
+  `SET_NULL`, never hard-deleted out from under the record).
+- The seed migration is idempotent (keyed on slug) — it never duplicates rows or
+  clobbers a name leadership has since edited.
+
+### Closing rules
+
+A move into a closing status (`resolved`, `false_positive`,
+`escalated_to_clinical`) **requires** a `resolution_method` (by slug). The
+`other` method additionally requires a `resolution_note`. On a valid close the
+server stamps the escalation with `resolution_method`, `resolution_note`,
+`resolved_by`, `resolved_at`, and `archived_at`, and copies the method + note
+onto the `EscalationTransition` audit row.
+
+### Archive & filtering
+
+Closing sets `archived_at`. The queue list **excludes archived rows by default**;
+`?archived=true` returns only them (the Archive tab). `?status=` still filters by
+lifecycle state or group and composes with the archive flag. Archived cards are
+read-only — no further transitions — **except** a leadership-only reopen.
+
+### New / changed endpoints
+
+| Method | Path | Auth | Purpose |
+| --- | --- | --- | --- |
+| `GET` | `/api/escalations/methods/` | Leadership | Active resolution vocabulary (slug + name), in sort order — feeds the close sheet. |
+| `GET` | `/api/escalations/?archived=true` | Leadership | Archive view (only `archived_at`-set rows). Default list excludes them. |
+| `POST` | `/api/escalations/{id}/transition/` | Leadership | Closing moves now require `resolution_method`; `other` requires `resolution_note`. Missing method → **400** with `resolution_methods` (the list to render). |
+| `POST` | `/api/escalations/{id}/reopen/` | Leadership | Reopen an archived escalation → `in_review`. Clears the escalation's resolution fields (the audit trail keeps them) and writes an audit row. Non-archived → 400. |
+
+Transition body gains `resolution_method` (slug) and `resolution_note`. The
+detail payload's `transitions` carry `resolution_method_name` /
+`resolution_method_slug` / `resolution_note`; the list row carries the closing
+summary (`resolution_method_name`, `resolution_note`, `resolved_by_name`,
+`resolved_at`, `archived_at`) so an Archive card renders without a detail fetch.
+
+### Frontend (`/escalations`)
+
+- Closing actions open a **mobile bottom-sheet**: single-tap method list, a note
+  field (required for *Other*), and a confirm button that names the action
+  ("Mark resolved"). Reduced-motion and 44px targets hold.
+- New **Archive** tab. Archived cards show the resolution method, note, who, and
+  when, plus a leadership **Reopen for review** action.
+- Card expand gains a **History** section — the full audited transition trail
+  (status → status, actor, timestamp, note), newest first, in quiet type.

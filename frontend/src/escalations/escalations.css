@@ -309,6 +309,263 @@
   color: var(--esc-t1);
 }
 
+/* ── Archived card ──────────────────────────────────────────────────────── */
+.esc-card[data-archived="true"] {
+  opacity: 0.94;
+}
+
+/* A settled resolved card reads in the calm green, not a tier alarm color. */
+.esc-card[data-archived="true"] .esc-chip {
+  background: var(--esc-resolved);
+}
+
+.esc-status-line {
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--esc-ink-soft);
+  margin: 0;
+}
+
+.esc-resolution {
+  margin: 12px 0 4px;
+  padding: 10px 12px;
+  background: rgba(62, 122, 94, 0.08);
+  border-left: 2px solid var(--esc-resolved);
+  border-radius: 6px;
+}
+
+.esc-resolution-title {
+  font-size: 0.7rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--esc-resolved);
+  margin: 0 0 4px;
+}
+
+.esc-resolution-method {
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: var(--esc-ink);
+  margin: 0 0 4px;
+}
+
+.esc-resolution-note {
+  font-size: 0.88rem;
+  line-height: 1.45;
+  color: var(--esc-ink-soft);
+  margin: 0 0 6px;
+}
+
+/* ── History (audit trail) — quiet, newest first ────────────────────────── */
+.esc-history {
+  margin-top: 14px;
+  padding-top: 12px;
+  border-top: 1px solid var(--esc-line);
+}
+
+.esc-history-title {
+  font-size: 0.7rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--esc-ink-soft);
+  margin: 0 0 8px;
+}
+
+.esc-history-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.esc-history-item {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  border-left: 2px solid var(--esc-line);
+  padding-left: 10px;
+}
+
+.esc-history-move {
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: var(--esc-ink);
+}
+
+.esc-history-meta {
+  font-size: 0.74rem;
+  color: var(--esc-ink-soft);
+}
+
+.esc-history-detail {
+  font-size: 0.8rem;
+  line-height: 1.4;
+  color: var(--esc-ink-soft);
+}
+
+/* ── Reopen (leadership) ────────────────────────────────────────────────── */
+.esc-reopen {
+  display: block;
+  width: 100%;
+  min-height: 44px;
+  margin-top: 14px;
+  border: 1px solid var(--esc-ground);
+  border-radius: 10px;
+  background: transparent;
+  color: var(--esc-ground);
+  font-size: 0.9rem;
+  font-weight: 600;
+  font-family: inherit;
+}
+
+.esc-reopen:disabled {
+  opacity: 0.5;
+}
+
+/* ── Close sheet (mobile bottom-sheet) ──────────────────────────────────── */
+.esc-sheet-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 40;
+  background: rgba(11, 26, 31, 0.55);
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+}
+
+.esc-sheet {
+  width: 100%;
+  max-width: 560px;
+  background: var(--esc-card);
+  border-radius: 16px 16px 0 0;
+  padding: 18px 16px calc(18px + env(safe-area-inset-bottom, 0px));
+  box-shadow: 0 -6px 24px rgba(0, 0, 0, 0.28);
+  animation: esc-sheet-in 180ms ease-out;
+  max-height: 88vh;
+  overflow-y: auto;
+}
+
+@keyframes esc-sheet-in {
+  from { transform: translateY(12px); opacity: 0.6; }
+  to { transform: translateY(0); opacity: 1; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .esc-sheet {
+    animation: none;
+  }
+}
+
+.esc-sheet-title {
+  font-family: var(--esc-display);
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: var(--esc-ink);
+  margin: 0 0 2px;
+}
+
+.esc-sheet-sub {
+  font-size: 0.85rem;
+  color: var(--esc-ink-soft);
+  margin: 0 0 14px;
+}
+
+.esc-method-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-bottom: 14px;
+}
+
+.esc-method {
+  min-height: 44px;
+  text-align: left;
+  padding: 0 14px;
+  border: 1px solid var(--esc-line);
+  border-radius: 10px;
+  background: transparent;
+  color: var(--esc-ink);
+  font-size: 0.92rem;
+  font-weight: 500;
+  font-family: inherit;
+}
+
+.esc-method[aria-pressed="true"] {
+  border-color: var(--esc-ground);
+  background: var(--esc-ground);
+  color: var(--esc-card);
+  font-weight: 600;
+}
+
+.esc-note-label {
+  display: block;
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: var(--esc-ink-soft);
+  margin-bottom: 14px;
+}
+
+.esc-note-field {
+  display: block;
+  width: 100%;
+  margin-top: 6px;
+  padding: 10px 12px;
+  border: 1px solid var(--esc-line);
+  border-radius: 10px;
+  background: #fff;
+  color: var(--esc-ink);
+  font-size: 0.92rem;
+  font-family: inherit;
+  resize: vertical;
+  box-sizing: border-box;
+}
+
+.esc-note-field:focus-visible,
+.esc-method:focus-visible,
+.esc-reopen:focus-visible,
+.esc-sheet-confirm:focus-visible,
+.esc-sheet-cancel:focus-visible {
+  outline: 3px solid #f2c14e;
+  outline-offset: 2px;
+}
+
+.esc-sheet-actions {
+  display: flex;
+  gap: 10px;
+}
+
+.esc-sheet-cancel {
+  flex: 1;
+  min-height: 48px;
+  border: 1px solid var(--esc-line);
+  border-radius: 12px;
+  background: transparent;
+  color: var(--esc-ink-soft);
+  font-size: 0.92rem;
+  font-weight: 600;
+  font-family: inherit;
+}
+
+.esc-sheet-confirm {
+  flex: 2;
+  min-height: 48px;
+  border: 1px solid var(--esc-ground);
+  border-radius: 12px;
+  background: var(--esc-ground);
+  color: var(--esc-card);
+  font-size: 0.95rem;
+  font-weight: 700;
+  font-family: inherit;
+}
+
+.esc-sheet-confirm:disabled {
+  opacity: 0.45;
+}
+
 /* ── Empty / loading / error ────────────────────────────────────────────── */
 .esc-notice {
   margin: 40px auto;

@@ -3,8 +3,14 @@ from rest_framework import serializers
 
 from .constants import ALLOWED_TRANSITIONS, STATUS_CHOICES, TERMINAL_STATUSES
 from .loader import VALID_TIERS
-from .models import Escalation, EscalationTransition
+from .models import Escalation, EscalationTransition, ResolutionMethod
 from .presentation import client_display_name, client_initials, trigger_label
+
+
+class ResolutionMethodSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = ResolutionMethod
+        fields = ["id", "slug", "name"]
 
 
 class IngestSerializer(serializers.Serializer):
@@ -28,10 +34,20 @@ class IngestSerializer(serializers.Serializer):
 
 class TransitionSerializer(serializers.ModelSerializer):
     actor_username = serializers.CharField(source="actor.username", default=None, read_only=True)
+    resolution_method_name = serializers.CharField(
+        source="resolution_method.name", default=None, read_only=True
+    )
+    resolution_method_slug = serializers.CharField(
+        source="resolution_method.slug", default=None, read_only=True
+    )
 
     class Meta:
         model = EscalationTransition
-        fields = ["id", "from_status", "to_status", "note", "actor_username", "created_at"]
+        fields = [
+            "id", "from_status", "to_status", "note", "actor_username",
+            "resolution_method_name", "resolution_method_slug", "resolution_note",
+            "created_at",
+        ]
 
 
 class EscalationListSerializer(serializers.ModelSerializer):
@@ -39,6 +55,15 @@ class EscalationListSerializer(serializers.ModelSerializer):
     client_initials = serializers.SerializerMethodField()
     breached = serializers.SerializerMethodField()
     seconds_remaining = serializers.SerializerMethodField()
+    # Resolution summary — carried on the list row so an Archive card renders
+    # method/note/who/when without an extra detail fetch.
+    resolution_method_name = serializers.CharField(
+        source="resolution_method.name", default=None, read_only=True
+    )
+    resolution_method_slug = serializers.CharField(
+        source="resolution_method.slug", default=None, read_only=True
+    )
+    resolved_by_name = serializers.SerializerMethodField()
 
     class Meta:
         model = Escalation
@@ -46,6 +71,8 @@ class EscalationListSerializer(serializers.ModelSerializer):
             "id", "trigger_id", "trigger_label", "tier", "confidence",
             "client_initials", "session_ref", "status", "sla_deadline_at",
             "breached", "seconds_remaining", "created_at", "updated_at",
+            "resolution_method_name", "resolution_method_slug", "resolution_note",
+            "resolved_by_name", "resolved_at", "archived_at",
         ]
 
     def get_trigger_label(self, obj):
@@ -60,6 +87,13 @@ class EscalationListSerializer(serializers.ModelSerializer):
     def get_seconds_remaining(self, obj):
         # Computed live, never stored. Negative once breached.
         return int((obj.sla_deadline_at - timezone.now()).total_seconds())
+
+    def get_resolved_by_name(self, obj):
+        # The resolving staff member (leadership), not the client — safe to name.
+        user = obj.resolved_by
+        if user is None:
+            return None
+        return user.get_full_name() or user.username
 
 
 class EscalationDetailSerializer(EscalationListSerializer):

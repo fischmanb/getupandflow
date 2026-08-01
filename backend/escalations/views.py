@@ -11,22 +11,36 @@ from rest_framework.views import APIView
 
 from .constants import (
     ALLOWED_TRANSITIONS,
+    RESOLUTION_METHOD_OTHER,
     STATUS_FILTER_GROUPS,
+    STATUS_IN_REVIEW,
     STATUS_OPEN,
+    TERMINAL_STATUSES,
     allowed_next_states,
 )
 from .delivery import deliver_escalation
 from .hmac_auth import signature_valid
 from .loader import TriggerSpecError, load_triggers
-from .models import Escalation, EscalationTransition
+from .models import Escalation, EscalationTransition, ResolutionMethod
 from .permissions import LeadershipPermission
 from .serializers import (
     EscalationDetailSerializer,
     EscalationListSerializer,
     IngestSerializer,
+    ResolutionMethodSerializer,
     TransitionSerializer,
 )
 from .sla import compute_sla_deadline
+
+# Query-param truthy values for ?archived=.
+_TRUTHY = {"1", "true", "yes", "on"}
+
+
+def _active_methods_payload():
+    """Active resolution methods as the 400 body and the /methods/ endpoint
+    both render them — slug + name, in leadership's sort order."""
+    methods = ResolutionMethod.objects.filter(active=True)
+    return ResolutionMethodSerializer(methods, many=True).data
 
 logger = logging.getLogger("escalations")
 User = get_user_model()
@@ -110,13 +124,23 @@ class EscalationListView(generics.ListAPIView):
     """GET /api/escalations/ — leadership queue, ordered tier ASC,
     sla_deadline_at ASC, confidence DESC (the model's default ordering).
     Optional ?status= accepts a lifecycle state OR a filter group
-    (open | in_review | closed)."""
+    (open | in_review | closed). By default archived (closed) rows are
+    excluded; ?archived=true returns only archived rows (the Archive view)."""
 
     permission_classes = [LeadershipPermission]
     serializer_class = EscalationListSerializer
 
     def get_queryset(self):
-        queryset = Escalation.objects.select_related("client").all()
+        queryset = Escalation.objects.select_related(
+            "client", "resolution_method", "resolved_by"
+        ).all()
+
+        archived = self.request.query_params.get("archived", "").lower() in _TRUTHY
+        if archived:
+            queryset = queryset.filter(archived_at__isnull=False)
+        else:
+            queryset = queryset.filter(archived_at__isnull=True)
+
         raw_status = self.request.query_params.get("status")
         if raw_status:
             if raw_status in STATUS_FILTER_GROUPS:
@@ -139,8 +163,13 @@ class EscalationDetailView(generics.RetrieveAPIView):
 class EscalationTransitionView(APIView):
     """POST /api/escalations/{id}/transition/ — advance the lifecycle.
 
-    Body: {to_status, note?}. Rejects any move not in the lifecycle graph with
-    400 + the allowed next states. Every accepted move writes an audit row.
+    Body: {to_status, note?, resolution_method?, resolution_note?}. Rejects any
+    move not in the lifecycle graph with 400 + the allowed next states. Closing
+    moves (resolved / false_positive / escalated_to_clinical) REQUIRE a
+    resolution_method (slug); "other" additionally requires a resolution_note.
+    A close stamps resolution + resolved_by/at + archived_at on the escalation
+    and copies the resolution onto the audit row. Every accepted move writes an
+    audit row.
     """
 
     permission_classes = [LeadershipPermission]
@@ -165,16 +194,108 @@ class EscalationTransitionView(APIView):
                 status=status.HTTP_400_BAD_REQUEST,
             )
 
+        # Closing moves must carry a resolution method (and a note for "other").
+        method = None
+        resolution_note = request.data.get("resolution_note", "") or ""
+        if to_status in TERMINAL_STATUSES:
+            method_slug = request.data.get("resolution_method")
+            if method_slug:
+                method = ResolutionMethod.objects.filter(
+                    slug=method_slug, active=True
+                ).first()
+            if method is None:
+                return Response(
+                    {"detail": "A resolution method is required to close this "
+                               "escalation. Choose one of the methods listed.",
+                     "resolution_methods": _active_methods_payload()},
+                    status=status.HTTP_400_BAD_REQUEST,
+                )
+            if method.slug == RESOLUTION_METHOD_OTHER and not resolution_note.strip():
+                return Response(
+                    {"detail": "A note is required when the resolution method is "
+                               "“Other”."},
+                    status=status.HTTP_400_BAD_REQUEST,
+                )
+
         from_status = escalation.status
         with transaction.atomic():
             escalation.status = to_status
-            escalation.save(update_fields=["status", "updated_at"])
+            update_fields = ["status", "updated_at"]
+            if to_status in TERMINAL_STATUSES:
+                now = timezone.now()
+                escalation.resolution_method = method
+                escalation.resolution_note = resolution_note
+                escalation.resolved_by = request.user
+                escalation.resolved_at = now
+                escalation.archived_at = now
+                update_fields += [
+                    "resolution_method", "resolution_note",
+                    "resolved_by", "resolved_at", "archived_at",
+                ]
+            escalation.save(update_fields=update_fields)
             EscalationTransition.objects.create(
                 escalation=escalation,
                 actor=request.user,
                 from_status=from_status,
                 to_status=to_status,
                 note=note,
+                resolution_method=method,
+                resolution_note=resolution_note if to_status in TERMINAL_STATUSES else "",
             )
 
         return Response(EscalationDetailSerializer(escalation).data, status=status.HTTP_200_OK)
+
+
+class EscalationReopenView(APIView):
+    """POST /api/escalations/{id}/reopen/ — leadership-only reopen of an
+    archived escalation back into review.
+
+    Only an archived (closed) escalation can be reopened; the move is audited
+    like any other transition. The escalation's own resolution fields are
+    cleared (it is no longer resolved) but the audit trail keeps the resolution
+    that was recorded at close.
+    """
+
+    permission_classes = [LeadershipPermission]
+
+    def post(self, request, pk):
+        escalation = generics.get_object_or_404(Escalation, pk=pk)
+        if escalation.archived_at is None:
+            return Response(
+                {"detail": "Only an archived escalation can be reopened."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        note = request.data.get("note", "") or ""
+        from_status = escalation.status
+        with transaction.atomic():
+            escalation.status = STATUS_IN_REVIEW
+            escalation.archived_at = None
+            escalation.resolution_method = None
+            escalation.resolution_note = ""
+            escalation.resolved_by = None
+            escalation.resolved_at = None
+            escalation.save(update_fields=[
+                "status", "archived_at", "resolution_method",
+                "resolution_note", "resolved_by", "resolved_at", "updated_at",
+            ])
+            EscalationTransition.objects.create(
+                escalation=escalation,
+                actor=request.user,
+                from_status=from_status,
+                to_status=STATUS_IN_REVIEW,
+                note=note or "Reopened for further review.",
+            )
+
+        return Response(EscalationDetailSerializer(escalation).data, status=status.HTTP_200_OK)
+
+
+class ResolutionMethodListView(generics.ListAPIView):
+    """GET /api/escalations/methods/ — the active resolution vocabulary for the
+    close sheet, in leadership's sort order."""
+
+    permission_classes = [LeadershipPermission]
+    serializer_class = ResolutionMethodSerializer
+
+    def get_queryset(self):
+        return ResolutionMethod.objects.filter(active=True)

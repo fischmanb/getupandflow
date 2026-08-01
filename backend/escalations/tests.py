@@ -13,13 +13,16 @@ from rest_framework.test import APIClient
 
 from accounts.constants import ROLE_ADMIN, ROLE_CLIENT
 from .constants import (
+    DEFAULT_RESOLUTION_METHODS,
     STATUS_ACKNOWLEDGED,
+    STATUS_ESCALATED_TO_CLINICAL,
     STATUS_FALSE_POSITIVE,
     STATUS_IN_REVIEW,
     STATUS_OPEN,
     STATUS_RESOLVED,
+    seed_resolution_methods,
 )
-from .models import Escalation, EscalationTransition
+from .models import Escalation, EscalationTransition, ResolutionMethod
 from .sla import business_hours_deadline, compute_sla_deadline
 
 ET = ZoneInfo("America/New_York")
@@ -266,16 +269,19 @@ class LifecycleTests(TestCase):
         self.client.force_authenticate(self.admin)
         self.esc = make_escalation(tier=1, status=STATUS_OPEN)
 
-    def _transition(self, to_status, note=""):
+    def _transition(self, to_status, note="", **extra):
         return self.client.post(
             reverse("escalation-transition", args=[self.esc.pk]),
-            {"to_status": to_status, "note": note}, format="json",
+            {"to_status": to_status, "note": note, **extra}, format="json",
         )
 
     def test_valid_path_writes_audit_rows(self):
         self.assertEqual(self._transition(STATUS_ACKNOWLEDGED).status_code, 200)
         self.assertEqual(self._transition(STATUS_IN_REVIEW).status_code, 200)
-        resp = self._transition(STATUS_RESOLVED, note="Spoke with client")
+        resp = self._transition(
+            STATUS_RESOLVED, note="Spoke with client",
+            resolution_method="contacted-client",
+        )
         self.assertEqual(resp.status_code, 200)
         self.esc.refresh_from_db()
         self.assertEqual(self.esc.status, STATUS_RESOLVED)
@@ -297,8 +303,8 @@ class LifecycleTests(TestCase):
     def test_terminal_state_rejects_further_moves(self):
         self._transition(STATUS_ACKNOWLEDGED)
         self._transition(STATUS_IN_REVIEW)
-        self._transition(STATUS_FALSE_POSITIVE)
-        resp = self._transition(STATUS_RESOLVED)
+        self._transition(STATUS_FALSE_POSITIVE, resolution_method="no-action-needed")
+        resp = self._transition(STATUS_RESOLVED, resolution_method="contacted-client")
         self.assertEqual(resp.status_code, 400)
         self.assertEqual(resp.json()["allowed_next_states"], [])
         # false_positive record retained.
@@ -309,6 +315,158 @@ class LifecycleTests(TestCase):
     def test_transition_requires_leadership(self):
         self.client.force_authenticate(None)
         self.assertEqual(self._transition(STATUS_ACKNOWLEDGED).status_code, 401)
+
+
+# ── Resolution + archive ────────────────────────────────────────────────────
+class ResolutionArchiveTests(TestCase):
+    def setUp(self):
+        self.client = APIClient()
+        Group.objects.get_or_create(name=ROLE_ADMIN)
+        self.admin = User.objects.create_superuser("boss", "boss@x.co", "pw")
+        self.client.force_authenticate(self.admin)
+
+    def _in_review(self):
+        esc = make_escalation(tier=1, status=STATUS_IN_REVIEW)
+        return esc
+
+    def _transition(self, esc, to_status, **body):
+        return self.client.post(
+            reverse("escalation-transition", args=[esc.pk]),
+            {"to_status": to_status, **body}, format="json",
+        )
+
+    def test_seed_migration_ran(self):
+        # The 0003 data migration seeded the full vocabulary.
+        self.assertEqual(
+            ResolutionMethod.objects.count(), len(DEFAULT_RESOLUTION_METHODS)
+        )
+        self.assertTrue(ResolutionMethod.objects.filter(slug="other").exists())
+
+    def test_seed_idempotent(self):
+        before = ResolutionMethod.objects.count()
+        seed_resolution_methods(ResolutionMethod)
+        seed_resolution_methods(ResolutionMethod)
+        self.assertEqual(ResolutionMethod.objects.count(), before)
+
+    def test_methods_endpoint_returns_active_only(self):
+        ResolutionMethod.objects.filter(slug="other").update(active=False)
+        body = self.client.get(reverse("escalation-methods")).json()
+        rows = body["results"] if isinstance(body, dict) else body
+        slugs = {r["slug"] for r in rows}
+        self.assertIn("contacted-client", slugs)
+        self.assertNotIn("other", slugs)
+
+    def test_close_requires_method_each_closing_status(self):
+        for closing in (STATUS_RESOLVED, STATUS_FALSE_POSITIVE, STATUS_ESCALATED_TO_CLINICAL):
+            esc = self._in_review()
+            resp = self._transition(esc, closing)  # no resolution_method
+            self.assertEqual(resp.status_code, 400, closing)
+            # 400 body lists the methods for the UI.
+            names = {m["slug"] for m in resp.json()["resolution_methods"]}
+            self.assertIn("contacted-client", names)
+            esc.refresh_from_db()
+            self.assertEqual(esc.status, STATUS_IN_REVIEW)  # unchanged
+            self.assertIsNone(esc.archived_at)
+
+    def test_inactive_method_rejected(self):
+        ResolutionMethod.objects.filter(slug="contacted-client").update(active=False)
+        esc = self._in_review()
+        resp = self._transition(esc, STATUS_RESOLVED, resolution_method="contacted-client")
+        self.assertEqual(resp.status_code, 400)
+
+    def test_other_requires_note(self):
+        esc = self._in_review()
+        resp = self._transition(esc, STATUS_RESOLVED, resolution_method="other")
+        self.assertEqual(resp.status_code, 400)
+        self.assertIn("note", resp.json()["detail"].lower())
+        esc.refresh_from_db()
+        self.assertEqual(esc.status, STATUS_IN_REVIEW)
+        # With a note it closes.
+        resp = self._transition(
+            esc, STATUS_RESOLVED, resolution_method="other", resolution_note="Bespoke plan."
+        )
+        self.assertEqual(resp.status_code, 200)
+
+    def test_close_stamps_resolution_and_archive_and_audit(self):
+        esc = self._in_review()
+        resp = self._transition(
+            esc, STATUS_RESOLVED,
+            resolution_method="contacted-client", resolution_note="Reached out.",
+        )
+        self.assertEqual(resp.status_code, 200)
+        esc.refresh_from_db()
+        self.assertEqual(esc.status, STATUS_RESOLVED)
+        self.assertEqual(esc.resolution_method.slug, "contacted-client")
+        self.assertEqual(esc.resolution_note, "Reached out.")
+        self.assertEqual(esc.resolved_by, self.admin)
+        self.assertIsNotNone(esc.resolved_at)
+        self.assertIsNotNone(esc.archived_at)
+        # Audit row carries method + note.
+        row = esc.transitions.order_by("-id").first()
+        self.assertEqual(row.to_status, STATUS_RESOLVED)
+        self.assertEqual(row.resolution_method.slug, "contacted-client")
+        self.assertEqual(row.resolution_note, "Reached out.")
+        # Detail serializer surfaces it.
+        detail = self.client.get(reverse("escalation-detail", args=[esc.pk])).json()
+        last = detail["transitions"][-1]
+        self.assertEqual(last["resolution_method_slug"], "contacted-client")
+        self.assertEqual(detail["resolution_method_name"], "Contacted client")
+
+    def test_archive_filtering(self):
+        # One live (open) + one closed → archived.
+        make_escalation(tier=2, status=STATUS_OPEN)
+        closed = self._in_review()
+        self._transition(closed, STATUS_RESOLVED, resolution_method="no-action-needed")
+
+        default = self.client.get(reverse("escalation-list")).json()["results"]
+        ids = {r["id"] for r in default}
+        self.assertNotIn(closed.id, ids)  # archived excluded by default
+
+        archived = self.client.get(
+            reverse("escalation-list"), {"archived": "true"}
+        ).json()["results"]
+        aids = {r["id"] for r in archived}
+        self.assertEqual(aids, {closed.id})
+        # Archive row carries who/when/method for the card.
+        card = archived[0]
+        self.assertEqual(card["resolution_method_slug"], "no-action-needed")
+        self.assertIsNotNone(card["archived_at"])
+        self.assertIsNotNone(card["resolved_by_name"])
+
+    def test_reopen_path_and_audit(self):
+        esc = self._in_review()
+        self._transition(esc, STATUS_RESOLVED, resolution_method="contacted-client")
+        esc.refresh_from_db()
+        self.assertIsNotNone(esc.archived_at)
+
+        resp = self.client.post(reverse("escalation-reopen", args=[esc.pk]), {}, format="json")
+        self.assertEqual(resp.status_code, 200)
+        esc.refresh_from_db()
+        self.assertEqual(esc.status, STATUS_IN_REVIEW)
+        self.assertIsNone(esc.archived_at)
+        self.assertIsNone(esc.resolution_method)
+        self.assertIsNone(esc.resolved_by)
+        self.assertIsNone(esc.resolved_at)
+        # Reopen is audited.
+        row = esc.transitions.order_by("-id").first()
+        self.assertEqual(row.to_status, STATUS_IN_REVIEW)
+        self.assertEqual(row.actor, self.admin)
+        # And the close row (with its resolution) is retained in the trail.
+        self.assertTrue(
+            esc.transitions.filter(to_status=STATUS_RESOLVED, resolution_method__isnull=False).exists()
+        )
+
+    def test_reopen_rejects_non_archived(self):
+        esc = self._in_review()
+        resp = self.client.post(reverse("escalation-reopen", args=[esc.pk]), {}, format="json")
+        self.assertEqual(resp.status_code, 400)
+
+    def test_reopen_requires_leadership(self):
+        esc = self._in_review()
+        self._transition(esc, STATUS_RESOLVED, resolution_method="contacted-client")
+        self.client.force_authenticate(None)
+        resp = self.client.post(reverse("escalation-reopen", args=[esc.pk]), {}, format="json")
+        self.assertEqual(resp.status_code, 401)
 
 
 # ── Loader / triggers.yaml ──────────────────────────────────────────────────
