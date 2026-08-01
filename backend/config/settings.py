@@ -42,6 +42,7 @@ INSTALLED_APPS = [
     "leads",
     "billing",
     "notifications",
+    "escalations",
 ]
 
 MIDDLEWARE = [

@@ -1,0 +1,13 @@
+{% autoescape off %}Tier 1 escalation — needs your eyes now.
+
+{{ trigger_label }}
+
+Client {{ client_initials }} · confidence {{ confidence_pct }}
+Response due by {{ deadline }} (12h, any day).
+
+Open the queue to acknowledge and review:
+{{ queue_url }}
+
+This is an automated clinical escalation from Get Up and Flow. Full name and
+evidence are behind sign-in; they are not included here.
+{% endautoescape %}

@@ -10,6 +10,7 @@ import { BillingSuccessPage } from "./pages/BillingSuccessPage";
 import { CalendarPage } from "./pages/CalendarPage";
 import { CategoryManagementPage } from "./pages/CategoryManagementPage";
 import { ClientListPage } from "./pages/ClientListPage";
+import { EscalationsPage } from "./escalations/EscalationsPage";
 import { ForgotPasswordPage } from "./pages/ForgotPasswordPage";
 import { HomePage } from "./pages/HomePage";
 import { LoginPage } from "./pages/LoginPage";
@@ -30,6 +31,16 @@ export default function App() {
       <Route path="/terms" element={<TermsPage />} />
       <Route path="/privacy" element={<PrivacyPage />} />
       <Route path="/billing/success" element={<BillingSuccessPage />} />
+      <Route
+        path="/escalations"
+        element={
+          <ProtectedRoute>
+            <RoleRoute allowedRoles={["Admin"]}>
+              <EscalationsPage />
+            </RoleRoute>
+          </ProtectedRoute>
+        }
+      />
       <Route
         path="/app"
         element={

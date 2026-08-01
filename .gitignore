@@ -12,3 +12,6 @@ marketing/node_modules/
 
 .DS_Store
 Thumbs.db
+
+# Worker task scaffolding — never ships to the product repo.
+.tasks/

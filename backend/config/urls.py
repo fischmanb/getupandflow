@@ -13,5 +13,6 @@ urlpatterns = [
     path("api/onboarding/", OnboardingView.as_view(), name="onboarding"),
     path("api/leads/", include("leads.urls")),
     path("api/billing/", include("billing.urls")),
+    path("api/escalations/", include("escalations.urls")),
     path("api/", include("planner.urls")),
 ]

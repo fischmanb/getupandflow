@@ -1,0 +1,123 @@
+# GUAF crisis-escalation trigger specification — SINGLE SOURCE OF TRUTH
+# Ratified: Brian Fischman + Bruce Parsons (MD), working session 2026-08-01.
+# Graph lineage: trigger list 828c04b4 · protocol 99ede868 · automation
+# requirement 3970dd14 · SLA ruling 5cb4e5c8. Supersedes the tier semantics of
+# archived spec dc22d562 (which the original code stubs referenced).
+# CONVENTION (ratified): severity-ordered — tier 1 = MOST severe. The shipped
+# stub enum is inverted (code tier3_acute = most severe); wiring renames code
+# to match THIS file. This file wins on any conflict.
+
+version: 1
+ratified_by: [brian_fischman, bruce_parsons_md]
+ratified_at: "2026-08-01"
+
+policy:
+  routing: coach -> review_queue -> push_notification_clinical_lead  # Bruce
+  tier1_push: immediate_on_transcript_processing  # bypasses queue cadence
+  grading_bias: over_flag  # false positives adjudicated by clinical lead;
+                           # never tune toward false negatives
+  ungraded_session_is_a_finding: true  # grader downtime/skip surfaces as its
+                                       # own queue item, never silent
+  business_hours:
+    definition: "Mon-Fri, America/New_York; weekends excluded"
+    holidays_excluded: false  # unspecified by operators; revisit
+  cluster_upgrade:
+    rule: ">=2 distinct tier-3 flags in one session escalate as tier 2"
+  tier3_sweep: weekly_full_caseload
+  slas:
+    tier1: {response: "12h", clock: calendar, days: any}
+    tier2: {response: "24h", clock: business_hours}
+    tier3: {response: "72h from trend-threshold crossing", clock: business_hours}
+  fail_closed: true  # absent/invalid triggers.yaml blocks clinical ingestion
+                     # exactly as the NotImplementedError stubs did
+
+# detection: single_utterance = one clear mention in one session suffices
+#            pattern = requires cross-session trend state (per-client graph)
+# confidence_threshold: grader escalates at/above this per-trigger confidence
+# source: bruce_draft (legal pad) | brian_addition | field_addition (browse,
+#         Brian sign-off) | catchall
+# tier_basis: ratified | vesper_inference (placement mine, reviewed in session)
+
+triggers:
+  # ── TIER 1 — immediate push; 12h response, any day ──────────────────────
+  - {id: suicidal_thought, tier: 1, detection: single_utterance,
+     confidence_threshold: 0.3, source: bruce_draft,
+     evidence: "any expression of suicidal ideation, active or passive"}
+  - {id: self_harm_nonsuicidal, tier: 1, detection: single_utterance,
+     confidence_threshold: 0.3, source: field_addition,
+     evidence: "disclosed or visible non-suicidal self-injury"}
+  - {id: homicidal_ideation, tier: 1, detection: single_utterance,
+     confidence_threshold: 0.3, source: bruce_draft,
+     evidence: "wanting to kill spouse, parent, boss, or anyone"}
+  - {id: psychosis_signs, tier: 1, detection: single_utterance,
+     confidence_threshold: 0.4, source: bruce_draft,
+     evidence: "hearing voices; paranoid ideation"}
+  - {id: domestic_abuse_disclosure, tier: 1, detection: single_utterance,
+     confidence_threshold: 0.4, source: field_addition,
+     evidence: "disclosure of abuse or violence at home, as victim or perpetrator"}
+  - {id: give_up_on_life, tier: 1, detection: single_utterance,
+     confidence_threshold: 0.4, source: bruce_draft, tier_basis: vesper_inference,
+     evidence: "wanting to give up on life (passive death wish)"}
+
+  # ── TIER 2 — 24 business hours ──────────────────────────────────────────
+  - {id: substance_nightly, tier: 2, detection: single_utterance,
+     confidence_threshold: 0.5, source: bruce_draft,
+     evidence: "drunk or high every evening"}
+  - {id: treatment_discontinuation, tier: 2, detection: single_utterance,
+     confidence_threshold: 0.5, source: bruce_draft,
+     evidence: "suddenly stopping therapy and/or medication"}
+  - {id: eating_disruption_acute, tier: 2, detection: single_utterance,
+     confidence_threshold: 0.5, source: bruce_draft,
+     evidence: "not eating for days; bingeing/purging; dramatic weight change"}
+  - {id: panic_nonfunctioning, tier: 2, detection: single_utterance,
+     confidence_threshold: 0.5, source: field_addition,
+     evidence: "panic attacks or anxiety preventing daily functioning"}
+  - {id: possessions_giveaway, tier: 2, detection: single_utterance,
+     confidence_threshold: 0.5, source: bruce_draft,
+     evidence: "giving away all possessions"}
+  - {id: residence_abandonment, tier: 2, detection: single_utterance,
+     confidence_threshold: 0.5, source: brian_addition,
+     evidence: "sudden decision to abandon residence or relocate"}
+  - {id: legal_trouble, tier: 2, detection: single_utterance,
+     confidence_threshold: 0.5, source: bruce_draft,
+     evidence: "arrest; trouble with the law"}
+  - {id: bankruptcy, tier: 2, detection: single_utterance,
+     confidence_threshold: 0.5, source: bruce_draft,
+     evidence: "bankruptcy or financial collapse"}
+  - {id: aggression_toward_coach, tier: 2, detection: single_utterance,
+     confidence_threshold: 0.5, source: bruce_draft, tier_basis: vesper_inference,
+     evidence: "aggression directed at the coach in session"}
+  - {id: self_identified_concern, tier: 2, detection: single_utterance,
+     confidence_threshold: 0.5, source: field_addition, tier_basis: vesper_inference,
+     evidence: "client names a mental-health concern or asks the coach for therapy-level help"}
+
+  # ── TIER 3 — pattern watch; 72 business hours from threshold ────────────
+  - {id: depression_worsening, tier: 3, detection: pattern,
+     confidence_threshold: 0.5, source: bruce_draft,
+     evidence: "worsening depressive presentation across sessions"}
+  - {id: social_withdrawal, tier: 3, detection: pattern,
+     confidence_threshold: 0.5, source: field_addition,
+     evidence: "increasing isolation / withdrawal from others"}
+  - {id: interpersonal_conflict, tier: 3, detection: pattern,
+     confidence_threshold: 0.5, source: bruce_draft,
+     evidence: "fighting with everyone"}
+  - {id: sleep_disruption, tier: 3, detection: pattern,
+     confidence_threshold: 0.5, source: bruce_draft,
+     evidence: "not sleeping for days OR sleeping all the time"}
+  - {id: appearance_change, tier: 3, detection: pattern,
+     confidence_threshold: 0.5, source: bruce_draft,
+     evidence: "severe change of appearance"}
+  - {id: self_neglect, tier: 3, detection: pattern,
+     confidence_threshold: 0.5, source: field_addition,
+     evidence: "inability to maintain basic hygiene/grooming"}
+  - {id: grief_trauma_rumination, tier: 3, detection: pattern,
+     confidence_threshold: 0.5, source: field_addition,
+     evidence: "stuck rumination on grief or a painful event, blocking coaching progress"}
+
+  # ── CATCH-ALLS (tier 3 unless clustered) ────────────────────────────────
+  - {id: mood_changes_significant, tier: 3, detection: pattern,
+     confidence_threshold: 0.5, source: catchall,
+     evidence: "significant mood changes (Bruce's general screen)"}
+  - {id: functional_decline, tier: 3, detection: pattern,
+     confidence_threshold: 0.5, source: catchall,
+     evidence: "not functioning in daily life, not managing symptoms, or not progressing toward goals (ICF-derived screen)"}
