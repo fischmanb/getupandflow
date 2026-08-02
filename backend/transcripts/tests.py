@@ -392,3 +392,23 @@ class PollZoomRecordingsTests(TestCase):
         call_command("poll_zoom_recordings", stderr=err)
         self.assertIn("Zoom listing failed", err.getvalue())
         self.assertEqual(Transcript.objects.count(), 0)
+
+
+@mock.patch.dict("os.environ", {"GUAF_ESCALATION_INGEST_SECRET": FEED_SECRET})
+class TranscriptPollEndpointTests(TestCase):
+    def _sig(self, body="poll"):
+        from transcripts.constants import get_feed_secret
+        return hmac.new(get_feed_secret().encode(), body.encode(), hashlib.sha256).hexdigest()
+
+    @mock.patch("planner.zoom.download_recording_file", return_value=SAMPLE_VTT.encode())
+    @mock.patch("planner.zoom.list_account_recordings")
+    def test_poll_endpoint_ingests(self, listing, download):
+        listing.return_value = {"meetings": [_recording_body(meeting_id=777000222)["payload"]["object"]]}
+        resp = self.client.post("/api/transcripts/poll/", HTTP_X_GUAF_SIGNATURE=self._sig())
+        self.assertEqual(resp.status_code, 200)
+        self.assertEqual(resp.json()["stored"], 1)
+        self.assertTrue(Transcript.objects.filter(zoom_meeting_id=777000222).exists())
+
+    def test_poll_endpoint_rejects_bad_signature(self):
+        resp = self.client.post("/api/transcripts/poll/", HTTP_X_GUAF_SIGNATURE="bad")
+        self.assertEqual(resp.status_code, 401)

@@ -111,3 +111,42 @@ class TranscriptFeedView(generics.ListAPIView):
                 since = timezone.make_aware(since, dt_timezone.utc)
             queryset = queryset.filter(created_at__gt=since)
         return queryset
+
+
+class TranscriptPollView(APIView):
+    """POST /api/transcripts/poll/ — HMAC-authenticated on-demand poll.
+
+    Runs the same account-wide recording sweep as the poll_zoom_recordings
+    management command, synchronously, and returns the counts. Auth: the feed's
+    HMAC scheme over the literal body "poll" (constant, replay-safe enough for
+    an idempotent read-and-ingest trigger). Exists so operators (and sorel) can
+    force an ingest sweep without waiting on cron or Zoom webhooks.
+    """
+
+    permission_classes = [AllowAny]
+    authentication_classes = []
+
+    def post(self, request):
+        signature = request.headers.get(FEED_SIGNATURE_HEADER, "")
+        if not feed_signature_valid("poll", signature):
+            return Response({"detail": "Invalid signature."}, status=status.HTTP_401_UNAUTHORIZED)
+        from datetime import timedelta
+        from planner import zoom
+        from .management.commands.poll_zoom_recordings import POLL_WINDOW_DAYS
+        now = timezone.now()
+        frm = (now - timedelta(days=POLL_WINDOW_DAYS)).date().isoformat()
+        to = now.date().isoformat()
+        try:
+            payload = zoom.list_account_recordings(frm, to)
+        except zoom.ZoomError as exc:
+            logger.warning("On-demand poll: Zoom listing failed: %s", exc)
+            return Response({"detail": f"Zoom listing failed ({exc.status_code})."},
+                            status=status.HTTP_502_BAD_GATEWAY)
+        meetings = payload.get("meetings") or []
+        results = []
+        for meeting in meetings:
+            body = {"event": "recording.completed", "payload": {"object": meeting}, "download_token": None}
+            results.append(handle_recording_event(body, allow_retry=False))
+        stored = sum(1 for r in results if r.get("status") == "stored")
+        return Response({"meetings": len(meetings), "stored": stored,
+                         "statuses": [r.get("status") for r in results]})
