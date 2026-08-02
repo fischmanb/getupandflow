@@ -132,3 +132,16 @@ def update_meeting(meeting_id, event):
 
 def delete_meeting(meeting_id):
     _request("DELETE", f"/meetings/{meeting_id}")
+
+
+def list_account_recordings(from_date, to_date):
+    """List cloud recordings account-wide via the S2S app.
+
+    Uses GET /accounts/me/recordings (account-level S2S apps only). Returns the
+    parsed JSON. from_date/to_date are 'YYYY-MM-DD' strings; Zoom caps the
+    window at one month per call.
+    """
+    return _request(
+        "GET",
+        f"/accounts/me/recordings?from={from_date}&to={to_date}&page_size=100",
+    ).json()

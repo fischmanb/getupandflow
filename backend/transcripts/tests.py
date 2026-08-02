@@ -363,3 +363,32 @@ class StorageSelectionTests(TestCase):
 
         with mock.patch("transcripts.storage.is_configured", return_value=False):
             self.assertIsInstance(storage.select_transcript_storage(), FileSystemStorage)
+
+
+class PollZoomRecordingsTests(TestCase):
+    """Webhook-independent poller: same ingest, same idempotency."""
+
+    @mock.patch("planner.zoom.download_recording_file", return_value=SAMPLE_VTT.encode())
+    @mock.patch("planner.zoom.list_account_recordings")
+    def test_poller_ingests_and_is_idempotent(self, listing, download):
+        from django.core.management import call_command
+        from io import StringIO
+        listing.return_value = {"meetings": [_recording_body(meeting_id=555000111)["payload"]["object"]]}
+        out = StringIO()
+        call_command("poll_zoom_recordings", stdout=out)
+        self.assertEqual(Transcript.objects.filter(zoom_meeting_id=555000111).count(), 1)
+        self.assertIn("1 stored", out.getvalue())
+        out2 = StringIO()
+        call_command("poll_zoom_recordings", stdout=out2)
+        self.assertEqual(Transcript.objects.filter(zoom_meeting_id=555000111).count(), 1)
+        self.assertIn("1 skipped", out2.getvalue())
+
+    @mock.patch("planner.zoom.list_account_recordings", side_effect=Exception)
+    def test_poller_listing_failure_is_contained(self, listing):
+        from django.core.management import call_command
+        listing.side_effect = __import__("planner.zoom", fromlist=["ZoomError"]).ZoomError("down", status_code=500)
+        from io import StringIO
+        err = StringIO()
+        call_command("poll_zoom_recordings", stderr=err)
+        self.assertIn("Zoom listing failed", err.getvalue())
+        self.assertEqual(Transcript.objects.count(), 0)
