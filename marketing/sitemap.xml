@@ -1,11 +1,8 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
-  <url>
-    <loc>https://getupandflow.co/</loc>
-    <changefreq>weekly</changefreq>
-    <priority>1.0</priority>
-  </url>
-  <url><loc>https://getupandflow.co/faq</loc></url>
-  <url><loc>https://getupandflow.co/terms</loc></url>
-  <url><loc>https://getupandflow.co/privacy</loc></url>
+  <url><loc>https://getupandflow.co/</loc><lastmod>2026-08-30</lastmod><changefreq>weekly</changefreq><priority>1.0</priority></url>
+  <url><loc>https://getupandflow.co/faq</loc><lastmod>2026-08-30</lastmod><changefreq>monthly</changefreq><priority>0.8</priority></url>
+  <url><loc>https://getupandflow.co/adhd-coach-cost</loc><lastmod>2026-08-30</lastmod><changefreq>monthly</changefreq><priority>0.8</priority></url>
+  <url><loc>https://getupandflow.co/terms</loc><lastmod>2026-08-30</lastmod></url>
+  <url><loc>https://getupandflow.co/privacy</loc><lastmod>2026-08-30</lastmod></url>
 </urlset>
