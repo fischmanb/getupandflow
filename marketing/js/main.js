@@ -146,7 +146,7 @@
           if (response.ok) {
             form.reset();
             showStatus(
-              "You're on the list! We'll reach out within 48 hours to schedule your onboarding call.",
+              "You're on the list! We'll reach out within a few days to schedule your onboarding call.",
               true
             );
             return;

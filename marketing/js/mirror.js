@@ -71,7 +71,7 @@
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(payload)
       }).then(function (r) {
-        if (r.status === 201) { status.textContent = "Got it \u2014 we will reach out within 48 hours."; status.style.color = "#059669"; form.reset(); apply("monthly"); }
+        if (r.status === 201) { status.textContent = "Got it \u2014 we will reach out within a few days."; status.style.color = "#059669"; form.reset(); apply("monthly"); }
         else if (r.status === 429) { status.textContent = "Too many submissions from this network \u2014 try again later."; status.style.color = "#b45309"; }
         else { r.json().then(function (d) { status.textContent = Object.values(d).flat().join(" ") || "Please check the form and try again."; status.style.color = "#b91c1c"; }).catch(function () { status.textContent = "Please check the form and try again."; status.style.color = "#b91c1c"; }); }
       }).catch(function () { status.textContent = "Network error \u2014 please try again."; status.style.color = "#b91c1c"; });
