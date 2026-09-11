@@ -33,9 +33,8 @@ export function TermsPage() {
         <h2>3. Session recording and transcription</h2>
         <p className="subtle-copy">
           Coaching sessions happen over Zoom. By accepting these terms, you consent to Get Up and Flow
-          using Zoom audio/video capture and transcription of your coaching sessions to help improve the
-          coaching experience. Recordings and transcripts help your coach remember exactly what you
-          worked on together and help us make the coaching better. Section 4 covers how carefully we
+          using Zoom transcription of your coaching sessions to help improve the coaching experience.
+          Transcripts help your coach remember exactly what you worked on together and help us make the coaching better. Section 4 covers how carefully we
           treat them.
         </p>
 
