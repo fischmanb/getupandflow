@@ -40,8 +40,7 @@ export function TermsPage() {
 
         <h2>4. Confidentiality</h2>
         <p className="subtle-copy">
-          What you share in session stays confidential within Get Up and Flow. Session recordings
-          and transcripts
+          What you share in session stays confidential within Get Up and Flow. Session transcripts
           are strictly confidential. We never sell them, and we never share them or use them for any
           purpose beyond delivering and improving the coaching service. Sessions are hosted and
           transcribed via Zoom — that's what delivers the call and the transcript. Beyond that hosting,
