@@ -24,7 +24,7 @@ export function TermsPage() {
         <p className="subtle-copy">
           GUAF is a coaching service. It is not medical care, therapy, psychotherapy, counseling, or a
           clinical service of any kind, and using GUAF does not create a clinician–patient relationship.
-          Our coaches are trained in executive-function support, but they are not licensed medical or
+          Our coaches are trained in executive-function support, but they are not acting as medical or
           mental-health providers, and nothing in a coaching session is medical advice. Coaching is not a
           substitute for diagnosis or treatment. If you are in crisis, contact a crisis line (in the US,
           call or text 988) or emergency services (911) — don't wait for a coaching session.
@@ -47,10 +47,10 @@ export function TermsPage() {
           purpose beyond delivering and improving the coaching service. Sessions are hosted and
           transcribed via Zoom — that's what delivers the call and the transcript. Beyond that hosting,
           your session content is never shared outside the company under any circumstances, with
-          exactly two exceptions: (a) we believe there is a real risk of harm to you or to someone
+          two exceptions: (a) we believe there is a real risk of harm to you or to someone
           else, or (b) we are legally compelled to disclose it. Within the company, access to session
-          content is limited to your own coach and GUAF's two-person leadership team, who review it
-          for quality assurance — no one else. Every Get Up and Flow team member signs a
+          content is limited to your own coach and GUAF's periodic quality assurance reviews — no one
+          else. Every Get Up and Flow team member signs a
           confidentiality agreement binding them to client confidentiality, except if and when
           required by law. The other providers we rely on — Stripe (payments), our email provider,
           and our hosting providers — handle only payment, email, and account data; they never
@@ -59,10 +59,10 @@ export function TermsPage() {
 
         <h2>5. Plans, billing, and refunds</h2>
         <p className="subtle-copy">
-          GUAF is a subscription, billed through Stripe. Plans and prices are shown at signup. If you're
+          GUAF is a subscription based service billed through Stripe. Plans and prices are shown at signup. If you're
           a new client and GUAF isn't working for you, you can get a full refund within 7 days of
           starting. After that you can cancel anytime through the billing portal in your account — your
-          subscription runs to the end of the period you've paid for, and we don't refund partial
+          subscription runs to the end of the period you've paid for; we don't refund partial
           periods.
         </p>
 
@@ -77,8 +77,8 @@ export function TermsPage() {
         <h2>7. Acceptable use</h2>
         <p className="subtle-copy">
           Treat your coach with the same decency they bring to you. Don't use GUAF to harass, threaten,
-          or abuse anyone; don't try to break, probe, or overload our systems; don't misuse anyone
-          else's data; and don't use the service for anything illegal. We can suspend or close accounts
+          or abuse anyone; don't try to break, probe, or overload our systems; and don't use the service for
+          anything illegal. We can suspend or close accounts
           that do.
         </p>
 
