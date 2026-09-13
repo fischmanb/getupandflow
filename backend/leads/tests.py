@@ -107,3 +107,20 @@ class LeadCorsTests(APITestCase):
             response.headers.get("Access-Control-Allow-Origin"),
             "https://www.getupandflow.co",
         )
+
+
+
+class SignupNotificationSafetyTests(__import__("rest_framework.test", fromlist=["APITestCase"]).APITestCase):
+    def test_lead_created_even_if_notifications_crash(self):
+        from unittest import mock
+
+        with mock.patch("leads.views.send_signup_notifications", side_effect=RuntimeError("boom")):
+            resp = self.client.post(
+                "/api/leads/",
+                {"full_name": "Crash Test", "email": "crash@example.com"},
+                format="json",
+            )
+        self.assertEqual(resp.status_code, 201)
+        from .models import Lead
+
+        self.assertTrue(Lead.objects.filter(email="crash@example.com").exists())
