@@ -38,14 +38,18 @@ def _push_ntfy(lead):
         lead.full_name, lead.email, lead.get_plan_display(),
         lead.get_billing_period_display(), (lead.notes or "-")[:300], lead.pk,
     )
+    headers = {
+        "Title": "NEW GUAF SIGNUP: %s" % lead.full_name,
+        "Priority": "4",
+        "Tags": "tada,moneybag",
+    }
+    token = os.getenv("GUAF_SIGNUP_NTFY_TOKEN", "").strip()
+    if token:
+        headers["Authorization"] = "Bearer %s" % token
     req = urllib.request.Request(
         url,
         data=body.encode("utf-8"),
-        headers={
-            "Title": "NEW GUAF SIGNUP: %s" % lead.full_name,
-            "Priority": "4",
-            "Tags": "tada,moneybag",
-        },
+        headers=headers,
         method="POST",
     )
     try:
