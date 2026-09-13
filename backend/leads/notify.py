@@ -8,6 +8,7 @@ Env:
   GUAF_SIGNUP_NTFY_TOPIC   -- ntfy topic URL (default: settings.NTFY_TOPIC_URL)
   GUAF_SIGNUP_NOTIFY_EMAILS -- comma-separated recipients; unset = email skipped
 """
+import json
 import logging
 import os
 import urllib.request
@@ -34,24 +35,29 @@ def _push_ntfy(lead):
     if not url:
         logger.error("Signup %s: no ntfy topic configured", lead.pk)
         return False
-    body = "%s <%s>\n%s / %s\nNotes: %s\nAdmin: https://api.getupandflow.co/admin/leads/lead/%s/change/" % (
+    # JSON publish endpoint: HTTP headers are latin-1 only, so any non-latin-1
+    # character in a lead name (em dash, curly quote, most non-Western names)
+    # would crash a Title header. The JSON body is UTF-8 end to end.
+    from urllib.parse import urlsplit
+    parts = urlsplit(url)
+    base = "%s://%s" % (parts.scheme, parts.netloc)
+    topic = parts.path.strip("/")
+    message = "%s <%s>\n%s / %s\nNotes: %s\nAdmin: https://api.getupandflow.co/admin/leads/lead/%s/change/" % (
         lead.full_name, lead.email, lead.get_plan_display(),
         lead.get_billing_period_display(), (lead.notes or "-")[:300], lead.pk,
     )
-    headers = {
-        "Title": "NEW GUAF SIGNUP: %s" % lead.full_name,
-        "Priority": "4",
-        "Tags": "tada,moneybag",
-    }
+    payload = json.dumps({
+        "topic": topic,
+        "title": "NEW GUAF SIGNUP: %s" % lead.full_name,
+        "message": message,
+        "priority": 4,
+        "tags": ["tada", "moneybag"],
+    }).encode("utf-8")
+    headers = {"Content-Type": "application/json"}
     token = os.getenv("GUAF_SIGNUP_NTFY_TOKEN", "").strip()
     if token:
         headers["Authorization"] = "Bearer %s" % token
-    req = urllib.request.Request(
-        url,
-        data=body.encode("utf-8"),
-        headers=headers,
-        method="POST",
-    )
+    req = urllib.request.Request(base, data=payload, headers=headers, method="POST")
     try:
         with urllib.request.urlopen(req, timeout=_NTFY_TIMEOUT_S) as resp:
             ok = 200 <= resp.status < 300
