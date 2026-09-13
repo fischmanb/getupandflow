@@ -84,7 +84,30 @@ def _send_email(lead):
         lead.get_billing_period_display(), lead.notes or "-",
         lead.created_at.isoformat(), lead.pk,
     )
-    msg = EmailMessage(subject=subject, body=body, to=to)
+    lead_url = "https://api.getupandflow.co/admin/leads/lead/%s/change/" % lead.pk
+    list_url = "https://api.getupandflow.co/admin/leads/lead/"
+    html = """\
+<div style="font-family:-apple-system,Segoe UI,Arial,sans-serif;max-width:560px;margin:0 auto;padding:24px">
+  <div style="font-size:30px;font-weight:800;color:#065f46;line-height:1.25;margin-bottom:6px">
+    \U0001f7e2 A new customer signed up for Get Up and Flow
+  </div>
+  <div style="font-size:16px;color:#334155;margin-bottom:20px">Review the lead and start onboarding.</div>
+  <table style="border-collapse:collapse;font-size:15px;color:#0f172a;margin-bottom:24px">
+    <tr><td style="padding:4px 14px 4px 0;color:#64748b">Name</td><td style="padding:4px 0;font-weight:700">%(name)s</td></tr>
+    <tr><td style="padding:4px 14px 4px 0;color:#64748b">Email</td><td style="padding:4px 0">%(email)s</td></tr>
+    <tr><td style="padding:4px 14px 4px 0;color:#64748b">Plan</td><td style="padding:4px 0">%(plan)s / %(billing)s</td></tr>
+    <tr><td style="padding:4px 14px 4px 0;color:#64748b;vertical-align:top">Notes</td><td style="padding:4px 0">%(notes)s</td></tr>
+  </table>
+  <a href="%(lead_url)s" style="display:inline-block;background:#059669;color:#ffffff;font-size:19px;font-weight:800;padding:15px 30px;border-radius:10px;text-decoration:none">REVIEW LEAD IN ADMIN &rarr;</a>
+  <div style="font-size:13px;color:#64748b;margin-top:16px">All leads: <a href="%(list_url)s" style="color:#2563eb">%(list_url)s</a></div>
+</div>""" % {
+        "name": lead.full_name, "email": lead.email,
+        "plan": lead.get_plan_display(), "billing": lead.get_billing_period_display(),
+        "notes": (lead.notes or "-"), "lead_url": lead_url, "list_url": list_url,
+    }
+    from django.core.mail import EmailMultiAlternatives
+    msg = EmailMultiAlternatives(subject=subject, body=body, to=to)
+    msg.attach_alternative(html, "text/html")
     msg.extra_headers = {"X-Priority": "1", "Importance": "high"}
     try:
         sent = msg.send(fail_silently=False)
