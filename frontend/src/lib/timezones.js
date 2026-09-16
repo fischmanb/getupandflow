@@ -1,27 +1,15 @@
 /** Timezone choices, sourced from the runtime's own IANA database.
  *
  * No hardcoded list: Intl.supportedValuesOf gives every zone the browser knows.
- * Older browsers without it fall back to the resolved local zone alone, which
- * is always enough to submit the form correctly.
+ * The list is only the menu; the applicant picks. Nothing here reads or
+ * defaults to the device's own zone setting.
  */
-export function browserTimezone() {
-  try {
-    return Intl.DateTimeFormat().resolvedOptions().timeZone || "";
-  } catch {
-    return "";
-  }
-}
-
 export function timezoneOptions() {
-  let all = [];
   try {
-    all = typeof Intl.supportedValuesOf === "function" ? Intl.supportedValuesOf("timeZone") : [];
+    return typeof Intl.supportedValuesOf === "function" ? Intl.supportedValuesOf("timeZone") : [];
   } catch {
-    all = [];
+    return [];
   }
-  const local = browserTimezone();
-  if (!all.length) return local ? [local] : [];
-  return all.includes(local) || !local ? all : [local, ...all];
 }
 
 /** "America/New_York" -> "America / New York (GMT-4)" for the select label. */

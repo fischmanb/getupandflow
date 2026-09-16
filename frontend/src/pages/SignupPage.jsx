@@ -4,7 +4,7 @@ import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import { apiClient } from "../api/client";
 import { getErrorMessage } from "../api/utils";
 import { INTERVAL_UNITS } from "../components/BillingCard";
-import { browserTimezone, timezoneLabel, timezoneOptions } from "../lib/timezones";
+import { timezoneLabel, timezoneOptions } from "../lib/timezones";
 
 const PLAN_IDS = ["full_support", "focus_lite"];
 const INTERVALS = ["monthly", "weekly"];
@@ -18,7 +18,9 @@ export function SignupPage() {
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
   const [timezones] = useState(() => timezoneOptions());
-  const [timezone, setTimezone] = useState(() => browserTimezone());
+  // Deliberately NOT prefilled from the browser: the applicant states their
+  // own zone. A device's clock setting is not evidence of where they work.
+  const [timezone, setTimezone] = useState("");
   const [plans, setPlans] = useState(null);
   const [catalogError, setCatalogError] = useState("");
   const [plan, setPlan] = useState(normalizeChoice(searchParams.get("plan"), PLAN_IDS, "full_support"));
