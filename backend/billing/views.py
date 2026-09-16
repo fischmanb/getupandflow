@@ -171,6 +171,43 @@ class CheckoutView(APIView):
         return Response({"url": session["url"]})
 
 
+class CheckoutSessionSummaryView(APIView):
+    """Amount/currency/plan of a completed Checkout Session, for analytics.
+
+    Public by design: the session id is an unguessable Stripe token that only
+    the buyer's browser holds, and the response carries no PII -- just what
+    the success page needs to fire a purchase event with the true value.
+    """
+
+    permission_classes = [AllowAny]
+    authentication_classes = []
+
+    def get(self, request):
+        session_id = (request.query_params.get("session_id") or "").strip()
+        if not session_id.startswith("cs_"):
+            return Response({"detail": "session_id required"}, status=status.HTTP_400_BAD_REQUEST)
+        api = get_stripe()
+        try:
+            session = api.checkout.Session.retrieve(session_id, expand=["line_items"])
+        except StripeError:
+            return Response({"detail": "Unknown session"}, status=status.HTTP_404_NOT_FOUND)
+        if session.get("payment_status") not in ("paid", "no_payment_required"):
+            return Response({"detail": "Session not completed"}, status=status.HTTP_409_CONFLICT)
+        items = (session.get("line_items") or {}).get("data") or []
+        lookup_keys = [
+            ((li.get("price") or {}).get("lookup_key")) for li in items
+            if (li.get("price") or {}).get("lookup_key")
+        ]
+        return Response(
+            {
+                "transaction_id": session["id"],
+                "value": (session.get("amount_total") or 0) / 100,
+                "currency": (session.get("currency") or "usd").upper(),
+                "items": lookup_keys,
+            }
+        )
+
+
 class PortalView(APIView):
     """Create a Stripe Billing Portal session, optionally deep-linked to a flow."""
 

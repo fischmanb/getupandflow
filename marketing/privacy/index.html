@@ -42,6 +42,7 @@ if (window.GUAF_ADS_ID) { gtag('config', window.GUAF_ADS_ID, { linker: { domains
    signup page. Bound by behaviour, not by a per-page selector list, so new
    pages inherit it. */
 window.guafReportLead = function(){
+  gtag('event','generate_lead',{currency:'USD', value: 0});
   if (!window.GUAF_ADS_ID || !window.GUAF_ADS_LEAD_LABEL) return;
   gtag('event','conversion',{send_to: window.GUAF_ADS_ID + '/' + window.GUAF_ADS_LEAD_LABEL});
 };

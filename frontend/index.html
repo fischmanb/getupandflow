@@ -14,6 +14,7 @@
       window.gtag = gtag;
       (function () {
         var ga = "%VITE_GA_MEASUREMENT_ID%";
+        if (!ga || ga.indexOf("%") === 0) ga = "G-GB7SC39Y13"; // same GA4 property as www
         var aw = "%VITE_GOOGLE_ADS_ID%";
         var ids = [ga, aw].filter(function (id) { return id && id.indexOf("%") !== 0; });
         if (!ids.length) return;
