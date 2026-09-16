@@ -24,7 +24,33 @@
    {"@context": "https://schema.org", "@type": "BreadcrumbList", "itemListElement": [{"@type": "ListItem", "position": 1, "name": "Home", "item": "https://getupandflow.co/"}, {"@type": "ListItem", "position": 2, "name": "Terms of Service", "item": "https://getupandflow.co/terms"}]}
   </script>
  <style>@media (min-width:768px){header .brand-wordmark{font-size:1.4625rem}header img.brand-logo{width:2.6rem!important;height:2.6rem!important}}</style>
-<!-- Google tag (gtag.js) --> <script async src="https://www.googletagmanager.com/gtag/js?id=G-GB7SC39Y13"></script> <script>   window.dataLayer = window.dataLayer || [];   function gtag(){dataLayer.push(arguments);}   gtag('js', new Date());    gtag('config', 'G-GB7SC39Y13'); </script>
+<!-- Google tag (gtag.js) --> <script async src="https://www.googletagmanager.com/gtag/js?id=G-GB7SC39Y13"></script> <script>
+window.dataLayer = window.dataLayer || [];
+function gtag(){dataLayer.push(arguments);}
+gtag('js', new Date());
+/* Cross-domain linker: carries the Google click id from www.getupandflow.co to
+   app.getupandflow.co, without which a Stripe purchase can never be attributed
+   back to the ad that produced it. */
+window.GUAF_LINKER_DOMAINS = ['getupandflow.co','www.getupandflow.co','app.getupandflow.co'];
+/* Google Ads conversion id and the Lead action's label. Both blank until the
+   conversion actions exist in Google Ads; blank makes every call below inert. */
+window.GUAF_ADS_ID = '';
+window.GUAF_ADS_LEAD_LABEL = '';
+gtag('config', 'G-GB7SC39Y13', { linker: { domains: window.GUAF_LINKER_DOMAINS } });
+if (window.GUAF_ADS_ID) { gtag('config', window.GUAF_ADS_ID, { linker: { domains: window.GUAF_LINKER_DOMAINS } }); }
+/* Lead conversion: any signup form submit, and any click through to the app's
+   signup page. Bound by behaviour, not by a per-page selector list, so new
+   pages inherit it. */
+window.guafReportLead = function(){
+  if (!window.GUAF_ADS_ID || !window.GUAF_ADS_LEAD_LABEL) return;
+  gtag('event','conversion',{send_to: window.GUAF_ADS_ID + '/' + window.GUAF_ADS_LEAD_LABEL});
+};
+document.addEventListener('submit', function(e){ if (e.target && e.target.tagName === 'FORM') window.guafReportLead(); }, true);
+document.addEventListener('click', function(e){
+  var a = e.target && e.target.closest ? e.target.closest('a[href*="app.getupandflow.co/signup"]') : null;
+  if (a) window.guafReportLead();
+}, true);
+</script>
 </head>
  <body>
   <div class="min-h-screen bg-gradient-to-b from-slate-50 to-white">

@@ -1,6 +1,14 @@
 from django.contrib import admin
 
-from .models import Lead
+from .models import Lead, WaitlistEntry
+
+
+@admin.register(WaitlistEntry)
+class WaitlistEntryAdmin(admin.ModelAdmin):
+    list_display = ("full_name", "email", "timezone", "plan", "created_at")
+    list_filter = ("timezone", "plan", "created_at")
+    search_fields = ("full_name", "email", "timezone")
+    readonly_fields = ("created_at",)
 
 
 @admin.register(Lead)

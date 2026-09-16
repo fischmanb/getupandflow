@@ -1,9 +1,10 @@
 import { useEffect, useState } from "react";
-import { Link, useSearchParams } from "react-router-dom";
+import { Link, useNavigate, useSearchParams } from "react-router-dom";
 
 import { apiClient } from "../api/client";
 import { getErrorMessage } from "../api/utils";
 import { INTERVAL_UNITS } from "../components/BillingCard";
+import { browserTimezone, timezoneLabel, timezoneOptions } from "../lib/timezones";
 
 const PLAN_IDS = ["full_support", "focus_lite"];
 const INTERVALS = ["monthly", "weekly"];
@@ -15,6 +16,9 @@ function normalizeChoice(value, allowed, fallback) {
 
 export function SignupPage() {
   const [searchParams] = useSearchParams();
+  const navigate = useNavigate();
+  const [timezones] = useState(() => timezoneOptions());
+  const [timezone, setTimezone] = useState(() => browserTimezone());
   const [plans, setPlans] = useState(null);
   const [catalogError, setCatalogError] = useState("");
   const [plan, setPlan] = useState(normalizeChoice(searchParams.get("plan"), PLAN_IDS, "full_support"));
@@ -53,6 +57,20 @@ export function SignupPage() {
     setShowLoginLink(false);
     setIsSubmitting(true);
     try {
+      // Coverage is decided by the server, never by the client: the browser
+      // reports its zone, the API answers whether a coach can work that day.
+      const area = await apiClient.get("/leads/service-area/", { params: { timezone } });
+      if (!area.data.serviceable) {
+        await apiClient.post("/leads/waitlist/", {
+          full_name: formData.full_name,
+          email: formData.email,
+          timezone,
+          plan,
+          interval,
+        });
+        navigate("/waitlist", { state: { timezone } });
+        return;
+      }
       const response = await apiClient.post("/billing/checkout/", {
         ...formData,
         plan,
@@ -143,6 +161,24 @@ export function SignupPage() {
               onChange={handleChange}
               required
             />
+          </label>
+          <label>
+            Your time zone
+            <select
+              name="timezone"
+              onChange={(event) => setTimezone(event.target.value)}
+              required
+              value={timezone}
+            >
+              <option disabled value="">
+                Select your time zone
+              </option>
+              {timezones.map((name) => (
+                <option key={name} value={name}>
+                  {timezoneLabel(name)}
+                </option>
+              ))}
+            </select>
           </label>
           <label>
             Password

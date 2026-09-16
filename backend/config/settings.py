@@ -191,6 +191,15 @@ DEFAULT_FROM_EMAIL = os.getenv(
     "DEFAULT_FROM_EMAIL", "Get Up and Flow <hello@getupandflow.co>"
 )
 
+# Coach coverage. A signup whose timezone shares a CURRENT UTC offset with any
+# of these is sold immediately; everyone else is routed to the waitlist. Adding
+# zones here is the only step needed to open a new region -- no code change.
+GUAF_SERVICE_TIMEZONES = [
+    name.strip()
+    for name in os.getenv("GUAF_SERVICE_TIMEZONES", "America/New_York").split(",")
+    if name.strip()
+]
+
 # Push notifications for new paid signups (fail-soft; empty disables).
 NTFY_TOPIC_URL = os.getenv("NTFY_TOPIC_URL", "https://ntfy.sh/aegis-brian-fischman")
 

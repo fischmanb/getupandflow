@@ -20,6 +20,7 @@ import { PrivacyPage } from "./pages/PrivacyPage";
 import { ResetPasswordPage } from "./pages/ResetPasswordPage";
 import { SignupPage } from "./pages/SignupPage";
 import { TermsPage } from "./pages/TermsPage";
+import { WaitlistPage } from "./pages/WaitlistPage";
 
 export default function App() {
   return (
@@ -31,6 +32,7 @@ export default function App() {
       <Route path="/terms" element={<TermsPage />} />
       <Route path="/privacy" element={<PrivacyPage />} />
       <Route path="/billing/success" element={<BillingSuccessPage />} />
+      <Route path="/waitlist" element={<WaitlistPage />} />
       <Route
         path="/escalations"
         element={

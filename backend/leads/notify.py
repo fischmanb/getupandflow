@@ -119,6 +119,84 @@ def _send_email(lead):
     return bool(sent)
 
 
+def _push_ntfy_waitlist(entry):
+    url = _ntfy_url()
+    if not url:
+        logger.error("Waitlist %s: no ntfy topic configured", entry.pk)
+        return False
+    from urllib.parse import urlsplit
+    parts = urlsplit(url)
+    base = "%s://%s" % (parts.scheme, parts.netloc)
+    topic = parts.path.strip("/")
+    message = (
+        "%s <%s>\nTimezone: %s\nWanted: %s / %s\n"
+        "Admin: https://api.getupandflow.co/admin/leads/waitlistentry/%s/change/"
+    ) % (
+        entry.full_name, entry.email, entry.timezone,
+        entry.plan or "-", entry.interval or "-", entry.pk,
+    )
+    payload = json.dumps({
+        "topic": topic,
+        "title": "GUAF WAITLIST (%s): %s" % (entry.timezone, entry.full_name),
+        "message": message,
+        "priority": 3,
+        "tags": ["hourglass", "world_map"],
+    }).encode("utf-8")
+    headers = {"Content-Type": "application/json"}
+    token = os.getenv("GUAF_SIGNUP_NTFY_TOKEN", "").strip()
+    if token:
+        headers["Authorization"] = "Bearer %s" % token
+    req = urllib.request.Request(base, data=payload, headers=headers, method="POST")
+    try:
+        with urllib.request.urlopen(req, timeout=_NTFY_TIMEOUT_S) as resp:
+            ok = 200 <= resp.status < 300
+    except Exception:
+        logger.exception("Waitlist %s: ntfy push FAILED", entry.pk)
+        return False
+    if not ok:
+        logger.error("Waitlist %s: ntfy push non-2xx", entry.pk)
+    return ok
+
+
+def _send_email_waitlist(entry):
+    to = _recipients()
+    if not to:
+        logger.warning("Waitlist %s: GUAF_SIGNUP_NOTIFY_EMAILS unset; email skipped", entry.pk)
+        return False
+    subject = "\u23f3 GUAF WAITLIST \u2014 %s (%s)" % (entry.full_name, entry.timezone)
+    admin_url = "https://api.getupandflow.co/admin/leads/waitlistentry/%s/change/" % entry.pk
+    body = (
+        "Someone outside current coach coverage tried to sign up.\n\n"
+        "Name:     %s\nEmail:    %s\nTimezone: %s\nWanted:   %s / %s\nWhen:     %s\n\n"
+        "In admin: %s\n"
+    ) % (
+        entry.full_name, entry.email, entry.timezone,
+        entry.plan or "-", entry.interval or "-",
+        entry.created_at.isoformat(), admin_url,
+    )
+    msg = EmailMessage(subject=subject, body=body, to=to)
+    try:
+        sent = msg.send(fail_silently=False)
+    except Exception:
+        logger.exception("Waitlist %s: notification email FAILED", entry.pk)
+        return False
+    if not sent:
+        logger.error("Waitlist %s: notification email reported 0 sent", entry.pk)
+    return bool(sent)
+
+
+def send_waitlist_notifications(entry):
+    """Fire both channels for a waitlist entry; never raise."""
+    try:
+        _push_ntfy_waitlist(entry)
+    except Exception:
+        logger.exception("Waitlist %s: ntfy channel crashed", entry.pk)
+    try:
+        _send_email_waitlist(entry)
+    except Exception:
+        logger.exception("Waitlist %s: email channel crashed", entry.pk)
+
+
 def send_signup_notifications(lead):
     """Fire both channels; never raise."""
     try:
