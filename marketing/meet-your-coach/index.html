@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Meet Your Coach — Book a Free 15-Minute Call | Get Up and Flow</title>
+<meta name="description" content="Talk to the coach you'd be working with before you decide. A free 15-minute conversation about your workday — no pitch, and if we're not the right fit, she'll say so.">
+<link rel="canonical" href="https://getupandflow.co/meet-your-coach">
+<meta property="og:title" content="Meet Your Coach — Book a Free 15-Minute Call">
+<meta property="og:description" content="Talk to the coach you'd be working with before you decide. Free, 15 minutes, no pitch.">
+<meta property="og:type" content="website">
+<meta property="og:url" content="https://getupandflow.co/meet-your-coach">
+<meta property="og:image" content="https://getupandflow.co/assets/joey-diaz.webp">
+<link rel="stylesheet" href="/assets/site.css">
+<link rel="icon" href="/assets/logo.png">
+<style>@media (min-width:768px){header .brand-wordmark{font-size:1.3em}}</style>
+<!-- Google tag (gtag.js) --> <script async src="https://www.googletagmanager.com/gtag/js?id=G-GB7SC39Y13"></script> <script>
+window.dataLayer = window.dataLayer || [];
+function gtag(){dataLayer.push(arguments);}
+gtag('js', new Date());
+/* Cross-domain linker: carries the Google click id from www.getupandflow.co to
+   app.getupandflow.co, without which a Stripe purchase can never be attributed
+   back to the ad that produced it. */
+window.GUAF_LINKER_DOMAINS = ['getupandflow.co','www.getupandflow.co','app.getupandflow.co'];
+/* Google Ads conversion id and the Lead action's label. Both blank until the
+   conversion actions exist in Google Ads; blank makes every call below inert. */
+window.GUAF_ADS_ID = '';
+window.GUAF_ADS_LEAD_LABEL = '';
+gtag('config', 'G-GB7SC39Y13', { linker: { domains: window.GUAF_LINKER_DOMAINS } });
+if (window.GUAF_ADS_ID) { gtag('config', window.GUAF_ADS_ID, { linker: { domains: window.GUAF_LINKER_DOMAINS } }); }
+/* Lead conversion: any signup form submit, and any click through to the app's
+   signup page. Bound by behaviour, not by a per-page selector list, so new
+   pages inherit it. */
+window.guafReportLead = function(){
+  gtag('event','generate_lead',{currency:'USD', value: 0});
+  if (!window.GUAF_ADS_ID || !window.GUAF_ADS_LEAD_LABEL) return;
+  gtag('event','conversion',{send_to: window.GUAF_ADS_ID + '/' + window.GUAF_ADS_LEAD_LABEL});
+};
+document.addEventListener('submit', function(e){ if (e.target && e.target.tagName === 'FORM') window.guafReportLead(); }, true);
+document.addEventListener('click', function(e){
+  var a = e.target && e.target.closest ? e.target.closest('a[href*="app.getupandflow.co/signup"]') : null;
+  if (a) window.guafReportLead();
+  var b = e.target && e.target.closest ? e.target.closest('a[href*="calendar.app.google"]') : null;
+  if (b) { gtag('event','book_call',{link_url: b.href}); }
+}, true);
+</script>
+</head>
+<body class="bg-white">
+<header class="border-b border-slate-200"><div class="max-w-3xl mx-auto px-6 py-4 flex items-center justify-between"><a href="/" class="font-bold text-slate-900 brand-wordmark">Get Up and Flow</a><nav><a href="/faq" class="text-slate-600 hover:text-blue-600 transition-colors">FAQ</a></nav></div></header>
+<main class="max-w-3xl mx-auto px-6 py-16">
+<p class="text-sm font-semibold uppercase tracking-wide text-blue-600 mb-3">Before you decide</p>
+<h1 class="text-4xl md:text-5xl font-bold text-slate-900 mb-4">Meet the coach you'd be working with</h1>
+<p class="text-xl text-slate-600 font-light mb-10">Fifteen minutes on a video call about your actual workday — where it falls apart, what a first morning together would look like. No pitch. If we're not the right fit, she'll tell you.</p>
+
+<div class="grid md:grid-cols-5 gap-8 items-start bg-slate-50 rounded-3xl p-6 md:p-8 border border-slate-100 mb-10">
+  <div class="md:col-span-2">
+    <img src="/assets/joey-diaz.webp" alt="Joey Diaz, RPsy — Get Up and Flow coach" class="rounded-2xl w-full shadow-lg" style="aspect-ratio:1/1;object-fit:cover">
+  </div>
+  <div class="md:col-span-3">
+    <h2 class="text-2xl font-bold text-slate-900 mb-1">Joey Diaz, RPsy</h2>
+    <p class="text-slate-500 mb-4">Executive function coach</p>
+    <div class="space-y-3 text-slate-600 leading-relaxed">
+      <p>Joey is a master's-level, licensed psychologist. She spent three years running one of the largest employee-assistance programs in the Philippines before moving into practice, most recently coaching one-to-one with high-pressure trust-and-safety teams. She placed in the top eight nationally on her psychology licensure exam and is a certified mental-health first responder.</p>
+      <p>At Get Up and Flow she coaches. That means a plan for your day every morning, the context you need before every transition, live time when things go sideways, and the same person tomorrow. It isn't therapy, and it isn't an app.</p>
+    </div>
+    <a href="https://calendar.app.google/M5xupvsDFigfU64X8" target="_blank" rel="noopener" class="inline-flex items-center justify-center gap-2 whitespace-nowrap font-medium h-12 bg-blue-600 hover:bg-blue-700 text-white px-8 text-base rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 mt-6 w-full sm:w-auto">Book 15 minutes with Joey</a>
+    <p class="text-sm text-slate-500 mt-3">Free. Video call on Google Meet. Pick any open slot; you'll get a calendar invite right away.</p>
+  </div>
+</div>
+
+<h2 class="text-2xl font-bold text-slate-900 mb-4">What happens on the call</h2>
+<ul class="space-y-3 text-slate-600 leading-relaxed mb-10">
+  <li><strong class="text-slate-800">Your workday, not ours.</strong> Where the day comes apart — mornings, transitions, the long afternoon — and what you've already tried.</li>
+  <li><strong class="text-slate-800">A first morning, sketched.</strong> What a Jump Start with Joey would look like tomorrow, given how your calendar actually runs.</li>
+  <li><strong class="text-slate-800">A straight answer on fit.</strong> Full Support is $750 a month, Focus Lite is $200, and either comes with a full refund in your first 7 days. If daily coaching isn't the right tool for you, she'll say so.</li>
+</ul>
+
+<p class="text-slate-600">Ready without the call? <a href="/#signup" class="text-blue-600 hover:text-blue-700 font-semibold">See plans and start this week &rarr;</a></p>
+</main>
+<footer class="bg-slate-900 text-slate-300 py-12"><div class="max-w-3xl mx-auto px-6 text-center"><p class="text-slate-400 mb-2">Get Up and Flow &mdash; daily accountability for executive function challenges</p><p class="text-sm text-slate-400"><a href="/" class="hover:text-white transition-colors">Home</a> &middot; <a href="/faq" class="hover:text-white transition-colors">FAQ</a> &middot; <a href="/coach-with-us" class="hover:text-white transition-colors">Coach With Us</a> · <a href="/terms" class="hover:text-white transition-colors">Terms</a> &middot; <a href="/privacy" class="hover:text-white transition-colors">Privacy</a></p></div></footer>
+</body>
+</html>
